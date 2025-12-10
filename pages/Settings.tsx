@@ -341,58 +341,21 @@ const Settings: React.FC = () => {
                             <div className="space-y-6">
                                 <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Appearance</h2>
                                 <div className="glass rounded-xl p-5">
-                                    <SettingRow label="Dark mode" description="Use dark theme (always on)">
-                                        <div className="flex items-center gap-2">
-                                            <Toggle enabled={darkMode} onChange={() => toast('Dark mode is the only supported theme ❄️')} />
-                                            <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'var(--accent-glow)', color: 'var(--accent)' }}>Default</span>
+                                    <div className="flex items-center gap-4 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
+                                        <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%)' }}>
+                                            <Palette className="w-6 h-6" style={{ color: 'var(--bg-primary)' }} />
                                         </div>
-                                    </SettingRow>
-                                    <SettingRow label="Accent color" description="Primary UI color">
+                                        <div>
+                                            <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Cryo Dark</div>
+                                            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Ice Blue accent • Dark background</div>
+                                        </div>
+                                    </div>
+                                    <div className="pt-4">
+                                        <div className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>Current theme colors</div>
                                         <div className="flex gap-2">
-                                            {[
-                                                { color: '#22d3ee', name: 'Cyan' },
-                                                { color: '#8b5cf6', name: 'Purple' },
-                                                { color: '#10b981', name: 'Green' },
-                                                { color: '#f59e0b', name: 'Amber' },
-                                                { color: '#ec4899', name: 'Pink' }
-                                            ].map(({ color, name }) => (
-                                                <button
-                                                    key={color}
-                                                    onClick={() => toast(`${name} accent coming soon!`)}
-                                                    className="w-7 h-7 rounded-full transition-all hover:scale-110"
-                                                    style={{
-                                                        background: color,
-                                                        border: color === '#22d3ee' ? '2px solid white' : '2px solid transparent',
-                                                        boxShadow: color === '#22d3ee' ? `0 0 12px ${color}` : 'none'
-                                                    }}
-                                                    title={name}
-                                                />
-                                            ))}
-                                        </div>
-                                    </SettingRow>
-                                    <SettingRow label="Compact mode" description="Reduce spacing for more content">
-                                        <Toggle enabled={false} onChange={() => toast('Compact mode coming soon!')} />
-                                    </SettingRow>
-                                    <SettingRow label="Animations" description="Enable UI animations">
-                                        <Toggle enabled={true} onChange={() => toast('Animation settings coming soon!')} />
-                                    </SettingRow>
-                                </div>
-                                <div className="glass rounded-xl p-5">
-                                    <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                                        <Palette className="w-4 h-4" style={{ color: 'var(--accent)' }} /> Theme Preview
-                                    </h3>
-                                    <div className="rounded-lg p-4 space-y-3" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg" style={{ background: 'var(--accent)' }} />
-                                            <div>
-                                                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Primary Accent</div>
-                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Cryo Ice Blue</div>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <div className="flex-1 h-8 rounded" style={{ background: 'var(--bg-primary)' }} />
-                                            <div className="flex-1 h-8 rounded" style={{ background: 'var(--bg-secondary)' }} />
-                                            <div className="flex-1 h-8 rounded" style={{ background: 'var(--bg-tertiary)' }} />
+                                            <div className="flex-1 h-10 rounded-lg flex items-center justify-center text-xs" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Accent</div>
+                                            <div className="flex-1 h-10 rounded-lg flex items-center justify-center text-xs" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>Background</div>
+                                            <div className="flex-1 h-10 rounded-lg flex items-center justify-center text-xs" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>Surface</div>
                                         </div>
                                     </div>
                                 </div>
