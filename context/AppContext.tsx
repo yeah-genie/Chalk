@@ -1,4 +1,4 @@
-
+﻿
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import toast from 'react-hot-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -137,7 +137,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const fetchCurrentUser = async (userId: string, email: string) => {
     try {
-      const fetchedUsers = await cryoApi.fetchUsers(currentWorkspace.workspace_id); // Fetch all to find self
+      const fetchedUsers = await cryoApi.fetchUsers(currentWorkspace?.workspace_id); // Fetch all to find self
       const me = fetchedUsers.find(u => u.user_id === userId);
 
       if (me) {
@@ -168,7 +168,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           email: email,
           name: email.split('@')[0], // Default name
           role: Role.Viewer, // Default role
-          workspace_id: currentWorkspace.workspace_id, // This might be wrong if currentWorkspace is mock.
+          workspace_id: currentWorkspace?.workspace_id, // This might be wrong if currentWorkspace is mock.
           // Correct flow: Create Workspace First -> Create User linked to it?
           // Or separate Onboarding flow.
           // For Refactor scope: Just ensure we attach to *some* workspace.
@@ -221,7 +221,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           title: idea.title,
           description: idea.content,
           created_by_user_id: currentUser?.user_id || '',
-          workspace_id: currentWorkspace.workspace_id,
+          workspace_id: currentWorkspace?.workspace_id,
           status: idea.status === 'frozen' ? IdeaStatus.Frozen : IdeaStatus.Active,
           priority: Priority.Medium,
           source: IdeaSource.Manual,
@@ -263,67 +263,67 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // 2. Data Fetching with React Query (with demo storage fallback)
   const { data: ideas = [] } = useQuery({
-    queryKey: ['ideas', currentWorkspace.workspace_id, isDemoMode],
+    queryKey: ['ideas', currentWorkspace?.workspace_id || '', isDemoMode],
     queryFn: async () => {
       if (isDemoMode) {
         return demoStorage.getIdeas();
       }
       try {
-        const data = await cryoApi.fetchIdeas(currentWorkspace.workspace_id);
+        const data = await cryoApi.fetchIdeas(currentWorkspace?.workspace_id || '');
         return data.length > 0 ? data : [];
       } catch {
         return demoStorage.getIdeas();
       }
     },
-    enabled: !!currentWorkspace.workspace_id
+    enabled: !!currentWorkspace?.workspace_id
   });
 
   const { data: decisions = [] } = useQuery({
-    queryKey: ['decisions', currentWorkspace.workspace_id, isDemoMode],
+    queryKey: ['decisions', currentWorkspace?.workspace_id || '', isDemoMode],
     queryFn: async () => {
       if (isDemoMode) {
         return demoStorage.getDecisions();
       }
       try {
-        const data = await cryoApi.fetchDecisions(currentWorkspace.workspace_id);
+        const data = await cryoApi.fetchDecisions(currentWorkspace?.workspace_id || '');
         return data.length > 0 ? data : [];
       } catch {
         return demoStorage.getDecisions();
       }
     },
-    enabled: !!currentWorkspace.workspace_id
+    enabled: !!currentWorkspace?.workspace_id
   });
 
   const { data: metrics = [] } = useQuery({
-    queryKey: ['metrics', currentWorkspace.workspace_id, isDemoMode],
+    queryKey: ['metrics', currentWorkspace?.workspace_id || '', isDemoMode],
     queryFn: async () => {
       if (isDemoMode) {
         return demoStorage.getMetrics();
       }
       try {
-        const data = await cryoApi.fetchMetrics(currentWorkspace.workspace_id);
+        const data = await cryoApi.fetchMetrics(currentWorkspace?.workspace_id || '');
         return data.length > 0 ? data : [];
       } catch {
         return demoStorage.getMetrics();
       }
     },
-    enabled: !!currentWorkspace.workspace_id
+    enabled: !!currentWorkspace?.workspace_id
   });
 
   const { data: wiki = [] } = useQuery({
-    queryKey: ['wiki', currentWorkspace.workspace_id, isDemoMode],
+    queryKey: ['wiki', currentWorkspace?.workspace_id || '', isDemoMode],
     queryFn: async () => {
       if (isDemoMode) {
         return demoStorage.getWiki();
       }
       try {
-        const data = await cryoApi.fetchWiki(currentWorkspace.workspace_id);
+        const data = await cryoApi.fetchWiki(currentWorkspace?.workspace_id || '');
         return data.length > 0 ? data : [];
       } catch {
         return demoStorage.getWiki();
       }
     },
-    enabled: !!currentWorkspace.workspace_id
+    enabled: !!currentWorkspace?.workspace_id
   });
 
   const { data: activities = [] } = useQuery({
@@ -366,12 +366,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const fetchedUsers = await cryoApi.fetchUsers(currentWorkspace.workspace_id);
+        const fetchedUsers = await cryoApi.fetchUsers(currentWorkspace?.workspace_id);
         setUsers(fetchedUsers);
       } catch (e) { console.error(e); }
     };
-    if (currentWorkspace.workspace_id) loadUsers();
-  }, [currentWorkspace.workspace_id]);
+    if (currentWorkspace?.workspace_id) loadUsers();
+  }, [currentWorkspace?.workspace_id]);
 
 
   // 3. Realtime Subscription (Invalidation Strategy)
@@ -422,7 +422,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addIdea = async (idea: Idea) => {
     // Optimistic Update
-    queryClient.setQueryData(['ideas', currentWorkspace.workspace_id, isDemoMode], (prev: Idea[] | undefined) => [idea, ...(prev || [])]);
+    queryClient.setQueryData(['ideas', currentWorkspace?.workspace_id, isDemoMode], (prev: Idea[] | undefined) => [idea, ...(prev || [])]);
 
     if (isDemoMode) {
       // Demo mode: save to localStorage
@@ -437,7 +437,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       logActivity(ActivityType.Create, 'Idea', idea.idea_id, idea.title);
     } catch (error: any) {
       // Rollback
-      queryClient.setQueryData(['ideas', currentWorkspace.workspace_id, isDemoMode], (prev: Idea[] | undefined) => prev?.filter(i => i.idea_id !== idea.idea_id) || []);
+      queryClient.setQueryData(['ideas', currentWorkspace?.workspace_id, isDemoMode], (prev: Idea[] | undefined) => prev?.filter(i => i.idea_id !== idea.idea_id) || []);
       toast.error(`Failed to create idea: ${error.message}`);
     }
   };
@@ -447,7 +447,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const previousIdeas = ideas;
 
     // Optimistic Update
-    queryClient.setQueryData(['ideas', currentWorkspace.workspace_id, isDemoMode], (prev: Idea[] | undefined) =>
+    queryClient.setQueryData(['ideas', currentWorkspace?.workspace_id, isDemoMode], (prev: Idea[] | undefined) =>
       prev?.map(idea => idea.idea_id === updatedIdea.idea_id ? updatedIdea : idea) || []
     );
 
@@ -470,38 +470,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     } catch (error: any) {
       // Rollback
-      queryClient.setQueryData(['ideas', currentWorkspace.workspace_id, isDemoMode], previousIdeas);
+      queryClient.setQueryData(['ideas', currentWorkspace?.workspace_id, isDemoMode], previousIdeas);
       toast.error(`Failed to update idea: ${error.message}`);
     }
   };
 
   const addDecision = async (decision: Decision) => {
-    queryClient.setQueryData(['decisions', currentWorkspace.workspace_id], (prev: Decision[] | undefined) => [decision, ...(prev || [])]);
+    queryClient.setQueryData(['decisions', currentWorkspace?.workspace_id], (prev: Decision[] | undefined) => [decision, ...(prev || [])]);
     await cryoApi.createDecision(decision);
     logActivity(ActivityType.Create, 'Decision', decision.decision_id, decision.title, decision.outcome);
   };
 
   const addMetric = (metric: Metric) => {
-    queryClient.setQueryData(['metrics', currentWorkspace.workspace_id], (prev: Metric[] | undefined) => [metric, ...(prev || [])]);
+    queryClient.setQueryData(['metrics', currentWorkspace?.workspace_id], (prev: Metric[] | undefined) => [metric, ...(prev || [])]);
     // Note: Add createMetric API if needed, for now just local or maybe I missed adding it to API
     // Adding placeholder log
     console.log("Metric created", metric);
   };
 
   const updateMetric = (updatedMetric: Metric) => {
-    queryClient.setQueryData(['metrics', currentWorkspace.workspace_id], (prev: Metric[] | undefined) =>
+    queryClient.setQueryData(['metrics', currentWorkspace?.workspace_id], (prev: Metric[] | undefined) =>
       prev?.map(m => m.metric_id === updatedMetric.metric_id ? updatedMetric : m) || []
     );
   };
 
   const addWikiDoc = async (doc: WikiDoc) => {
-    queryClient.setQueryData(['wiki', currentWorkspace.workspace_id], (prev: WikiDoc[] | undefined) => [doc, ...(prev || [])]);
+    queryClient.setQueryData(['wiki', currentWorkspace?.workspace_id], (prev: WikiDoc[] | undefined) => [doc, ...(prev || [])]);
     await cryoApi.createWikiDoc(doc);
     logActivity(ActivityType.Create, 'Wiki', doc.wiki_id, doc.title);
   };
 
   const updateWikiDoc = async (updatedDoc: WikiDoc) => {
-    queryClient.setQueryData(['wiki', currentWorkspace.workspace_id], (prev: WikiDoc[] | undefined) =>
+    queryClient.setQueryData(['wiki', currentWorkspace?.workspace_id], (prev: WikiDoc[] | undefined) =>
       prev?.map(doc => doc.wiki_id === updatedDoc.wiki_id ? updatedDoc : doc) || []
     );
     await cryoApi.updateWikiDoc(updatedDoc);
@@ -509,7 +509,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const voteIdea = async (ideaId: string, tag: VoteTag) => {
-    queryClient.setQueryData(['ideas', currentWorkspace.workspace_id], (prev: Idea[] | undefined) => prev?.map(idea => {
+    queryClient.setQueryData(['ideas', currentWorkspace?.workspace_id], (prev: Idea[] | undefined) => prev?.map(idea => {
       if (idea.idea_id === ideaId) {
         const newRecord = { user_id: currentUser.user_id, tag, timestamp: new Date().toISOString() };
         return {
@@ -574,7 +574,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         outcome: DecisionOutcome.Modified,
         decided_by_user_id: currentUser.user_id,
         decided_at: new Date().toISOString(),
-        workspace_id: currentWorkspace.workspace_id
+        workspace_id: currentWorkspace?.workspace_id
       };
       await addDecision(decision);
     }
@@ -688,7 +688,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       status: IdeaStatus.Frozen,
       priority: Priority.Medium,
       category: Category.Technical,
-      workspace_id: currentWorkspace.workspace_id,
+      workspace_id: currentWorkspace?.workspace_id,
       created_by_user_id: currentUser.user_id,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -758,7 +758,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const generateWikiFromIdea = (idea: Idea): WikiDoc => {
     return {
       wiki_id: uuidv4(),
-      workspace_id: currentWorkspace.workspace_id,
+      workspace_id: currentWorkspace?.workspace_id,
       title: `Spec: ${idea.title}`,
       content: `# ${idea.title}\n\n## Overview\n${idea.description}\n\n## Goals\n- Goal 1\n- Goal 2\n\n## Technical Requirements\n(Auto-generated draft based on idea context)`,
       category: 'Technical',
@@ -820,3 +820,4 @@ export const useAppContext = () => {
   }
   return context;
 };
+
