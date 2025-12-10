@@ -150,32 +150,63 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-shrink-0">
         {/* AI Smart Wake */}
         <div className="glass rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5" style={{ color: 'var(--accent)' }} />
-            <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>Smart Wake</h2>
-            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(34, 211, 238, 0.2)', color: 'var(--accent)' }}>AI</span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5" style={{ color: 'var(--accent)' }} />
+              <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>Smart Wake</h2>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(34, 211, 238, 0.2)', color: 'var(--accent)' }}>AI</span>
+            </div>
+            {frozenIdeas.length > 0 && (
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{frozenIdeas.length} frozen</span>
+            )}
           </div>
           {isLoadingAI ? (
-            <div className="text-center py-6">
-              <Sparkles className="w-8 h-8 mx-auto mb-2 animate-pulse" style={{ color: 'var(--accent)' }} />
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Analyzing...</p>
+            <div className="text-center py-8">
+              <div className="relative w-12 h-12 mx-auto mb-3">
+                <Sparkles className="w-12 h-12 animate-pulse" style={{ color: 'var(--accent)' }} />
+                <div className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ background: 'var(--accent)' }} />
+              </div>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Analyzing your frozen ideas...</p>
             </div>
           ) : aiRecommendations.length === 0 ? (
-            <div className="text-center py-6">
-              <Zap className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No recommendations yet</p>
+            <div className="text-center py-8">
+              <Zap className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm mb-1" style={{ color: 'var(--text-muted)' }}>No wake recommendations</p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Freeze some ideas to get AI suggestions</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {aiRecommendations.slice(0, 3).map(rec => {
+            <div className="space-y-3">
+              {aiRecommendations.slice(0, 3).map((rec, index) => {
                 const idea = ideas.find(i => i.idea_id === rec.ideaId);
                 if (!idea) return null;
                 return (
                   <div key={rec.ideaId} onClick={() => navigate(`/ideas/${idea.idea_id}`)}
-                    className="p-3 rounded-xl cursor-pointer hover:bg-white/5"
-                    style={{ background: 'rgba(14, 165, 233, 0.08)', border: '1px solid rgba(14, 165, 233, 0.2)' }}>
-                    <h3 className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{idea.title}</h3>
-                    <p className="text-xs mt-1" style={{ color: 'var(--accent)' }}>{rec.reason}</p>
+                    className="group p-4 rounded-xl cursor-pointer transition-all hover:scale-[1.02]"
+                    style={{
+                      background: index === 0
+                        ? 'linear-gradient(135deg, rgba(34, 211, 238, 0.15) 0%, rgba(14, 165, 233, 0.08) 100%)'
+                        : 'rgba(14, 165, 233, 0.08)',
+                      border: index === 0 ? '1px solid rgba(34, 211, 238, 0.3)' : '1px solid rgba(14, 165, 233, 0.2)'
+                    }}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          {index === 0 && <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Top Pick</span>}
+                          <h3 className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{idea.title}</h3>
+                        </div>
+                        <p className="text-xs leading-relaxed" style={{ color: 'var(--accent)' }}>{rec.reason}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="text-lg font-bold" style={{ color: rec.score >= 70 ? '#22c55e' : rec.score >= 50 ? '#eab308' : 'var(--text-muted)' }}>
+                          {rec.score}
+                        </div>
+                        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>score</div>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{rec.suggestedAction}</span>
+                      <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--accent)' }} />
+                    </div>
                   </div>
                 );
               })}
