@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Bell, User, Briefcase, Shield, Check, LogOut, Settings as SettingsIcon, Globe, Key, Users, CreditCard, Palette, Link2, X, Loader2 } from 'lucide-react';
+import { Bell, User, Briefcase, Shield, Check, LogOut, Settings as SettingsIcon, Globe, Key, Users, Palette, Link2, X, Loader2 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import toast from 'react-hot-toast';
 
-type SettingsSection = 'account' | 'workspace' | 'members' | 'integrations' | 'billing' | 'appearance';
+type SettingsSection = 'account' | 'workspace' | 'members' | 'integrations' | 'appearance';
 
 interface Integration {
     name: string;
@@ -119,7 +119,6 @@ const Settings: React.FC = () => {
         { id: 'workspace' as const, label: 'Workspace', icon: Briefcase },
         { id: 'members' as const, label: 'Members', icon: Users },
         { id: 'integrations' as const, label: 'Integrations', icon: Globe },
-        { id: 'billing' as const, label: 'Billing', icon: CreditCard },
         { id: 'appearance' as const, label: 'Appearance', icon: Palette },
     ];
 
@@ -333,88 +332,6 @@ const Settings: React.FC = () => {
                                     <div className="flex gap-2">
                                         <input type="text" placeholder="Type a mock message..." className="flex-1 text-sm rounded-lg px-3 py-2 outline-none" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} value={testMessage} onChange={e => setTestMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSlackTest()} />
                                         <button onClick={handleSlackTest} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Send</button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeSection === 'billing' && (
-                            <div className="space-y-6">
-                                <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Billing</h2>
-                                <div className="glass rounded-xl p-5">
-                                    <div className="flex items-center justify-between pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
-                                        <div>
-                                            <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Current Plan</div>
-                                            <div className="text-2xl font-bold mt-1 flex items-center gap-2" style={{ color: 'var(--accent)' }}>
-                                                Pro
-                                                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(34, 211, 238, 0.2)', color: 'var(--accent)' }}>Active</span>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>$12</div>
-                                            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>per user/month</div>
-                                        </div>
-                                    </div>
-                                    <div className="pt-4 grid grid-cols-3 gap-4 text-center">
-                                        <div><div className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>∞</div><div className="text-xs" style={{ color: 'var(--text-muted)' }}>Ideas</div></div>
-                                        <div><div className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>5</div><div className="text-xs" style={{ color: 'var(--text-muted)' }}>Integrations</div></div>
-                                        <div><div className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>10</div><div className="text-xs" style={{ color: 'var(--text-muted)' }}>Members</div></div>
-                                    </div>
-                                </div>
-
-                                {/* Plan Comparison */}
-                                <div className="glass rounded-xl p-5">
-                                    <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Compare Plans</h3>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div className="p-4 rounded-xl text-center" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}>
-                                            <div className="text-sm font-bold mb-1" style={{ color: 'var(--text-muted)' }}>Free</div>
-                                            <div className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>$0</div>
-                                            <div className="text-xs space-y-1" style={{ color: 'var(--text-muted)' }}>
-                                                <div>10 ideas</div>
-                                                <div>1 integration</div>
-                                                <div>1 member</div>
-                                            </div>
-                                        </div>
-                                        <div className="p-4 rounded-xl text-center relative" style={{ background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%)', border: '2px solid var(--accent)' }}>
-                                            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Current</span>
-                                            <div className="text-sm font-bold mb-1" style={{ color: 'var(--accent)' }}>Pro</div>
-                                            <div className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>$12</div>
-                                            <div className="text-xs space-y-1" style={{ color: 'var(--text-muted)' }}>
-                                                <div>Unlimited ideas</div>
-                                                <div>5 integrations</div>
-                                                <div>10 members</div>
-                                            </div>
-                                        </div>
-                                        <div className="p-4 rounded-xl text-center" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}>
-                                            <div className="text-sm font-bold mb-1" style={{ color: 'var(--text-muted)' }}>Team</div>
-                                            <div className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>$29</div>
-                                            <div className="text-xs space-y-1" style={{ color: 'var(--text-muted)' }}>
-                                                <div>Unlimited all</div>
-                                                <div>SSO & SAML</div>
-                                                <div>Priority support</div>
-                                            </div>
-                                            <button onClick={() => toast('Upgrade coming soon!')} className="mt-3 text-xs px-3 py-1.5 rounded-lg font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Upgrade</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Payment Method */}
-                                <div className="glass rounded-xl p-5">
-                                    <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                                        <CreditCard className="w-4 h-4" style={{ color: 'var(--accent)' }} /> Payment Method
-                                    </h3>
-                                    <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-6 rounded flex items-center justify-center text-xs font-bold" style={{ background: '#1a1f71', color: 'white' }}>VISA</div>
-                                            <div>
-                                                <div className="text-sm" style={{ color: 'var(--text-primary)' }}>•••• •••• •••• 4242</div>
-                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Expires 12/26</div>
-                                            </div>
-                                        </div>
-                                        <button onClick={() => toast('Payment settings coming soon!')} className="text-xs px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Edit</button>
-                                    </div>
-                                    <div className="pt-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-                                        Next billing date: January 1, 2025
                                     </div>
                                 </div>
                             </div>
