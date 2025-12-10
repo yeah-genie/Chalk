@@ -44,6 +44,8 @@ const Settings: React.FC = () => {
     const [storedIntegrations, setStoredIntegrations] = useState(getStoredIntegrations());
     const [showWebhookModal, setShowWebhookModal] = useState<string | null>(null);
     const [webhookInput, setWebhookInput] = useState('');
+    const [showInviteModal, setShowInviteModal] = useState(false);
+    const [inviteEmail, setInviteEmail] = useState('');
 
     const handleSlackTest = () => {
         if (!testMessage) return;
@@ -246,7 +248,9 @@ const Settings: React.FC = () => {
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Members</h2>
-                                    <button className="px-4 py-2 rounded-lg text-sm font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Invite</button>
+                                    <button onClick={() => setShowInviteModal(true)} className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
+                                        <Users className="w-4 h-4" /> Invite
+                                    </button>
                                 </div>
                                 <div className="glass rounded-xl overflow-hidden">
                                     <div className="p-4 flex items-center gap-4" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -255,11 +259,35 @@ const Settings: React.FC = () => {
                                             <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{currentUser?.name}</div>
                                             <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{currentUser?.email}</div>
                                         </div>
-                                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Owner</span>
+                                        <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(34, 211, 238, 0.1)', color: 'var(--accent)' }}>Owner</span>
                                     </div>
-                                    <div className="p-6 text-center">
-                                        <Users className="w-8 h-8 mx-auto mb-2 opacity-30" style={{ color: 'var(--text-muted)' }} />
-                                        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Invite your team to collaborate</p>
+                                    <div className="p-6 text-center" style={{ background: 'var(--bg-tertiary)' }}>
+                                        <Users className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: 'var(--text-muted)' }} />
+                                        <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>Invite your team to collaborate</p>
+                                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Up to 10 members on Pro plan</p>
+                                    </div>
+                                </div>
+                                <div className="glass rounded-xl p-5">
+                                    <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Roles & Permissions</h3>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                                            <div>
+                                                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Owner</div>
+                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Full access, billing, delete workspace</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                                            <div>
+                                                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Admin</div>
+                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Manage members, settings, integrations</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between py-2">
+                                            <div>
+                                                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Member</div>
+                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Create, edit, vote on ideas</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -317,7 +345,10 @@ const Settings: React.FC = () => {
                                     <div className="flex items-center justify-between pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
                                         <div>
                                             <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Current Plan</div>
-                                            <div className="text-2xl font-bold mt-1" style={{ color: 'var(--accent)' }}>Pro</div>
+                                            <div className="text-2xl font-bold mt-1 flex items-center gap-2" style={{ color: 'var(--accent)' }}>
+                                                Pro
+                                                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(34, 211, 238, 0.2)', color: 'var(--accent)' }}>Active</span>
+                                            </div>
                                         </div>
                                         <div className="text-right">
                                             <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>$12</div>
@@ -330,6 +361,62 @@ const Settings: React.FC = () => {
                                         <div><div className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>10</div><div className="text-xs" style={{ color: 'var(--text-muted)' }}>Members</div></div>
                                     </div>
                                 </div>
+
+                                {/* Plan Comparison */}
+                                <div className="glass rounded-xl p-5">
+                                    <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Compare Plans</h3>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="p-4 rounded-xl text-center" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}>
+                                            <div className="text-sm font-bold mb-1" style={{ color: 'var(--text-muted)' }}>Free</div>
+                                            <div className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>$0</div>
+                                            <div className="text-xs space-y-1" style={{ color: 'var(--text-muted)' }}>
+                                                <div>10 ideas</div>
+                                                <div>1 integration</div>
+                                                <div>1 member</div>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 rounded-xl text-center relative" style={{ background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%)', border: '2px solid var(--accent)' }}>
+                                            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Current</span>
+                                            <div className="text-sm font-bold mb-1" style={{ color: 'var(--accent)' }}>Pro</div>
+                                            <div className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>$12</div>
+                                            <div className="text-xs space-y-1" style={{ color: 'var(--text-muted)' }}>
+                                                <div>Unlimited ideas</div>
+                                                <div>5 integrations</div>
+                                                <div>10 members</div>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 rounded-xl text-center" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}>
+                                            <div className="text-sm font-bold mb-1" style={{ color: 'var(--text-muted)' }}>Team</div>
+                                            <div className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>$29</div>
+                                            <div className="text-xs space-y-1" style={{ color: 'var(--text-muted)' }}>
+                                                <div>Unlimited all</div>
+                                                <div>SSO & SAML</div>
+                                                <div>Priority support</div>
+                                            </div>
+                                            <button onClick={() => toast('Upgrade coming soon!')} className="mt-3 text-xs px-3 py-1.5 rounded-lg font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Upgrade</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Payment Method */}
+                                <div className="glass rounded-xl p-5">
+                                    <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                                        <CreditCard className="w-4 h-4" style={{ color: 'var(--accent)' }} /> Payment Method
+                                    </h3>
+                                    <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-6 rounded flex items-center justify-center text-xs font-bold" style={{ background: '#1a1f71', color: 'white' }}>VISA</div>
+                                            <div>
+                                                <div className="text-sm" style={{ color: 'var(--text-primary)' }}>•••• •••• •••• 4242</div>
+                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Expires 12/26</div>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => toast('Payment settings coming soon!')} className="text-xs px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Edit</button>
+                                    </div>
+                                    <div className="pt-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+                                        Next billing date: January 1, 2025
+                                    </div>
+                                </div>
                             </div>
                         )}
 
@@ -337,11 +424,60 @@ const Settings: React.FC = () => {
                             <div className="space-y-6">
                                 <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Appearance</h2>
                                 <div className="glass rounded-xl p-5">
-                                    <SettingRow label="Dark mode" description="Use dark theme"><Toggle enabled={darkMode} onChange={() => { }} /></SettingRow>
-                                    <SettingRow label="Accent color" description="Primary UI color">
-                                        <div className="flex gap-2">{['#22d3ee', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899'].map(color => (<button key={color} className="w-6 h-6 rounded-full" style={{ background: color, border: color === '#22d3ee' ? '2px solid white' : 'none' }} />))}</div>
+                                    <SettingRow label="Dark mode" description="Use dark theme (always on)">
+                                        <div className="flex items-center gap-2">
+                                            <Toggle enabled={darkMode} onChange={() => toast('Dark mode is the only supported theme ❄️')} />
+                                            <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'var(--accent-glow)', color: 'var(--accent)' }}>Default</span>
+                                        </div>
                                     </SettingRow>
-                                    <SettingRow label="Compact mode" description="Reduce spacing"><Toggle enabled={false} onChange={() => { }} /></SettingRow>
+                                    <SettingRow label="Accent color" description="Primary UI color">
+                                        <div className="flex gap-2">
+                                            {[
+                                                { color: '#22d3ee', name: 'Cyan' },
+                                                { color: '#8b5cf6', name: 'Purple' },
+                                                { color: '#10b981', name: 'Green' },
+                                                { color: '#f59e0b', name: 'Amber' },
+                                                { color: '#ec4899', name: 'Pink' }
+                                            ].map(({ color, name }) => (
+                                                <button
+                                                    key={color}
+                                                    onClick={() => toast(`${name} accent coming soon!`)}
+                                                    className="w-7 h-7 rounded-full transition-all hover:scale-110"
+                                                    style={{
+                                                        background: color,
+                                                        border: color === '#22d3ee' ? '2px solid white' : '2px solid transparent',
+                                                        boxShadow: color === '#22d3ee' ? `0 0 12px ${color}` : 'none'
+                                                    }}
+                                                    title={name}
+                                                />
+                                            ))}
+                                        </div>
+                                    </SettingRow>
+                                    <SettingRow label="Compact mode" description="Reduce spacing for more content">
+                                        <Toggle enabled={false} onChange={() => toast('Compact mode coming soon!')} />
+                                    </SettingRow>
+                                    <SettingRow label="Animations" description="Enable UI animations">
+                                        <Toggle enabled={true} onChange={() => toast('Animation settings coming soon!')} />
+                                    </SettingRow>
+                                </div>
+                                <div className="glass rounded-xl p-5">
+                                    <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                                        <Palette className="w-4 h-4" style={{ color: 'var(--accent)' }} /> Theme Preview
+                                    </h3>
+                                    <div className="rounded-lg p-4 space-y-3" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg" style={{ background: 'var(--accent)' }} />
+                                            <div>
+                                                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Primary Accent</div>
+                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Cryo Ice Blue</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <div className="flex-1 h-8 rounded" style={{ background: 'var(--bg-primary)' }} />
+                                            <div className="flex-1 h-8 rounded" style={{ background: 'var(--bg-secondary)' }} />
+                                            <div className="flex-1 h-8 rounded" style={{ background: 'var(--bg-tertiary)' }} />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -376,6 +512,60 @@ const Settings: React.FC = () => {
                     </div>
                 );
             })()}
+
+            {/* Invite Modal */}
+            {showInviteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.8)' }}>
+                    <div className="relative w-full max-w-md mx-4 rounded-2xl p-6" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+                        <button onClick={() => setShowInviteModal(false)} className="absolute top-4 right-4 p-2 rounded-lg transition-all hover:bg-white/10" style={{ color: 'var(--text-muted)' }}><X className="w-5 h-5" /></button>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent-glow)' }}>
+                                <Users className="w-5 h-5" style={{ color: 'var(--accent)' }} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Invite Team Member</h3>
+                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>They'll receive an email invitation</p>
+                            </div>
+                        </div>
+                        <div className="mb-4">
+                            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-secondary)' }}>Email Address</label>
+                            <input
+                                type="email"
+                                value={inviteEmail}
+                                onChange={(e) => setInviteEmail(e.target.value)}
+                                placeholder="colleague@company.com"
+                                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-secondary)' }}>Role</label>
+                            <select className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
+                                <option value="member">Member</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <button onClick={() => setShowInviteModal(false)} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Cancel</button>
+                            <button
+                                onClick={() => {
+                                    if (!inviteEmail.includes('@')) {
+                                        toast.error('Please enter a valid email');
+                                        return;
+                                    }
+                                    toast.success(`Invitation sent to ${inviteEmail}!`);
+                                    setInviteEmail('');
+                                    setShowInviteModal(false);
+                                }}
+                                className="px-4 py-2 rounded-lg text-sm font-medium"
+                                style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
+                            >
+                                Send Invitation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
