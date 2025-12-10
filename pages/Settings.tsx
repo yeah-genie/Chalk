@@ -78,8 +78,12 @@ const Settings: React.FC = () => {
     const handleWorkspaceNameChange = (value: string) => { setWorkspaceName(value); setHasUnsavedChanges(true); };
 
     const handleConnect = (integrationName: string) => {
-        setShowWebhookModal(integrationName);
-        setWebhookInput(storedIntegrations[integrationName]?.webhookUrl || '');
+        // Open Nango Connect UI for OAuth
+        const nangoIntegrationId = integrationName.toLowerCase();
+        const connectionId = `user_${Date.now()}`; // Unique connection ID
+        const nangoConnectUrl = `https://api.nango.dev/oauth/connect/${nangoIntegrationId}?connection_id=${connectionId}`;
+        window.open(nangoConnectUrl, '_blank', 'width=600,height=700');
+        toast.success(`Connecting to ${integrationName}...`);
     };
 
     const handleDisconnect = (integrationName: string) => {
