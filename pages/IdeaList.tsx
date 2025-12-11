@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IdeaStatus, Idea, Priority } from '../types';
 import { StatusBadge, PriorityBadge } from '../components/Badges';
-import { Search, Snowflake, Lightbulb, Slack } from 'lucide-react';
+import { Search, Snowflake, Lightbulb, Slack, ThumbsUp } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 
@@ -141,6 +141,11 @@ const IdeaList: React.FC = () => {
                   <div className="flex items-center gap-2 mt-2">
                     <PriorityBadge priority={idea.priority} />
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{idea.category}</span>
+                    {(idea.votes || 0) > 0 && (
+                      <span className="flex items-center gap-1 text-xs" style={{ color: '#f97316' }}>
+                        <ThumbsUp className="w-3 h-3" /> {idea.votes}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

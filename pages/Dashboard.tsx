@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import EmptyState from '../components/EmptyState';
-import { Snowflake, ArrowRight, Sparkles, Plus } from 'lucide-react';
+import { Snowflake, ArrowRight, Sparkles, Plus, ThumbsUp, Flame } from 'lucide-react';
 import { IdeaStatus } from '../types';
 import { analyzeSmartWake } from '../services/geminiService';
 
@@ -22,6 +22,7 @@ const Dashboard: React.FC = () => {
   const frozenIdeas = ideas.filter(i => i.status === IdeaStatus.Frozen || i.is_zombie);
   const activeIdeas = ideas.filter(i => !i.is_zombie && i.status !== IdeaStatus.Frozen);
   const recentIdeas = [...ideas].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).slice(0, 5);
+  const hotIdeas = [...ideas].filter(i => (i.votes || 0) > 0).sort((a, b) => (b.votes || 0) - (a.votes || 0)).slice(0, 3);
 
   useEffect(() => {
     const loadAI = async () => {
@@ -130,6 +131,34 @@ const Dashboard: React.FC = () => {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Hot Ideas */}
+        {hotIdeas.length > 0 && (
+          <div className="glass rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Flame className="w-4 h-4" style={{ color: '#f97316' }} />
+              <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Hot Ideas</h2>
+            </div>
+            <div className="space-y-2">
+              {hotIdeas.map(idea => (
+                <div key={idea.idea_id} onClick={() => navigate(`/ideas/${idea.idea_id}`)}
+                  className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-white/5 transition-all"
+                  style={{ background: 'var(--bg-tertiary)' }}>
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-md"
+                    style={{ background: 'rgba(249, 115, 22, 0.1)' }}>
+                    <ThumbsUp className="w-3 h-3" style={{ color: '#f97316' }} />
+                    <span className="text-xs font-bold" style={{ color: '#f97316' }}>{idea.votes || 0}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{idea.title}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{idea.category}</p>
+                  </div>
+                  {idea.is_zombie && <Snowflake className="w-3.5 h-3.5" style={{ color: '#0ea5e9' }} />}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
