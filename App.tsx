@@ -10,7 +10,6 @@ import IdeaDetail from './pages/IdeaDetail';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import LandingNew from './pages/LandingNew';
-import Landing from './pages/Landing';
 import { Loader2 } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
@@ -55,7 +54,6 @@ const AppRoutes: React.FC = () => {
   return (
     <Routes>
       {/* Public pages */}
-      <Route path="/landing" element={<Landing />} />
       <Route path="/welcome" element={<LandingNew />} />
       <Route path="/auth/notion/callback" element={<LandingNew />} />
       <Route path="/login" element={<Login />} />

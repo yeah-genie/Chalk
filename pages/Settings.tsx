@@ -1,69 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Bell, User, Briefcase, Shield, Check, LogOut, Settings as SettingsIcon, Globe, Key, Users, Palette, Link2, X, Loader2, Download } from 'lucide-react';
+import { Bell, User, LogOut, Settings as SettingsIcon, Globe, Palette, Download, Loader2 } from 'lucide-react';
 import { supabase } from '../services/supabase';
-import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import toast from 'react-hot-toast';
 
-type SettingsSection = 'account' | 'workspace' | 'members' | 'integrations' | 'appearance';
-
-interface Integration {
-    name: string;
-    desc: string;
-    connected: boolean;
-    icon: string;
-    status: string | null;
-    oauthUrl: string | null;
-    features: string[];
-    webhookUrl?: string;
-}
-
-const getStoredIntegrations = (): Record<string, { connected: boolean; webhookUrl?: string }> => {
-    const stored = localStorage.getItem('cryo_integrations');
-    return stored ? JSON.parse(stored) : {};
-};
-
-const saveIntegration = (name: string, data: { connected: boolean; webhookUrl?: string }) => {
-    const current = getStoredIntegrations();
-    current[name] = data;
-    localStorage.setItem('cryo_integrations', JSON.stringify(current));
-};
+type SettingsSection = 'account' | 'integrations' | 'appearance';
 
 const Settings: React.FC = () => {
-    const { currentUser, currentWorkspace, simulateSlackIncoming, ideas } = useAppContext();
-    const navigate = useNavigate();
+    const { currentUser, ideas } = useAppContext();
     const [activeSection, setActiveSection] = useState<SettingsSection>('account');
     const [emailNotif, setEmailNotif] = useState(currentUser?.notification_email ?? true);
     const [slackNotif, setSlackNotif] = useState(false);
-    const [testMessage, setTestMessage] = useState('');
     const [darkMode] = useState(true);
-    const [workspaceName, setWorkspaceName] = useState(currentWorkspace?.name || 'My Workspace');
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [storedIntegrations, setStoredIntegrations] = useState(getStoredIntegrations());
-    const [showWebhookModal, setShowWebhookModal] = useState<string | null>(null);
-    const [webhookInput, setWebhookInput] = useState('');
-    const [showInviteModal, setShowInviteModal] = useState(false);
-    const [inviteEmail, setInviteEmail] = useState('');
-
-    const handleSlackTest = () => {
-        if (!testMessage) return;
-        simulateSlackIncoming();
-        setTestMessage('');
-    };
+    const [slackConnected, setSlackConnected] = useState(!!localStorage.getItem('cryo_slack_connected'));
 
     const handleSignOut = async () => {
         localStorage.removeItem('cryo_onboarding_completed');
-        localStorage.removeItem('cryo_pending_ideas');
-        localStorage.removeItem('cryo_integrations');
-        localStorage.removeItem('cryo_demo_ideas');
-        localStorage.removeItem('cryo_demo_decisions');
-        localStorage.removeItem('cryo_demo_wiki');
-        localStorage.removeItem('cryo_demo_activities');
-        localStorage.removeItem('cryo_demo_metrics');
+        localStorage.removeItem('cryo_slack_connected');
         await supabase.auth.signOut();
-        toast.success('Signed out successfully');
+        toast.success('Signed out');
         window.location.href = '/';
     };
 
@@ -72,79 +30,35 @@ const Settings: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         setIsSaving(false);
         setHasUnsavedChanges(false);
-        toast.success('Settings saved successfully!');
+        toast.success('Settings saved!');
     };
 
-    const handleEmailNotifChange = () => { setEmailNotif(!emailNotif); setHasUnsavedChanges(true); };
-    const handleSlackNotifChange = () => { setSlackNotif(!slackNotif); setHasUnsavedChanges(true); };
-    const handleWorkspaceNameChange = (value: string) => { setWorkspaceName(value); setHasUnsavedChanges(true); };
-
-    const handleConnect = (integrationName: string) => {
-        // Open Nango Connect UI for OAuth
-        const nangoIntegrationId = integrationName.toLowerCase();
-        const connectionId = `user_${Date.now()}`; // Unique connection ID
-        const nangoConnectUrl = `https://api.nango.dev/oauth/connect/${nangoIntegrationId}?connection_id=${connectionId}`;
-        window.open(nangoConnectUrl, '_blank', 'width=600,height=700');
-        toast.success(`Connecting to ${integrationName}...`);
-    };
-
-    const handleDisconnect = (integrationName: string) => {
-        saveIntegration(integrationName, { connected: false, webhookUrl: undefined });
-        setStoredIntegrations(getStoredIntegrations());
-        toast.success(`${integrationName} disconnected`);
-    };
-
-    const getIntegrationConfig = (name: string) => {
-        const configs: Record<string, { placeholder: string; prefix: string; label: string }> = {
-            'Slack': { placeholder: 'https://hooks.slack.com/services/...', prefix: 'https://hooks.slack.com/', label: 'Webhook URL' },
-            'Linear': { placeholder: 'lin_api_...', prefix: 'lin_api_', label: 'API Key' },
-            'Notion': { placeholder: 'secret_...', prefix: 'secret_', label: 'Integration Token' },
-            'Google Analytics': { placeholder: 'G-XXXXXXXXXX', prefix: 'G-', label: 'Measurement ID' }
-        };
-        return configs[name] || { placeholder: '', prefix: '', label: 'API Key' };
-    };
-
-    const handleSaveIntegration = () => {
-        const config = getIntegrationConfig(showWebhookModal || '');
-        if (!webhookInput.trim()) { toast.error(`Please enter ${config.label}`); return; }
-        if (!webhookInput.startsWith(config.prefix)) { toast.error(`Invalid ${config.label} format`); return; }
-        saveIntegration(showWebhookModal!, { connected: true, webhookUrl: webhookInput });
-        setStoredIntegrations(getStoredIntegrations());
-        setShowWebhookModal(null);
-        toast.success(`${showWebhookModal} connected!`);
+    const handleExportCSV = () => {
+        const csvContent = [
+            ['Title', 'Description', 'Status', 'Priority', 'Category', 'Created At'].join(','),
+            ...ideas.map(idea => [
+                `"${idea.title.replace(/"/g, '""')}"`,
+                `"${(idea.description || '').replace(/"/g, '""')}"`,
+                idea.status,
+                idea.priority,
+                idea.category,
+                idea.created_at
+            ].join(','))
+        ].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cryo-ideas-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        toast.success('Exported to CSV!');
     };
 
     const menuItems = [
-        { id: 'account' as const, label: 'My Account', icon: User },
-        { id: 'workspace' as const, label: 'Workspace', icon: Briefcase },
-        { id: 'members' as const, label: 'Members', icon: Users },
+        { id: 'account' as const, label: 'Account', icon: User },
         { id: 'integrations' as const, label: 'Integrations', icon: Globe },
         { id: 'appearance' as const, label: 'Appearance', icon: Palette },
     ];
-
-    const integrationLogos: Record<string, React.ReactNode> = {
-        'Slack': <svg viewBox="0 0 24 24" className="w-6 h-6"><path fill="#E01E5A" d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z" /><path fill="#36C5F0" d="M8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312z" /><path fill="#2EB67D" d="M18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312z" /><path fill="#ECB22E" d="M15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" /></svg>,
-        'Linear': <svg viewBox="0 0 24 24" className="w-6 h-6"><path fill="#818CF8" d="M3.184 12.924a.5.5 0 0 1 0-.707l8.633-8.633a.5.5 0 0 1 .707.707L3.89 12.924a.5.5 0 0 1-.707 0zm.354 2.475a.5.5 0 0 1 0-.707l10.96-10.96a.5.5 0 1 1 .708.707L4.245 15.399a.5.5 0 0 1-.707 0zm.707 2.829a.5.5 0 0 1 0-.707l12.728-12.728a.5.5 0 1 1 .707.707L4.952 18.228a.5.5 0 0 1-.707 0zm2.122 2.121a.5.5 0 0 1 0-.707l12.02-12.02a.5.5 0 1 1 .708.707l-12.02 12.02a.5.5 0 0 1-.708 0zm2.828 1.768a.5.5 0 0 1 0-.708l9.9-9.9a.5.5 0 0 1 .706.708l-9.9 9.9a.5.5 0 0 1-.706 0zm3.182 1.414a.5.5 0 0 1 0-.707l7.07-7.071a.5.5 0 1 1 .708.707l-7.07 7.071a.5.5 0 0 1-.708 0zm3.535 1.061a.5.5 0 0 1 0-.707l3.889-3.889a.5.5 0 1 1 .707.707l-3.89 3.89a.5.5 0 0 1-.706 0z" /></svg>,
-        'Notion': <svg viewBox="0 0 24 24" className="w-6 h-6"><path fill="#FFFFFF" d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.98-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.84-.046.933-.56.933-1.167V6.354c0-.606-.233-.933-.746-.886l-15.177.887c-.56.047-.747.327-.747.933zm14.337.7c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.746 0-.933-.234-1.493-.933l-4.577-7.186v6.952l1.449.327s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.14c-.093-.514.28-.886.746-.933zM2.778 1.268l13.588-.934c1.68-.14 2.1-.046 3.149.7l4.343 3.033c.7.513.933.653.933 1.212v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.895c0-.84.374-1.54 1.009-1.627z" /></svg>,
-        'Google Analytics': <svg viewBox="0 0 24 24" className="w-6 h-6"><path fill="#F9AB00" d="M22.84 2.998v17.998a2.005 2.005 0 0 1-4.01 0V2.998a2.005 2.005 0 1 1 4.01 0z" /><path fill="#E37400" d="M14.02 7.998v13a2 2 0 0 1-4 0v-13a2 2 0 1 1 4 0z" /><path fill="#F9AB00" d="M5.17 14.998v6a2 2 0 1 1-4 0v-6a2 2 0 1 1 4 0z" /></svg>
-    };
-
-    const integrations: Integration[] = [
-        { name: 'Slack', desc: 'Capture ideas from channels', connected: storedIntegrations['Slack']?.connected || false, icon: '', status: storedIntegrations['Slack']?.connected ? 'Connected' : null, oauthUrl: null, features: ['Auto-capture from #ideas', 'DM @cryo to freeze', 'Wake notifications'] },
-        { name: 'Linear', desc: 'Push ideas to projects', connected: storedIntegrations['Linear']?.connected || false, icon: '', status: storedIntegrations['Linear']?.connected ? 'Connected' : null, oauthUrl: null, features: ['Create issues', 'Sync status', 'Link decisions'] },
-        { name: 'Notion', desc: 'Sync with databases', connected: storedIntegrations['Notion']?.connected || false, icon: '', status: storedIntegrations['Notion']?.connected ? 'Connected' : null, oauthUrl: null, features: ['Import databases', 'Export history', 'Wiki sync'] },
-        { name: 'Google Analytics', desc: 'Metric triggers', connected: storedIntegrations['Google Analytics']?.connected || false, icon: '', status: storedIntegrations['Google Analytics']?.connected ? 'Connected' : null, oauthUrl: null, features: ['DAU/MAU triggers', 'Conversion alerts', 'Real-time metrics'] },
-    ];
-
-    const SettingRow = ({ label, description, children }: { label: string; description?: string; children: React.ReactNode }) => (
-        <div className="flex items-center justify-between py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-            <div>
-                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{label}</div>
-                {description && <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{description}</div>}
-            </div>
-            {children}
-        </div>
-    );
 
     const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
         <button onClick={onChange} className="w-10 h-5 rounded-full transition-all relative" style={{ background: enabled ? 'var(--accent)' : 'var(--bg-tertiary)' }}>
@@ -154,9 +68,9 @@ const Settings: React.FC = () => {
 
     return (
         <div className="h-full flex flex-col gap-4 overflow-hidden">
-            <PageHeader icon={SettingsIcon} title="Settings" description="Manage your account and workspace" />
+            <PageHeader icon={SettingsIcon} title="Settings" description="Manage your account" />
             <div className="flex-1 flex min-h-0 gap-6">
-                <div className="w-56 flex-shrink-0">
+                <div className="w-48 flex-shrink-0">
                     <nav className="space-y-1">
                         {menuItems.map(item => (
                             <button key={item.id} onClick={() => setActiveSection(item.id)}
@@ -173,194 +87,93 @@ const Settings: React.FC = () => {
                         </button>
                     </div>
                 </div>
+
                 <div className="flex-1 overflow-auto">
-                    <div className="max-w-2xl">
+                    <div className="max-w-xl">
                         {activeSection === 'account' && (
                             <div className="space-y-6">
-                                <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>My Account</h2>
+                                <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Account</h2>
+
                                 <div className="glass rounded-xl p-5">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold" style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%)', color: 'var(--bg-primary)' }}>
+                                        <div className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold" style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%)', color: 'var(--bg-primary)' }}>
                                             {currentUser?.name?.charAt(0) || 'U'}
                                         </div>
-                                        <div className="flex-1">
+                                        <div>
                                             <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>{currentUser?.name || 'User'}</div>
                                             <div className="text-sm" style={{ color: 'var(--text-muted)' }}>{currentUser?.email}</div>
                                         </div>
-                                        <button className="text-sm font-medium px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>Edit</button>
                                     </div>
                                 </div>
+
                                 <div className="glass rounded-xl p-5">
                                     <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}><Bell className="w-4 h-4" /> Notifications</h3>
-                                    <SettingRow label="Email notifications" description="Weekly digest and alerts"><Toggle enabled={emailNotif} onChange={handleEmailNotifChange} /></SettingRow>
-                                    <SettingRow label="Slack notifications" description="Smart thaw in Slack"><Toggle enabled={slackNotif} onChange={handleSlackNotifChange} /></SettingRow>
+                                    <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                                        <div>
+                                            <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Email notifications</div>
+                                            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Weekly digest</div>
+                                        </div>
+                                        <Toggle enabled={emailNotif} onChange={() => { setEmailNotif(!emailNotif); setHasUnsavedChanges(true); }} />
+                                    </div>
+                                    <div className="flex items-center justify-between py-3">
+                                        <div>
+                                            <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Slack notifications</div>
+                                            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Wake alerts in Slack</div>
+                                        </div>
+                                        <Toggle enabled={slackNotif} onChange={() => { setSlackNotif(!slackNotif); setHasUnsavedChanges(true); }} />
+                                    </div>
                                     {hasUnsavedChanges && (
                                         <div className="mt-4 pt-4 flex justify-end" style={{ borderTop: '1px solid var(--border)' }}>
-                                            <button onClick={handleSaveSettings} disabled={isSaving} className="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
-                                                {isSaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : 'Save Changes'}
+                                            <button onClick={handleSaveSettings} disabled={isSaving} className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
+                                                {isSaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : 'Save'}
                                             </button>
                                         </div>
                                     )}
                                 </div>
+
                                 <div className="glass rounded-xl p-5">
-                                    <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}><Key className="w-4 h-4" /> Security</h3>
-                                    <SettingRow label="Password" description="Set via Google OAuth"><span className="text-xs" style={{ color: 'var(--text-muted)' }}>Google SSO</span></SettingRow>
-                                </div>
-                                {/* Data Export */}
-                                <div className="glass rounded-xl p-5">
-                                    <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}><Download className="w-4 h-4" /> Data Export</h3>
-                                    <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>Export all your ideas to CSV format.</p>
-                                    <button onClick={() => {
-                                        const csvContent = [
-                                            ['Title', 'Description', 'Status', 'Priority', 'Category', 'Created At', 'Votes', 'Trigger Type'].join(','),
-                                            ...ideas.map(idea => [
-                                                `"${idea.title.replace(/"/g, '""')}"`,
-                                                `"${(idea.description || '').replace(/"/g, '""')}"`,
-                                                idea.status,
-                                                idea.priority,
-                                                idea.category,
-                                                idea.created_at,
-                                                idea.votes || 0,
-                                                idea.trigger_type || 'None'
-                                            ].join(','))
-                                        ].join('\n');
-                                        const blob = new Blob([csvContent], { type: 'text/csv' });
-                                        const url = URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        a.download = `cryo-ideas-${new Date().toISOString().split('T')[0]}.csv`;
-                                        a.click();
-                                        toast.success('Ideas exported to CSV!');
-                                    }} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+                                    <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}><Download className="w-4 h-4" /> Export</h3>
+                                    <p className="text-sm mb-3" style={{ color: 'var(--text-muted)' }}>Download all your ideas as CSV.</p>
+                                    <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
                                         <Download className="w-4 h-4" /> Export CSV
                                     </button>
                                 </div>
                             </div>
                         )}
 
-                        {activeSection === 'workspace' && (
-                            <div className="space-y-6">
-                                <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Workspace</h2>
-                                <div className="glass rounded-xl p-5">
-                                    <div className="flex items-center gap-4 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
-                                        <div className="w-12 h-12 rounded-xl flex items-center justify-center font-bold" style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%)', color: 'var(--bg-primary)' }}>C</div>
-                                        <div>
-                                            <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>{currentWorkspace?.name || 'My Workspace'}</div>
-                                            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{currentWorkspace?.member_count || 1} members</div>
-                                        </div>
-                                    </div>
-                                    <SettingRow label="Workspace name">
-                                        <input type="text" value={workspaceName} onChange={(e) => handleWorkspaceNameChange(e.target.value)} className="text-sm rounded-lg px-3 py-1.5 outline-none w-48 text-right" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
-                                    </SettingRow>
-                                    {hasUnsavedChanges && (
-                                        <div className="mt-4 pt-4 flex justify-end" style={{ borderTop: '1px solid var(--border)' }}>
-                                            <button onClick={handleSaveSettings} disabled={isSaving} className="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>{isSaving ? 'Saving...' : 'Save Changes'}</button>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="glass rounded-xl p-5">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <Shield className="w-5 h-5" style={{ color: 'var(--accent)' }} />
-                                            <div>
-                                                <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Pro Plan</div>
-                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Unlimited ideas</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeSection === 'members' && (
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Members</h2>
-                                    <button onClick={() => setShowInviteModal(true)} className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
-                                        <Users className="w-4 h-4" /> Invite
-                                    </button>
-                                </div>
-                                <div className="glass rounded-xl overflow-hidden">
-                                    <div className="p-4 flex items-center gap-4" style={{ borderBottom: '1px solid var(--border)' }}>
-                                        <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm" style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%)', color: 'var(--bg-primary)' }}>{currentUser?.name?.charAt(0) || 'U'}</div>
-                                        <div className="flex-1">
-                                            <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{currentUser?.name}</div>
-                                            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{currentUser?.email}</div>
-                                        </div>
-                                        <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(34, 211, 238, 0.1)', color: 'var(--accent)' }}>Owner</span>
-                                    </div>
-                                    <div className="p-6 text-center" style={{ background: 'var(--bg-tertiary)' }}>
-                                        <Users className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: 'var(--text-muted)' }} />
-                                        <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>Invite your team to collaborate</p>
-                                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Up to 10 members on Pro plan</p>
-                                    </div>
-                                </div>
-                                <div className="glass rounded-xl p-5">
-                                    <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Roles & Permissions</h3>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-                                            <div>
-                                                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Owner</div>
-                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Full access, billing, delete workspace</div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-                                            <div>
-                                                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Admin</div>
-                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Manage members, settings, integrations</div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between py-2">
-                                            <div>
-                                                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Member</div>
-                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Create, edit, vote on ideas</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
                         {activeSection === 'integrations' && (
                             <div className="space-y-6">
-                                <div>
-                                    <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Integrations</h2>
-                                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Connect your tools to Cryo</p>
-                                </div>
-                                <div className="space-y-3">
-                                    {integrations.map(item => (
-                                        <div key={item.name} className="glass rounded-xl overflow-hidden">
-                                            <div className="p-4 flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--bg-tertiary)' }}>{integrationLogos[item.name]}</div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{item.name}</div>
-                                                    <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{item.desc}</div>
-                                                </div>
-                                                {item.connected ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs px-2 py-1 rounded-full flex items-center gap-1" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}><Check className="w-3 h-3" /> {item.status}</span>
-                                                        <button onClick={() => handleDisconnect(item.name)} className="text-xs px-2 py-1 rounded-lg font-medium transition-all hover:bg-red-500/20" style={{ color: 'var(--text-muted)' }}>Disconnect</button>
-                                                    </div>
-                                                ) : (
-                                                    <button onClick={() => handleConnect(item.name)} className="text-xs px-3 py-1.5 rounded-lg font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Connect</button>
-                                                )}
-                                            </div>
-                                            <div className="px-4 py-3" style={{ background: 'var(--bg-tertiary)', borderTop: '1px solid var(--border)' }}>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {item.features.map((feature, i) => (<span key={i} className="text-xs px-2 py-1 rounded-full" style={{ background: 'var(--bg-primary)', color: 'var(--text-muted)' }}>{feature}</span>))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Integrations</h2>
+
                                 <div className="glass rounded-xl p-5">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(251, 191, 36, 0.1)', color: '#fbbf24' }}>Dev Tool</span>
-                                        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Slack Bot Simulator</span>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(224, 30, 90, 0.1)' }}>
+                                            <svg viewBox="0 0 24 24" className="w-6 h-6"><path fill="#E01E5A" d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z" /><path fill="#36C5F0" d="M8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312z" /><path fill="#2EB67D" d="M18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312z" /><path fill="#ECB22E" d="M15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" /></svg>
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Slack</div>
+                                            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Capture ideas with ❄️ emoji</div>
+                                        </div>
+                                        {slackConnected ? (
+                                            <span className="text-xs font-medium px-2 py-1 rounded-full" style={{ background: 'rgba(34, 211, 238, 0.1)', color: 'var(--accent)' }}>Connected</span>
+                                        ) : (
+                                            <button onClick={() => { setSlackConnected(true); localStorage.setItem('cryo_slack_connected', 'true'); toast.success('Slack connected!'); }} className="px-3 py-1.5 rounded-lg text-sm font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Connect</button>
+                                        )}
                                     </div>
-                                    <div className="flex gap-2">
-                                        <input type="text" placeholder="Type a mock message..." className="flex-1 text-sm rounded-lg px-3 py-2 outline-none" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} value={testMessage} onChange={e => setTestMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSlackTest()} />
-                                        <button onClick={handleSlackTest} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Send</button>
+                                    <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+                                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>React with ❄️ on any message to freeze it as an idea. The bot will confirm in a thread.</p>
+                                    </div>
+                                </div>
+
+                                <div className="glass rounded-xl p-5 opacity-50">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(129, 140, 248, 0.1)' }}>
+                                            <svg viewBox="0 0 24 24" className="w-6 h-6"><path fill="#818CF8" d="M3.184 12.924a.5.5 0 0 1 0-.707l8.633-8.633a.5.5 0 0 1 .707.707L3.89 12.924a.5.5 0 0 1-.707 0z" /></svg>
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Linear</div>
+                                            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Coming soon</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -370,22 +183,12 @@ const Settings: React.FC = () => {
                             <div className="space-y-6">
                                 <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Appearance</h2>
                                 <div className="glass rounded-xl p-5">
-                                    <div className="flex items-center gap-4 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
-                                        <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%)' }}>
-                                            <Palette className="w-6 h-6" style={{ color: 'var(--bg-primary)' }} />
-                                        </div>
+                                    <div className="flex items-center justify-between">
                                         <div>
-                                            <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Cryo Dark</div>
-                                            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Ice Blue accent • Dark background</div>
+                                            <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Dark mode</div>
+                                            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Always enabled</div>
                                         </div>
-                                    </div>
-                                    <div className="pt-4">
-                                        <div className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>Current theme colors</div>
-                                        <div className="flex gap-2">
-                                            <div className="flex-1 h-10 rounded-lg flex items-center justify-center text-xs" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Accent</div>
-                                            <div className="flex-1 h-10 rounded-lg flex items-center justify-center text-xs" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>Background</div>
-                                            <div className="flex-1 h-10 rounded-lg flex items-center justify-center text-xs" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>Surface</div>
-                                        </div>
+                                        <Toggle enabled={darkMode} onChange={() => { }} />
                                     </div>
                                 </div>
                             </div>
@@ -393,88 +196,6 @@ const Settings: React.FC = () => {
                     </div>
                 </div>
             </div>
-
-            {showWebhookModal && (() => {
-                const config = getIntegrationConfig(showWebhookModal);
-                const helpTexts: Record<string, string> = { 'Slack': 'Get your webhook URL from Slack App settings', 'Linear': 'Get your API key from Linear Settings', 'Notion': 'Get your integration token from notion.so/my-integrations', 'Google Analytics': 'Get your Measurement ID from GA4' };
-                return (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.8)' }}>
-                        <div className="relative w-full max-w-md mx-4 rounded-2xl p-6" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
-                            <button onClick={() => setShowWebhookModal(null)} className="absolute top-4 right-4 p-2 rounded-lg transition-all hover:bg-white/10" style={{ color: 'var(--text-muted)' }}><X className="w-5 h-5" /></button>
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 flex items-center justify-center">{integrationLogos[showWebhookModal]}</div>
-                                <div>
-                                    <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Connect {showWebhookModal}</h3>
-                                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Enter your {config.label}</p>
-                                </div>
-                            </div>
-                            <div className="mb-4">
-                                <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-secondary)' }}>{config.label}</label>
-                                <input type="text" value={webhookInput} onChange={(e) => setWebhookInput(e.target.value)} placeholder={config.placeholder} className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
-                                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>{helpTexts[showWebhookModal]}</p>
-                            </div>
-                            <div className="flex justify-end gap-2">
-                                <button onClick={() => setShowWebhookModal(null)} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Cancel</button>
-                                <button onClick={handleSaveIntegration} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>Save & Connect</button>
-                            </div>
-                        </div>
-                    </div>
-                );
-            })()}
-
-            {/* Invite Modal */}
-            {showInviteModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.8)' }}>
-                    <div className="relative w-full max-w-md mx-4 rounded-2xl p-6" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
-                        <button onClick={() => setShowInviteModal(false)} className="absolute top-4 right-4 p-2 rounded-lg transition-all hover:bg-white/10" style={{ color: 'var(--text-muted)' }}><X className="w-5 h-5" /></button>
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent-glow)' }}>
-                                <Users className="w-5 h-5" style={{ color: 'var(--accent)' }} />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Invite Team Member</h3>
-                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>They'll receive an email invitation</p>
-                            </div>
-                        </div>
-                        <div className="mb-4">
-                            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-secondary)' }}>Email Address</label>
-                            <input
-                                type="email"
-                                value={inviteEmail}
-                                onChange={(e) => setInviteEmail(e.target.value)}
-                                placeholder="colleague@company.com"
-                                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-secondary)' }}>Role</label>
-                            <select className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
-                                <option value="member">Member</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <button onClick={() => setShowInviteModal(false)} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Cancel</button>
-                            <button
-                                onClick={() => {
-                                    if (!inviteEmail.includes('@')) {
-                                        toast.error('Please enter a valid email');
-                                        return;
-                                    }
-                                    toast.success(`Invitation sent to ${inviteEmail}!`);
-                                    setInviteEmail('');
-                                    setShowInviteModal(false);
-                                }}
-                                className="px-4 py-2 rounded-lg text-sm font-medium"
-                                style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}
-                            >
-                                Send Invitation
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
