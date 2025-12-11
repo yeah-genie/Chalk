@@ -80,6 +80,70 @@ async function getThreadContext(channel: string, threadTs: string): Promise<stri
     } catch { return ""; }
 }
 
+// Get App Home content with Block Kit
+async function getHomeContent(userId: string): Promise<object> {
+    // Get user's locale
+    let userLocale = "en";
+    try {
+        const res = await fetch(`https://slack.com/api/users.info?user=${userId}`, {
+            headers: { "Authorization": `Bearer ${SLACK_BOT_TOKEN}` }
+        });
+        const data = await res.json();
+        userLocale = data.user?.locale?.substring(0, 2) || "en";
+    } catch { }
+
+    // Translate intro
+    const intro = await translateText(userLocale, "Freeze your ideas and thaw them at the right time. Never lose a good idea from conversations.");
+    const howToUse = await translateText(userLocale, "How to use");
+    const freezeDesc = await translateText(userLocale, "Save idea");
+    const thawDesc = await translateText(userLocale, "Thaw idea");
+    const voteDesc = await translateText(userLocale, "Vote for idea");
+    const tip = await translateText(userLocale, "Just add an emoji to any message!");
+
+    return {
+        type: "home",
+        blocks: [
+            { type: "header", text: { type: "plain_text", text: "🧊 Cryo", emoji: true } },
+            { type: "section", text: { type: "mrkdwn", text: intro } },
+            { type: "divider" },
+            { type: "header", text: { type: "plain_text", text: `📌 ${howToUse}`, emoji: true } },
+            { type: "section", text: { type: "mrkdwn", text: `❄️ = ${freezeDesc}\n🔥 = ${thawDesc}\n👍 = ${voteDesc}` } },
+            { type: "context", elements: [{ type: "mrkdwn", text: `💡 ${tip}` }] },
+            { type: "divider" },
+            { type: "section", text: { type: "mrkdwn", text: "🔗 <https://cryo-dun.vercel.app|Open Dashboard>" } }
+        ]
+    };
+}
+
+// Get welcome message for channel
+async function getWelcomeMessage(): Promise<string> {
+    return `👋 Hi! Cryo is now in this channel.
+
+I freeze ideas so you never lose them.
+Just add ❄️ to any message to save it!
+
+🔗 Dashboard: https://cryo-dun.vercel.app`;
+}
+
+// Translate text using Gemini
+async function translateText(locale: string, text: string): Promise<string> {
+    if (locale === "en" || !GEMINI_API_KEY) return text;
+    try {
+        const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `Translate to ${locale}: "${text}". Return ONLY the translation.` }] }]
+                })
+            }
+        );
+        const data = await res.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || text;
+    } catch { return text; }
+}
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 serve(async (req) => {
@@ -97,6 +161,34 @@ serve(async (req) => {
         // Event callback
         if (payload.type === "event_callback") {
             const event = payload.event;
+
+            // 🏠 APP HOME OPENED
+            if (event.type === "app_home_opened") {
+                const userId = event.user;
+                const homeContent = await getHomeContent(userId);
+
+                await fetch("https://slack.com/api/views.publish", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SLACK_BOT_TOKEN}` },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        view: homeContent
+                    })
+                });
+
+                return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
+            }
+
+            // 👋 BOT JOINED CHANNEL
+            if (event.type === "member_joined_channel" && event.user === event.inviter) {
+                // Bot was invited to channel
+                const channel = event.channel;
+                const welcomeMsg = await getWelcomeMessage();
+                await postMessage(channel, "", welcomeMsg);
+
+                return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
+            }
+
             if (event.type !== "reaction_added") {
                 return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
             }
