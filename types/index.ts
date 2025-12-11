@@ -146,6 +146,18 @@ export interface Idea extends Omit<IdeaRow, 'status' | 'priority' | 'trigger_typ
     votes: number;
     vote_records?: VoteRecord[];
     lineage?: IdeaLineage[];
+    tags?: string[]; // New: 태그/라벨 시스템
+}
+
+// Comments (New)
+export interface Comment {
+    comment_id: string;
+    idea_id: string;
+    user_id: string;
+    user_name: string;
+    content: string;
+    created_at: string;
+    updated_at: string;
 }
 
 // Decisions

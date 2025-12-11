@@ -4,8 +4,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { IdeaStatus, TriggerType, DecisionType, DecisionOutcome, Decision, Idea, IdeaSource, VoteTag } from '../types';
 import { StatusBadge, PriorityBadge, CategoryBadge } from '../components/Badges';
-import { ArrowLeft, Archive, Skull, Clock, CheckCircle2, Plus, Snowflake, ThumbsUp, GitMerge, CalendarClock, History, Search, Network, X, Book, ExternalLink, BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ArrowLeft, Archive, Skull, Clock, CheckCircle2, Plus, Snowflake, ThumbsUp, GitMerge, CalendarClock, History, Search, Network, X, Book, ExternalLink, BarChart3, TrendingUp, TrendingDown, Minus, Tag } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+import Comments from '../components/Comments';
 
 const IdeaDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -169,6 +170,33 @@ const IdeaDetail: React.FC = () => {
                         ))}
                     </nav>
                 </div>
+
+                {/* Default Overview Tab - Tags and Comments */}
+                {activeTab === 'details' && (
+                    <div className="space-y-4">
+                        {/* Tags Section */}
+                        <div className="glass p-5 rounded-xl">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-bold uppercase tracking-wide flex items-center" style={{ color: 'var(--text-primary)' }}>
+                                    <Tag className="w-4 h-4 mr-2" style={{ color: 'var(--accent)' }} /> Tags
+                                </h3>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {(idea.tags && idea.tags.length > 0) ? idea.tags.map(tag => (
+                                    <span key={tag} className="px-3 py-1 rounded-full text-xs font-medium"
+                                        style={{ background: 'var(--accent-glow)', color: 'var(--accent)', border: '1px solid rgba(34, 211, 238, 0.2)' }}>
+                                        {tag}
+                                    </span>
+                                )) : (
+                                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>No tags yet</span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Comments Section */}
+                        <Comments ideaId={idea.idea_id} userId={currentUser.user_id} userName={currentUser.name} />
+                    </div>
+                )}
 
                 {activeTab === 'history' && (
                     <div className="glass rounded-xl">

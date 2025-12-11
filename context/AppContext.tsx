@@ -1,11 +1,11 @@
-﻿
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+﻿import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import toast from 'react-hot-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   User, Workspace, Idea, Decision, Metric, WikiDoc, Role,
   DecisionType, DecisionOutcome, IdeaStatus, TriggerType, IdeaSource, Priority, Category, WikiStatus,
-  ActivityLog, ActivityType, VoteTag, MarketPulse, SynthesisSuggestion, PostMortemReport, KnowledgeGraphData
+  ActivityLog, ActivityType, VoteTag, MarketPulse, SynthesisSuggestion, PostMortemReport, KnowledgeGraphData,
+  Comment
 } from '../types';
 import {
   CURRENT_USER as MOCK_USER, CURRENT_WORKSPACE as MOCK_WORKSPACE,
@@ -28,6 +28,7 @@ interface AppContextType {
   activities: ActivityLog[];
   marketPulses: MarketPulse[];
   synthesisSuggestions: SynthesisSuggestion[];
+  comments: Comment[];
 
   // Actions
   addIdea: (idea: Idea) => void;
@@ -41,9 +42,12 @@ interface AppContextType {
   voteIdea: (ideaId: string, tag: VoteTag) => void;
   mergeIdeas: (targetIdeaId: string, sourceIdeaIds: string[]) => void;
   markActivityAsRead: (activityId: string) => void;
+  addComment: (comment: Comment) => void;
+  deleteComment: (commentId: string) => void;
 
   // Helpers
   getIdeaDecisions: (ideaId: string) => Decision[];
+  getIdeaComments: (ideaId: string) => Comment[];
   getUserName: (userId: string) => string;
   getSmartThawRecommendations: () => Idea[];
   generatePostMortem: () => PostMortemReport;
