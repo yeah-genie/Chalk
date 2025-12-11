@@ -64,16 +64,19 @@ const IdeaList: React.FC = () => {
   const [newIdeaDesc, setNewIdeaDesc] = useState('');
   const [newIdeaPriority, setNewIdeaPriority] = useState<Priority>(Priority.Medium);
   const [newIdeaCategory, setNewIdeaCategory] = useState<Category>(Category.Feature);
+  const [newIdeaTags, setNewIdeaTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [modalKey, setModalKey] = useState(0);
 
-  // Reset form when modal closes
   const handleCloseModal = () => {
     setIsAddModalOpen(false);
     setNewIdeaTitle('');
     setNewIdeaDesc('');
     setNewIdeaPriority(Priority.Medium);
     setNewIdeaCategory(Category.Feature);
+    setNewIdeaTags([]);
+    setTagInput('');
     setDuplicateWarning(null);
   };
 
@@ -134,7 +137,8 @@ const IdeaList: React.FC = () => {
       predicted_thaw_date: null,
       votes: 0,
       vote_records: [],
-      lineage: []
+      lineage: [],
+      tags: newIdeaTags
     };
     addIdea(newIdea);
     handleCloseModal();
@@ -354,6 +358,30 @@ const IdeaList: React.FC = () => {
                     style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
                     {Object.values(Category).map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
+                </div>
+              </div>
+              {/* Tags Input */}
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Tags</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {newIdeaTags.map(tag => (
+                    <span key={tag} className="px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"
+                      style={{ background: 'var(--accent-glow)', color: 'var(--accent)', border: '1px solid rgba(34, 211, 238, 0.2)' }}>
+                      {tag}
+                      <button type="button" onClick={() => setNewIdeaTags(newIdeaTags.filter(t => t !== tag))} className="hover:opacity-70">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (tagInput.trim() && !newIdeaTags.includes(tagInput.trim())) { setNewIdeaTags([...newIdeaTags, tagInput.trim()]); setTagInput(''); } } }}
+                    placeholder="Type and press Enter..."
+                    className="flex-1 rounded-lg px-3 py-2 text-sm outline-none"
+                    style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+                  <button type="button" onClick={() => { if (tagInput.trim() && !newIdeaTags.includes(tagInput.trim())) { setNewIdeaTags([...newIdeaTags, tagInput.trim()]); setTagInput(''); } }}
+                    className="px-3 py-2 rounded-lg text-sm" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Add</button>
                 </div>
               </div>
               <div className="pt-2 flex justify-end gap-2">
