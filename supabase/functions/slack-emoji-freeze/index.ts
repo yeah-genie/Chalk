@@ -6,43 +6,45 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SLACK_BOT_TOKEN = Deno.env.get("SLACK_BOT_TOKEN")!;
 const GEMINI_API_KEY = Deno.env.get("GOOGLE_GEMINI_API_KEY") || "";
 
-console.log("Slack Emoji Freeze v4 - Full Features");
+console.log("Slack Emoji Freeze v5 - Auto Translate");
 
-// Detect if text is Korean
-function isKorean(text: string): boolean {
-    return /[가-힣]/.test(text);
-}
+// Message templates (English base)
+const messages: Record<string, string> = {
+    notIdea: "🤔 This doesn't look like an idea. Use it for actual product/feature ideas!",
+    frozen: "🧊 Frozen!",
+    thawed: "🔥 Thawed! Time to review.",
+    voted: "👍 Voted!",
+    alreadyActive: "Already active.",
+    notFound: "No idea found for this message."
+};
 
-// Get localized message
-function getMessage(text: string, key: string): string {
-    const isKo = isKorean(text);
-    const messages: Record<string, { ko: string; en: string }> = {
-        notIdea: {
-            ko: "🤔 이건 아이디어 같지 않아요.",
-            en: "🤔 This doesn't look like an idea."
-        },
-        frozen: {
-            ko: "🧊 얼렸어요!",
-            en: "🧊 Frozen!"
-        },
-        thawed: {
-            ko: "🔥 해동됐어요! 검토할 시간이에요.",
-            en: "🔥 Thawed! Time to review."
-        },
-        voted: {
-            ko: "👍 투표했어요!",
-            en: "👍 Voted!"
-        },
-        alreadyActive: {
-            ko: "이미 활성 상태에요.",
-            en: "Already active."
-        },
-        notFound: {
-            ko: "이 메시지로 저장된 아이디어가 없어요.",
-            en: "No idea found for this message."
-        }
-    };
-    return isKo ? messages[key].ko : messages[key].en;
+// Translate message to user's language using Gemini
+async function getMessage(userText: string, key: string): Promise<string> {
+    const baseMessage = messages[key] || key;
+    if (!GEMINI_API_KEY) return baseMessage;
+
+    try {
+        const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `Translate this message to the SAME LANGUAGE as the user's text. Keep emojis. Return ONLY the translated text.
+User's text language: "${userText.substring(0, 50)}"
+Message to translate: "${baseMessage}"`
+                        }]
+                    }]
+                })
+            }
+        );
+        const data = await res.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || baseMessage;
+    } catch {
+        return baseMessage;
+    }
 }
 
 // Check if text is a valid idea
@@ -120,7 +122,7 @@ serve(async (req) => {
             if (reaction === "snowflake") {
                 const isIdea = await isValidIdea(text);
                 if (!isIdea) {
-                    await postMessage(channel, threadTs, getMessage(text, "notIdea"));
+                    await postMessage(channel, threadTs, await getMessage(text, "notIdea"));
                 } else {
                     // Get thread context if exists
                     const context = await getThreadContext(channel, threadTs);
@@ -141,7 +143,7 @@ serve(async (req) => {
                     }).select().single();
 
                     await postMessage(channel, threadTs,
-                        `${getMessage(text, "frozen")} https://cryo-dun.vercel.app/ideas/${data?.idea_id}`);
+                        `${await getMessage(text, "frozen")} https://cryo-dun.vercel.app/ideas/${data?.idea_id}`);
                 }
             }
 
@@ -154,9 +156,9 @@ serve(async (req) => {
                     .single();
 
                 if (!idea) {
-                    await postMessage(channel, threadTs, getMessage(text, "notFound"));
+                    await postMessage(channel, threadTs, await getMessage(text, "notFound"));
                 } else if (!idea.is_zombie) {
-                    await postMessage(channel, threadTs, getMessage(text, "alreadyActive"));
+                    await postMessage(channel, threadTs, await getMessage(text, "alreadyActive"));
                 } else {
                     await supabase.from("ideas").update({
                         is_zombie: false,
@@ -166,7 +168,7 @@ serve(async (req) => {
                     }).eq("idea_id", idea.idea_id);
 
                     await postMessage(channel, threadTs,
-                        `${getMessage(text, "thawed")} https://cryo-dun.vercel.app/ideas/${idea.idea_id}`);
+                        `${await getMessage(text, "thawed")} https://cryo-dun.vercel.app/ideas/${idea.idea_id}`);
                 }
             }
 
@@ -185,7 +187,7 @@ serve(async (req) => {
                     }).eq("idea_id", idea.idea_id);
 
                     await postMessage(channel, threadTs,
-                        `${getMessage(text, "voted")} (${(idea.votes || 0) + 1}표)`);
+                        `${await getMessage(text, "voted")} (${(idea.votes || 0) + 1}표)`);
                 }
             }
         }
