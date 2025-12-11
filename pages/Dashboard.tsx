@@ -71,6 +71,29 @@ const Dashboard: React.FC = () => {
           </button>
         </div>
 
+        {/* Weekly Review Prompt */}
+        {frozenIdeas.length >= 3 && (
+          <div className="flex items-center justify-between p-4 rounded-xl"
+            style={{ background: 'var(--accent-glow)', border: '1px solid rgba(34, 211, 238, 0.3)' }}>
+            <div className="flex items-center gap-3">
+              <Snowflake className="w-5 h-5" style={{ color: 'var(--accent)' }} />
+              <div>
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  Review frozen ideas?
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {frozenIdeas.length} ideas waiting - consider thawing one
+                </p>
+              </div>
+            </div>
+            <button onClick={() => navigate('/ideas?filter=frozen')}
+              className="text-xs font-medium px-3 py-1.5 rounded-lg"
+              style={{ background: 'var(--accent)', color: 'var(--bg-primary)' }}>
+              Review
+            </button>
+          </div>
+        )}
+
         {/* AI Smart Wake */}
         {frozenIdeas.length > 0 && (
           <div className="glass rounded-xl p-5">

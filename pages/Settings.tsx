@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Bell, User, Briefcase, Shield, Check, LogOut, Settings as SettingsIcon, Globe, Key, Users, Palette, Link2, X, Loader2 } from 'lucide-react';
+import { Bell, User, Briefcase, Shield, Check, LogOut, Settings as SettingsIcon, Globe, Key, Users, Palette, Link2, X, Loader2, Download } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
@@ -31,7 +31,7 @@ const saveIntegration = (name: string, data: { connected: boolean; webhookUrl?: 
 };
 
 const Settings: React.FC = () => {
-    const { currentUser, currentWorkspace, simulateSlackIncoming } = useAppContext();
+    const { currentUser, currentWorkspace, simulateSlackIncoming, ideas } = useAppContext();
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState<SettingsSection>('account');
     const [emailNotif, setEmailNotif] = useState(currentUser?.notification_email ?? true);
@@ -205,6 +205,35 @@ const Settings: React.FC = () => {
                                 <div className="glass rounded-xl p-5">
                                     <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}><Key className="w-4 h-4" /> Security</h3>
                                     <SettingRow label="Password" description="Set via Google OAuth"><span className="text-xs" style={{ color: 'var(--text-muted)' }}>Google SSO</span></SettingRow>
+                                </div>
+                                {/* Data Export */}
+                                <div className="glass rounded-xl p-5">
+                                    <h3 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}><Download className="w-4 h-4" /> Data Export</h3>
+                                    <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>Export all your ideas to CSV format.</p>
+                                    <button onClick={() => {
+                                        const csvContent = [
+                                            ['Title', 'Description', 'Status', 'Priority', 'Category', 'Created At', 'Votes', 'Trigger Type'].join(','),
+                                            ...ideas.map(idea => [
+                                                `"${idea.title.replace(/"/g, '""')}"`,
+                                                `"${(idea.description || '').replace(/"/g, '""')}"`,
+                                                idea.status,
+                                                idea.priority,
+                                                idea.category,
+                                                idea.created_at,
+                                                idea.votes || 0,
+                                                idea.trigger_type || 'None'
+                                            ].join(','))
+                                        ].join('\n');
+                                        const blob = new Blob([csvContent], { type: 'text/csv' });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `cryo-ideas-${new Date().toISOString().split('T')[0]}.csv`;
+                                        a.click();
+                                        toast.success('Ideas exported to CSV!');
+                                    }} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+                                        <Download className="w-4 h-4" /> Export CSV
+                                    </button>
                                 </div>
                             </div>
                         )}
