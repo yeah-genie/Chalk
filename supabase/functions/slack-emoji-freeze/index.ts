@@ -15,7 +15,9 @@ const messages: Record<string, string> = {
     thawed: "🔥 Thawed! Time to review.",
     voted: "👍 Voted!",
     alreadyActive: "Already active.",
-    notFound: "No idea found for this message."
+    notFound: "No idea found for this message.",
+    similarFound: "⚠️ Similar ideas found",
+    duplicate: "🔴 This looks like a duplicate!"
 };
 
 // Translate message to user's language using Gemini
@@ -78,6 +80,53 @@ async function getThreadContext(channel: string, threadTs: string): Promise<stri
         if (!data.ok || !data.messages) return "";
         return data.messages.map((m: any) => m.text).join("\n---\n");
     } catch { return ""; }
+}
+
+// Find similar ideas using Gemini
+async function findSimilarIdeas(text: string, supabase: any): Promise<{ count: number; titles: string[] }> {
+    try {
+        // Get existing ideas
+        const { data: ideas } = await supabase
+            .from("ideas")
+            .select("idea_id, title, description")
+            .limit(50);
+
+        if (!ideas || ideas.length === 0) return { count: 0, titles: [] };
+        if (!GEMINI_API_KEY) return { count: 0, titles: [] };
+
+        // Use Gemini to find similar ideas
+        const ideaList = ideas.map((i: any) => `- ${i.title}`).join("\n");
+        const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `Find ideas SIMILAR to this new idea. Return ONLY the titles of similar ideas, one per line. If none similar, return "NONE".
+
+New idea: "${text.substring(0, 200)}"
+
+Existing ideas:
+${ideaList}`
+                        }]
+                    }]
+                })
+            }
+        );
+        const data = await res.json();
+        const result = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "NONE";
+
+        if (result === "NONE" || result.toLowerCase().includes("none")) {
+            return { count: 0, titles: [] };
+        }
+
+        const titles = result.split("\n").filter((t: string) => t.trim().length > 0).slice(0, 3);
+        return { count: titles.length, titles };
+    } catch {
+        return { count: 0, titles: [] };
+    }
 }
 
 // Get App Home content with Block Kit
@@ -219,6 +268,9 @@ serve(async (req) => {
                     // Get thread context if exists
                     const context = await getThreadContext(channel, threadTs);
 
+                    // Find similar ideas
+                    const similar = await findSimilarIdeas(text, supabase);
+
                     const { data } = await supabase.from("ideas").insert({
                         title: text.length > 100 ? text.substring(0, 100) + "..." : text,
                         description: context || text,
@@ -227,6 +279,7 @@ serve(async (req) => {
                         category: "Feature",
                         is_zombie: true,
                         zombie_reason: "Frozen via Slack",
+                        freeze_reason: null,  // Will be set via modal later
                         slack_message_ts: messageTs,
                         slack_channel: channel,
                         votes: 0,
@@ -234,8 +287,14 @@ serve(async (req) => {
                         updated_at: new Date().toISOString()
                     }).select().single();
 
-                    await postMessage(channel, threadTs,
-                        `${await getMessage(text, "frozen")} https://cryo-dun.vercel.app/ideas/${data?.idea_id}`);
+                    // Build response with similar ideas
+                    let response = `${await getMessage(text, "frozen")} https://cryo-dun.vercel.app/ideas/${data?.idea_id}`;
+
+                    if (similar.count > 0) {
+                        response += `\n\n⚠️ Similar ideas found (${similar.count}):\n${similar.titles.map(t => `• ${t}`).join("\n")}`;
+                    }
+
+                    await postMessage(channel, threadTs, response);
                 }
             }
 
