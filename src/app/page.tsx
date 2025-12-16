@@ -1058,7 +1058,7 @@ export default function Home() {
               <span className="text-sm font-semibold">Briefix</span>
             </div>
             <p className="text-xs text-[var(--text-tertiary)]">
-              © 2024 Briefix. All rights reserved.
+              © 2025 Briefix. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-sm text-[var(--text-tertiary)]">
               <a href="#" className="hover:text-[var(--text-secondary)] transition-colors">Privacy</a>
