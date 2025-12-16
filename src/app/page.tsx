@@ -14,6 +14,13 @@ interface PlaygroundIdea {
   killReason?: string;
 }
 
+interface MockIdea {
+  id: number;
+  title: string;
+  score: number;
+  status: "inbox" | "evaluating" | "top" | "killed";
+}
+
 const killReasons = [
   "Too competitive",
   "Not enough resources", 
@@ -26,6 +33,228 @@ const calculateScore = (scores: PlaygroundIdea["scores"]) => {
   const { impact, effort, confidence } = scores;
   return Math.round((impact * confidence) / Math.max(effort, 1) * 10);
 };
+
+// Animated App Mockup Component
+function AppMockup() {
+  const [activeTab, setActiveTab] = useState<"inbox" | "top" | "killed">("inbox");
+  const [ideas, setIdeas] = useState<MockIdea[]>([
+    { id: 1, title: "AI-powered analytics dashboard", score: 87, status: "top" },
+    { id: 2, title: "Mobile app for team sync", score: 72, status: "top" },
+    { id: 3, title: "Browser extension for bookmarks", score: 45, status: "inbox" },
+    { id: 4, title: "Newsletter automation tool", score: 0, status: "evaluating" },
+    { id: 5, title: "Social media scheduler", score: 23, status: "killed" },
+  ]);
+  const [typingText, setTypingText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Auto-cycle through tabs
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveTab(prev => {
+        if (prev === "inbox") return "top";
+        if (prev === "top") return "killed";
+        return "inbox";
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Typing animation for new idea
+  useEffect(() => {
+    const phrases = ["Customer feedback portal", "API marketplace", "Team retrospective tool"];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    
+    const type = () => {
+      const currentPhrase = phrases[phraseIndex];
+      
+      if (!isDeleting) {
+        setTypingText(currentPhrase.slice(0, charIndex + 1));
+        charIndex++;
+        
+        if (charIndex === currentPhrase.length) {
+          isDeleting = true;
+          setTimeout(type, 2000);
+          return;
+        }
+      } else {
+        setTypingText(currentPhrase.slice(0, charIndex - 1));
+        charIndex--;
+        
+        if (charIndex === 0) {
+          isDeleting = false;
+          phraseIndex = (phraseIndex + 1) % phrases.length;
+        }
+      }
+      
+      setTimeout(type, isDeleting ? 30 : 80);
+    };
+    
+    const timeout = setTimeout(type, 1000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  const filteredIdeas = ideas.filter(idea => {
+    if (activeTab === "inbox") return idea.status === "inbox" || idea.status === "evaluating";
+    if (activeTab === "top") return idea.status === "top";
+    return idea.status === "killed";
+  });
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, delay: 0.3 }}
+      className="relative w-full max-w-3xl mx-auto"
+    >
+      {/* Glow effect */}
+      <div className="absolute -inset-px bg-gradient-to-b from-zinc-700/50 to-transparent rounded-xl blur-sm" />
+      
+      {/* App window */}
+      <div className="relative bg-[#0c0c0e] border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
+        {/* Title bar */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800/80 bg-[#111113]">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-zinc-700" />
+              <div className="w-3 h-3 rounded-full bg-zinc-700" />
+              <div className="w-3 h-3 rounded-full bg-zinc-700" />
+            </div>
+            <span className="text-xs text-zinc-500 ml-2">Briefix</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-[10px] text-white font-medium">
+              Y
+            </div>
+          </div>
+        </div>
+
+        <div className="flex min-h-[340px]">
+          {/* Sidebar */}
+          <div className="w-48 border-r border-zinc-800/80 bg-[#0a0a0c] p-3 hidden sm:block">
+            <div className="space-y-1">
+              {[
+                { id: "inbox", label: "Inbox", count: 2 },
+                { id: "top", label: "Top Ideas", count: 2 },
+                { id: "killed", label: "Killed", count: 1 },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                    activeTab === tab.id 
+                      ? "bg-zinc-800/80 text-white" 
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/40"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span className={`text-xs ${activeTab === tab.id ? "text-zinc-400" : "text-zinc-600"}`}>
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-zinc-800/80">
+              <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-3 px-3">
+                Quick Stats
+              </div>
+              <div className="space-y-3 px-3">
+                <div>
+                  <div className="text-lg font-semibold text-white">24</div>
+                  <div className="text-[10px] text-zinc-600">Ideas evaluated</div>
+                </div>
+                <div>
+                  <div className="text-lg font-semibold text-emerald-400">8</div>
+                  <div className="text-[10px] text-zinc-600">Shipped this month</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main content */}
+          <div className="flex-1 p-4">
+            {/* Add new idea input */}
+            <div className="relative mb-4">
+              <input
+                type="text"
+                value={typingText}
+                readOnly
+                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none"
+                placeholder="Add new idea..."
+              />
+              <motion.span 
+                animate={{ opacity: [1, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-blue-400"
+              />
+            </div>
+
+            {/* Ideas list */}
+            <div className="space-y-2">
+              <AnimatePresence mode="popLayout">
+                {filteredIdeas.map((idea, index) => (
+                  <motion.div
+                    key={idea.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ delay: index * 0.1 }}
+                    className={`p-3 rounded-lg border ${
+                      idea.status === "killed" 
+                        ? "border-red-500/20 bg-red-500/5" 
+                        : idea.status === "evaluating"
+                          ? "border-blue-500/30 bg-blue-500/5"
+                          : "border-zinc-800 bg-zinc-900/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {idea.status === "evaluating" ? (
+                          <motion.div 
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                            className="w-5 h-5 rounded-full border-2 border-blue-500/30 border-t-blue-500"
+                          />
+                        ) : (
+                          <div className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-medium ${
+                            idea.status === "killed" 
+                              ? "bg-red-500/20 text-red-400" 
+                              : idea.status === "top"
+                                ? "bg-emerald-500/20 text-emerald-400"
+                                : "bg-zinc-800 text-zinc-500"
+                          }`}>
+                            {idea.status === "killed" ? "×" : idea.score}
+                          </div>
+                        )}
+                        <span className={`text-sm ${
+                          idea.status === "killed" ? "text-zinc-600 line-through" : "text-white"
+                        }`}>
+                          {idea.title}
+                        </span>
+                      </div>
+                      {idea.status === "top" && (
+                        <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                          Top pick
+                        </span>
+                      )}
+                      {idea.status === "evaluating" && (
+                        <span className="text-[10px] text-blue-400">
+                          Scoring...
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function LandingPage() {
   const [step, setStep] = useState<"idle" | "input" | "evaluate" | "result">("idle");
@@ -116,14 +345,15 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#09090b]">
-      {/* Background gradient */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-blue-500/[0.03] blur-[100px] rounded-full" />
+      {/* Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[800px] bg-gradient-to-b from-blue-500/[0.07] to-transparent blur-[120px] rounded-full" />
+        <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-violet-500/[0.03] blur-[100px] rounded-full" />
       </div>
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#09090b]/80 backdrop-blur-md border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link href="/" className="font-semibold text-white tracking-tight">
             Briefix
           </Link>
@@ -139,66 +369,179 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-14">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center max-w-2xl"
-        >
-          <div className="inline-flex items-center gap-2 text-xs text-zinc-500 border border-zinc-800 rounded-full px-3 py-1 mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Private beta
-          </div>
-
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-[1.1] tracking-tight mb-5">
-            Ideas deserve better
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400">
-              than your notes app
-            </span>
-          </h1>
-          
-          <p className="text-base sm:text-lg text-zinc-400 leading-relaxed mb-10 max-w-lg mx-auto">
-            Evaluate, prioritize, and ship your ideas—or kill them with conviction. 
-            No more endless brainstorm docs.
-          </p>
-
-          <button
-            onClick={scrollToPlayground}
-            className="group inline-flex items-center gap-2 bg-white text-black font-medium text-sm px-6 py-3 rounded-md hover:bg-zinc-200 transition-all"
-          >
-            Try it now
-            <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-
-          <p className="mt-4 text-xs text-zinc-600">
-            No account needed
-          </p>
-        </motion.div>
-
-        {/* Scroll hint */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-8"
-        >
+      <section className="relative pt-32 pb-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          {/* Badge */}
           <motion.div 
-            animate={{ y: [0, 6, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-5 h-8 rounded-full border border-zinc-700 flex items-start justify-center p-1.5"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-center mb-8"
           >
-            <div className="w-0.5 h-1.5 rounded-full bg-zinc-600" />
+            <div className="inline-flex items-center gap-2 text-xs text-zinc-400 border border-zinc-800 rounded-full px-3 py-1.5 bg-zinc-900/50">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Now in private beta
+            </div>
           </motion.div>
-        </motion.div>
+
+          {/* Headline */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-center max-w-3xl mx-auto mb-8"
+          >
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-[1.1] tracking-tight mb-6">
+              Turn 50 scattered ideas
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-violet-400 to-purple-400">
+                into 1 shipped product
+              </span>
+            </h1>
+            
+            <p className="text-lg text-zinc-400 leading-relaxed max-w-xl mx-auto">
+              Stop losing ideas in Notion docs. Collect, evaluate, and prioritize with a scoring system that actually works.
+            </p>
+          </motion.div>
+
+          {/* CTAs */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16"
+          >
+            <button
+              onClick={scrollToPlayground}
+              className="group inline-flex items-center gap-2 bg-white text-black font-medium text-sm px-6 py-3 rounded-lg hover:bg-zinc-200 transition-all shadow-lg shadow-white/10"
+            >
+              Try it free
+              <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            <Link 
+              href="#how-it-works"
+              className="inline-flex items-center gap-2 text-zinc-400 hover:text-white font-medium text-sm px-6 py-3 transition-colors"
+            >
+              See how it works
+            </Link>
+          </motion.div>
+
+          {/* App Mockup */}
+          <AppMockup />
+
+          {/* Social proof alternative */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="mt-16 text-center"
+          >
+            <p className="text-xs text-zinc-600 uppercase tracking-wider mb-4">
+              Built for teams who ship fast
+            </p>
+            <div className="flex items-center justify-center gap-8 text-zinc-500">
+              <span className="text-sm">Startup founders</span>
+              <span className="w-1 h-1 rounded-full bg-zinc-700" />
+              <span className="text-sm">Product teams</span>
+              <span className="w-1 h-1 rounded-full bg-zinc-700" />
+              <span className="text-sm">Solo makers</span>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="py-24 px-6 border-t border-zinc-800/50">
+        <div className="max-w-4xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              From chaos to clarity in 3 steps
+            </h2>
+            <p className="text-zinc-400 max-w-lg mx-auto">
+              Most ideas die in messy docs. Briefix gives them a fighting chance.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "01",
+                title: "Capture everything",
+                desc: "Dump all your ideas in one place. Browser extension, Slack, or just type it in.",
+                icon: (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                )
+              },
+              {
+                step: "02", 
+                title: "Score ruthlessly",
+                desc: "Rate each idea on Impact, Effort, and Confidence. The math does the rest.",
+                icon: (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                )
+              },
+              {
+                step: "03",
+                title: "Ship or kill",
+                desc: "Top ideas rise. Bad ones get killed with a reason. No more zombie ideas.",
+                icon: (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                )
+              }
+            ].map((item, i) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="relative"
+              >
+                <div className="text-[80px] font-bold text-zinc-900 absolute -top-4 -left-2 select-none">
+                  {item.step}
+                </div>
+                <div className="relative pt-8">
+                  <div className="w-10 h-10 rounded-lg bg-zinc-800/80 flex items-center justify-center text-zinc-400 mb-4">
+                    {item.icon}
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+                  <p className="text-sm text-zinc-500 leading-relaxed">{item.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Playground */}
-      <section ref={playgroundRef} className="py-32 px-6">
+      <section ref={playgroundRef} className="py-24 px-6 border-t border-zinc-800/50">
         <div className="max-w-xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-10"
+          >
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+              Try it yourself
+            </h2>
+            <p className="text-zinc-400">
+              No signup required. Add your ideas and see how it works.
+            </p>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -354,7 +697,7 @@ export default function LandingPage() {
                       <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400">
                         {ideas[evalIndex].totalScore}
                       </div>
-                      <div className="text-xs text-zinc-500 mt-1">Score</div>
+                      <div className="text-xs text-zinc-500 mt-1">ICE Score</div>
                     </div>
 
                     <button onClick={nextEval} className="w-full mt-5 text-sm bg-white text-black font-medium py-2.5 rounded-md hover:bg-zinc-200 transition-colors">
@@ -487,30 +830,36 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Built for */}
-      <section className="py-24 px-6">
-        <div className="max-w-3xl mx-auto">
-          <p className="text-xs text-zinc-600 text-center mb-8 uppercase tracking-wider">
-            Built for
-          </p>
-          <div className="grid sm:grid-cols-3 gap-8 text-center">
-            {[
-              { title: "Founders", desc: "Turn 100 ideas into 1 experiment" },
-              { title: "Product teams", desc: "Prioritize with data, not opinions" },
-              { title: "Solo makers", desc: "Stop overthinking, start shipping" }
-            ].map((item) => (
-              <div key={item.title}>
-                <h3 className="text-sm font-medium text-white mb-1">{item.title}</h3>
-                <p className="text-xs text-zinc-500">{item.desc}</p>
-              </div>
-            ))}
-          </div>
+      {/* Final CTA */}
+      <section className="py-24 px-6 border-t border-zinc-800/50">
+        <div className="max-w-2xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              Ready to ship your best ideas?
+            </h2>
+            <p className="text-zinc-400 mb-8">
+              Join the waitlist and be the first to know when we launch.
+            </p>
+            <Link 
+              href="/signup"
+              className="inline-flex items-center gap-2 bg-white text-black font-medium text-sm px-6 py-3 rounded-lg hover:bg-zinc-200 transition-all"
+            >
+              Get early access
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </motion.div>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="py-6 px-6 border-t border-zinc-800/50">
-        <div className="max-w-3xl mx-auto flex items-center justify-between text-xs text-zinc-600">
+        <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-zinc-600">
           <span>© 2025 Briefix</span>
           <div className="flex gap-4">
             <Link href="/login" className="hover:text-zinc-400 transition-colors">Log in</Link>
