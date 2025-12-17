@@ -313,7 +313,7 @@ function FAQAccordion() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {faqs.map((faq, i) => (
         <div
           key={i}
