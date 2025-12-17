@@ -1,101 +1,248 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
-type ValidationResult = {
-  demandScore: number;
-  competition: "Low" | "Medium" | "High";
-  estimatedRevenue: string;
-  searchVolume: string;
-  existingCourses: number;
-  avgPrice: number;
-  niche: {
-    found: boolean;
-    suggestion: string;
-    reason: string;
-  };
-  verdict: "Worth building" | "Needs refinement" | "High risk";
-  tips: string[];
-};
+// Demo Flow Step Component
+function DemoStep({ 
+  step, 
+  title, 
+  description, 
+  isActive,
+  children 
+}: { 
+  step: number;
+  title: string;
+  description: string;
+  isActive: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: step * 0.15 }}
+      className={`p-5 rounded-xl border transition-all duration-300 ${
+        isActive 
+          ? "bg-cyan-500/5 border-cyan-500/30" 
+          : "bg-zinc-900/30 border-zinc-800"
+      }`}
+    >
+      <div className="flex items-start gap-4">
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${
+          isActive ? "bg-cyan-500 text-white" : "bg-zinc-800 text-zinc-500"
+        }`}>
+          {step}
+        </div>
+        <div className="flex-1">
+          <h3 className="font-medium text-white mb-1">{title}</h3>
+          <p className="text-sm text-zinc-400 mb-4">{description}</p>
+          {children}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
-// Validation logic
-function generateValidation(topic: string): ValidationResult {
-  const topicLower = topic.toLowerCase();
-  
-  const techKeywords = ["python", "javascript", "coding", "programming", "web", "app", "data", "ai", "machine learning", "sql", "react"];
-  const businessKeywords = ["marketing", "sales", "business", "startup", "entrepreneur", "freelance", "copywriting"];
-  const creativeKeywords = ["design", "photo", "video", "music", "art", "writing", "illustration"];
-  const nicheKeywords = ["healthcare", "legal", "real estate", "finance", "teachers", "parents", "doctors", "nurses", "accountants"];
-  
-  const hasTech = techKeywords.some(k => topicLower.includes(k));
-  const hasBusiness = businessKeywords.some(k => topicLower.includes(k));
-  const hasCreative = creativeKeywords.some(k => topicLower.includes(k));
-  const hasNiche = nicheKeywords.some(k => topicLower.includes(k));
-  
-  let demandScore = 50 + Math.floor(Math.random() * 25);
-  let competition: "Low" | "Medium" | "High" = "Medium";
-  let existingCourses = 100 + Math.floor(Math.random() * 300);
-  
-  if (hasTech) {
-    demandScore += 15;
-    competition = "High";
-    existingCourses += 400;
-  }
-  if (hasBusiness) {
-    demandScore += 10;
-    competition = "High";
-    existingCourses += 250;
-  }
-  if (hasCreative) {
-    demandScore += 5;
-  }
-  if (hasNiche) {
-    demandScore += 12;
-    competition = "Low";
-    existingCourses = Math.floor(existingCourses / 4);
-  }
-  
-  demandScore = Math.min(94, demandScore);
-  
-  const avgPrice = hasNiche ? 149 + Math.floor(Math.random() * 100) : 49 + Math.floor(Math.random() * 80);
-  const monthlyRevenue = demandScore * 50 + Math.floor(Math.random() * 2000);
-  const revenueMin = Math.floor(monthlyRevenue * 0.4 / 1000);
-  const revenueMax = Math.floor(monthlyRevenue * 1.2 / 1000);
-  
-  const nicheSuggestions: Record<string, { suggestion: string; reason: string }> = {
-    python: { suggestion: `${topic} for Healthcare`, reason: "Only 15 courses exist in this niche" },
-    javascript: { suggestion: `${topic} for Non-Profits`, reason: "Underserved market, low competition" },
-    marketing: { suggestion: `${topic} for SaaS`, reason: "High-ticket niche, $200+ course prices" },
-    design: { suggestion: `${topic} for FinTech`, reason: "Specialized skill with growing demand" },
-    default: { suggestion: `${topic} for Small Business`, reason: "Adding audience reduces competition 60%" }
-  };
-  
-  const nicheKey = Object.keys(nicheSuggestions).find(k => topicLower.includes(k)) || "default";
-  const nicheData = nicheSuggestions[nicheKey];
-  
-  let verdict: "Worth building" | "Needs refinement" | "High risk" = "Needs refinement";
-  if (demandScore >= 72 && competition !== "High") verdict = "Worth building";
-  else if (demandScore < 55 || (competition === "High" && !hasNiche)) verdict = "High risk";
-  
-  const tips: string[] = [];
-  if (competition === "High") tips.push("Narrow to a specific audience to stand out");
-  if (!hasNiche) tips.push("Adding a niche can reduce competition by 60%");
-  if (demandScore >= 75) tips.push("Strong demand — move fast");
-  if (avgPrice > 100) tips.push("Higher price point works here");
-  
-  return {
-    demandScore,
-    competition,
-    estimatedRevenue: `$${Math.max(1, revenueMin)}K-${Math.max(2, revenueMax)}K/mo`,
-    searchVolume: `${Math.floor(demandScore * 15)}K/mo`,
-    existingCourses,
-    avgPrice,
-    niche: { found: true, suggestion: nicheData.suggestion, reason: nicheData.reason },
-    verdict,
-    tips: tips.slice(0, 2),
-  };
+// Connect Animation
+function ConnectDemo() {
+  const [connected, setConnected] = useState(false);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    if (isInView) {
+      const timer = setTimeout(() => setConnected(true), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isInView]);
+
+  return (
+    <div ref={ref} className="flex items-center gap-3">
+      {[
+        { name: "Zoom", color: "bg-blue-500" },
+        { name: "Meet", color: "bg-green-500" },
+        { name: "Upload", color: "bg-zinc-600" },
+      ].map((item, i) => (
+        <motion.div
+          key={item.name}
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={isInView ? { scale: 1, opacity: 1 } : {}}
+          transition={{ delay: i * 0.1 }}
+          className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 ${
+            connected ? `${item.color} text-white` : "bg-zinc-800 text-zinc-400"
+          } transition-all duration-500`}
+        >
+          {connected && (
+            <motion.svg 
+              initial={{ scale: 0 }} 
+              animate={{ scale: 1 }}
+              className="w-3 h-3" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </motion.svg>
+          )}
+          {item.name}
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+// Analyze Animation
+function AnalyzeDemo() {
+  const [phase, setPhase] = useState(0);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    if (!isInView) return;
+    const timers = [
+      setTimeout(() => setPhase(1), 400),
+      setTimeout(() => setPhase(2), 1000),
+      setTimeout(() => setPhase(3), 1600),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [isInView]);
+
+  return (
+    <div ref={ref} className="space-y-2">
+      <div className="flex items-center gap-2 h-6">
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ height: 4 }}
+            animate={{ height: phase >= 1 ? 8 + Math.random() * 16 : 4 }}
+            transition={{ duration: 0.3, delay: i * 0.05 }}
+            className="w-1.5 bg-cyan-500/60 rounded-full"
+          />
+        ))}
+      </div>
+      {phase >= 2 && (
+        <motion.p 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }}
+          className="text-xs text-zinc-500"
+        >
+          Transcribing...
+        </motion.p>
+      )}
+      {phase >= 3 && (
+        <motion.p 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }}
+          className="text-xs text-cyan-400"
+        >
+          Analysis complete
+        </motion.p>
+      )}
+    </div>
+  );
+}
+
+// Metrics Preview Component
+function MetricsPreview() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (isInView) {
+      const timer = setTimeout(() => setShow(true), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isInView]);
+
+  return (
+    <div ref={ref} className="bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden">
+      <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+        <span className="text-sm font-medium text-white">Session Analysis</span>
+        <span className="text-xs text-zinc-500">Demo</span>
+      </div>
+      
+      <div className="p-4 space-y-5">
+        {/* Speaking Balance */}
+        <div>
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-zinc-400">Speaking Balance</span>
+            <span className="text-white">80% You / 20% Student</span>
+          </div>
+          <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={show ? { width: "80%" } : {}}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Engagement Dips */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={show ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.3 }}
+          className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg"
+        >
+          <span className="text-amber-400">📉</span>
+          <div>
+            <p className="text-sm text-white">3 moments where attention dropped</p>
+            <p className="text-xs text-zinc-500">Click to review timestamps</p>
+          </div>
+        </motion.div>
+
+        {/* A vs B */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={show ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.5 }}
+        >
+          <p className="text-sm text-zinc-400 mb-2">Explanation Comparison</p>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+              <span className="text-sm text-white">Method A: Visual diagram</span>
+              <span className="text-emerald-400 font-medium">85% understood</span>
+            </div>
+            <div className="flex items-center justify-between p-2 bg-zinc-800/50 border border-zinc-700 rounded-lg">
+              <span className="text-sm text-zinc-300">Method B: Verbal only</span>
+              <span className="text-zinc-400 font-medium">62% understood</span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+// Privacy Section
+function PrivacySection() {
+  const items = [
+    { icon: "🔒", text: "Process locally, delete after analysis" },
+    { icon: "🎓", text: "Only you see your recordings" },
+    { icon: "✓", text: "GDPR & COPPA compliant" },
+  ];
+
+  return (
+    <div className="grid sm:grid-cols-3 gap-4">
+      {items.map((item, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: i * 0.1 }}
+          className="flex items-center gap-3 p-4 bg-zinc-900/30 border border-zinc-800 rounded-lg"
+        >
+          <span className="text-lg">{item.icon}</span>
+          <span className="text-sm text-zinc-300">{item.text}</span>
+        </motion.div>
+      ))}
+    </div>
+  );
 }
 
 // FAQ Component
@@ -103,9 +250,18 @@ function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   
   const faqs = [
-    { q: "How does this work?", a: "We analyze search trends, existing courses, and market data to estimate demand, competition, and revenue potential." },
-    { q: "Is it accurate?", a: "We use real market signals. It won't guarantee success, but it'll help you avoid obvious mistakes." },
-    { q: "What's coming next?", a: "Student tracking and lesson testing — connect your platform and see where students drop off." },
+    { 
+      q: "How does the analysis work?", 
+      a: "Connect your Zoom account or upload recordings. Our AI transcribes the session, analyzes speaking patterns, identifies engagement dips, and compares different teaching methods you've used." 
+    },
+    { 
+      q: "Is my data private?", 
+      a: "Yes. Recordings are processed securely and deleted after analysis. We never share your data. Only you can see your session analytics." 
+    },
+    { 
+      q: "What teaching metrics do you track?", 
+      a: "Speaking balance (you vs student), engagement patterns, explanation effectiveness, question frequency, and concept comprehension signals." 
+    },
   ];
 
   return (
@@ -138,10 +294,7 @@ function FAQ() {
 }
 
 export default function LandingPage() {
-  const [topic, setTopic] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [result, setResult] = useState<ValidationResult | null>(null);
-  
+  const [activeStep, setActiveStep] = useState(1);
   const [email, setEmail] = useState("");
   const [emailStatus, setEmailStatus] = useState<"idle" | "loading" | "success">("idle");
   const [waitlistCount, setWaitlistCount] = useState(127);
@@ -150,18 +303,13 @@ export default function LandingPage() {
     fetch("/api/waitlist").then(r => r.json()).then(d => d.count && setWaitlistCount(d.count)).catch(() => {});
   }, []);
 
-  const handleValidate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!topic.trim() || isAnalyzing) return;
-    
-    setIsAnalyzing(true);
-    setResult(null);
-    
-    await new Promise(r => setTimeout(r, 1800));
-    
-    setResult(generateValidation(topic));
-    setIsAnalyzing(false);
-  };
+  // Auto-cycle through steps
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep(s => s >= 3 ? 1 : s + 1);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,182 +331,108 @@ export default function LandingPage() {
     }
   };
 
-  const resetValidator = () => {
-    setTopic("");
-    setResult(null);
-  };
-
-  const getVerdictStyle = (v: string) => {
-    if (v === "Worth building") return "bg-emerald-500/10 border-emerald-500/30 text-emerald-400";
-    if (v === "Needs refinement") return "bg-yellow-500/10 border-yellow-500/30 text-yellow-400";
-    return "bg-red-500/10 border-red-500/30 text-red-400";
-  };
-
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-white">
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[120px]" />
       </div>
 
       {/* Header */}
       <header className="relative z-10 border-b border-white/5">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link href="/" className="font-semibold flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold">C</div>
-            CourseOS
+            <div className="w-6 h-6 rounded bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-xs font-bold">C</div>
+            Chalk
           </Link>
+          <span className="text-xs text-zinc-500">For online tutors</span>
         </div>
       </header>
 
       {/* Main */}
-      <main className="relative z-10 max-w-2xl mx-auto px-6 py-20">
+      <main className="relative z-10 max-w-4xl mx-auto px-6 py-16">
         
         {/* Hero */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-4 leading-tight">
-            Will your course idea sell?
-          </h1>
-          <p className="text-zinc-400 text-lg">
-            Find out in 30 seconds. Free.
-          </p>
+        <div className="text-center mb-16">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight"
+          >
+            See what works in your teaching
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-lg text-zinc-400 max-w-xl mx-auto"
+          >
+            AI analyzes your online sessions. Discover which explanations actually get results.
+          </motion.p>
         </div>
 
-        {/* Validator */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 sm:p-8">
-          
-          {/* Input */}
-          <form onSubmit={handleValidate} className="mb-6">
-            <label className="block text-sm text-zinc-400 mb-2">Your course topic</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g. Python for data science"
-                className="flex-1 bg-zinc-800/50 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder:text-zinc-500 focus:outline-none focus:border-violet-500/50 transition-colors"
-                disabled={isAnalyzing}
-              />
-              <button
-                type="submit"
-                disabled={!topic.trim() || isAnalyzing}
-                className="bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-medium px-6 py-3 rounded-lg transition-colors whitespace-nowrap"
-              >
-                {isAnalyzing ? "..." : "Validate"}
-              </button>
+        {/* Demo Flow - 3 Steps */}
+        <div className="grid md:grid-cols-3 gap-4 mb-16">
+          <DemoStep
+            step={1}
+            title="Connect"
+            description="Connect Zoom or upload recordings"
+            isActive={activeStep === 1}
+          >
+            <ConnectDemo />
+          </DemoStep>
+
+          <DemoStep
+            step={2}
+            title="Analyze"
+            description="AI analyzes your sessions automatically"
+            isActive={activeStep === 2}
+          >
+            <AnalyzeDemo />
+          </DemoStep>
+
+          <DemoStep
+            step={3}
+            title="Improve"
+            description="See which explanations work best"
+            isActive={activeStep === 3}
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-2 bg-emerald-500/50 rounded-full" />
+              <span className="text-xs text-emerald-400">85%</span>
             </div>
-          </form>
-
-          {/* Loading */}
-          <AnimatePresence>
-            {isAnalyzing && (
-              <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="text-center py-12"
-              >
-                <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-zinc-400 text-sm">Analyzing market data...</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Result */}
-          <AnimatePresence>
-            {result && !isAnalyzing && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className="space-y-5"
-              >
-                {/* Verdict */}
-                <div className={`p-4 rounded-xl border text-center ${getVerdictStyle(result.verdict)}`}>
-                  <p className="text-xl font-semibold">{result.verdict}</p>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-white">{result.demandScore}</p>
-                    <p className="text-xs text-zinc-500">Demand</p>
-                  </div>
-                  <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-                    <p className={`text-2xl font-bold ${
-                      result.competition === "Low" ? "text-emerald-400" :
-                      result.competition === "Medium" ? "text-yellow-400" : "text-red-400"
-                    }`}>{result.competition}</p>
-                    <p className="text-xs text-zinc-500">Competition</p>
-                  </div>
-                  <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-white">{result.estimatedRevenue}</p>
-                    <p className="text-xs text-zinc-500">Revenue</p>
-                  </div>
-                </div>
-
-                {/* Niche */}
-                {result.niche.found && (
-                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                    <p className="text-sm text-blue-400 mb-1">Niche opportunity</p>
-                    <p className="text-white font-medium">{result.niche.suggestion}</p>
-                    <p className="text-sm text-zinc-400 mt-1">{result.niche.reason}</p>
-                  </div>
-                )}
-
-                {/* Tips */}
-                {result.tips.length > 0 && (
-                  <div className="space-y-1.5">
-                    {result.tips.map((tip, i) => (
-                      <p key={i} className="text-sm text-zinc-400 flex items-start gap-2">
-                        <span className="text-violet-400">→</span> {tip}
-                      </p>
-                    ))}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={resetValidator}
-                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Try another idea
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Empty state */}
-          {!result && !isAnalyzing && (
-            <div className="text-center py-8 text-zinc-500 text-sm">
-              <p>Enter any course topic to see demand and competition</p>
-              <div className="flex flex-wrap gap-2 justify-center mt-4">
-                {["Python basics", "Digital marketing", "UI design"].map(ex => (
-                  <button
-                    key={ex}
-                    onClick={() => setTopic(ex)}
-                    className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-400 hover:text-white transition-colors"
-                  >
-                    {ex}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="flex-1 h-2 bg-zinc-600/50 rounded-full" style={{ width: "62%" }} />
+              <span className="text-xs text-zinc-500">62%</span>
             </div>
-          )}
+          </DemoStep>
         </div>
 
-        {/* Email signup - after validator */}
+        {/* Metrics Preview */}
+        <div className="mb-16">
+          <h2 className="text-xl font-semibold text-center mb-6">What you'll see</h2>
+          <MetricsPreview />
+        </div>
+
+        {/* Privacy Section */}
+        <div className="mb-16">
+          <h2 className="text-xl font-semibold text-center mb-6">Your data stays yours</h2>
+          <PrivacySection />
+        </div>
+
+        {/* Email Signup */}
         <motion.div 
           initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          transition={{ delay: 0.5 }}
-          className="mt-12 text-center"
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center mb-16 p-8 bg-gradient-to-b from-cyan-500/5 to-transparent border border-cyan-500/10 rounded-2xl"
         >
-          <p className="text-zinc-400 mb-4">
-            <span className="text-white font-medium">Coming soon:</span> Connect your platform. See where students drop off.
-          </p>
+          <h2 className="text-2xl font-semibold mb-2">Join the beta</h2>
+          <p className="text-zinc-400 mb-6">Be first to try Chalk. Free for early adopters.</p>
           
           {emailStatus === "success" ? (
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 inline-block">
-              <p className="text-emerald-400">You're on the list!</p>
+              <p className="text-emerald-400">You're on the list! We'll be in touch soon.</p>
             </div>
           ) : (
             <form onSubmit={handleEmailSubmit} className="flex gap-2 max-w-sm mx-auto">
@@ -367,31 +441,31 @@ export default function LandingPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-700"
+                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500/50 transition-colors"
               />
               <button
                 type="submit"
                 disabled={emailStatus === "loading"}
-                className="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-3 rounded-lg font-medium transition-colors"
               >
-                Notify me
+                Join beta
               </button>
             </form>
           )}
           
-          <p className="text-xs text-zinc-600 mt-3">{waitlistCount}+ creators waiting</p>
+          <p className="text-xs text-zinc-600 mt-4">{waitlistCount}+ tutors waiting</p>
         </motion.div>
 
         {/* FAQ */}
-        <div className="mt-16">
-          <h2 className="text-lg font-semibold text-center mb-6">FAQ</h2>
+        <div className="mb-16">
+          <h2 className="text-xl font-semibold text-center mb-6">FAQ</h2>
           <FAQ />
         </div>
       </main>
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/5 py-6 text-center text-sm text-zinc-600">
-        © 2025 CourseOS
+        © 2025 Chalk
       </footer>
     </div>
   );
