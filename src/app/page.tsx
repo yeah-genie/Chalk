@@ -58,55 +58,112 @@ function FeatureSection({
   );
 }
 
+// Tool icons
+function GitHubIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+    </svg>
+  );
+}
+
+function VercelIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+      <path d="M24 22.525H0l12-21.05 12 21.05z"/>
+    </svg>
+  );
+}
+
+function GoogleAnalyticsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+      <path d="M22.84 2.998v17.998c0 1.66-1.34 3.004-3 3.004-1.66 0-3-1.344-3-3.004V2.998c0-1.656 1.34-3 3-3 1.66 0 3 1.344 3 3zM6 13.998v7.002c0 1.656-1.34 3-3 3s-3-1.344-3-3v-7.002c0-1.659 1.34-3.003 3-3.003s3 1.344 3 3.003zm8.5-4.5v11.498c0 1.66-1.34 3.004-3 3.004s-3-1.344-3-3.004V9.498c0-1.656 1.34-3 3-3s3 1.344 3 3z"/>
+    </svg>
+  );
+}
+
+function SlackIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+      <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+    </svg>
+  );
+}
+
+function MixpanelIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.8a7.2 7.2 0 110 14.4 7.2 7.2 0 010-14.4z"/>
+    </svg>
+  );
+}
+
+function AmplitudeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+      <path d="M12 2L2 19.5h20L12 2zm0 4l7 12H5l7-12z"/>
+    </svg>
+  );
+}
+
 // Connect animation
 function ConnectDemo() {
-  const [connected, setConnected] = useState([false, false, false]);
+  const [connected, setConnected] = useState<boolean[]>([]);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
 
+  const tools = [
+    { name: "GitHub", icon: <GitHubIcon /> },
+    { name: "Vercel", icon: <VercelIcon /> },
+    { name: "Google Analytics", icon: <GoogleAnalyticsIcon /> },
+    { name: "Slack", icon: <SlackIcon /> },
+    { name: "Mixpanel", icon: <MixpanelIcon /> },
+    { name: "Amplitude", icon: <AmplitudeIcon /> },
+  ];
+
   useEffect(() => {
     if (!isInView) return;
-    const timers = [
-      setTimeout(() => setConnected([true, false, false]), 300),
-      setTimeout(() => setConnected([true, true, false]), 600),
-      setTimeout(() => setConnected([true, true, true]), 900),
-    ];
+    setConnected([]);
+    const timers = tools.map((_, i) => 
+      setTimeout(() => setConnected(prev => [...prev, true]), 200 * (i + 1))
+    );
     return () => timers.forEach(clearTimeout);
   }, [isInView]);
 
-  const tools = [
-    { name: "GitHub", icon: "G" },
-    { name: "Vercel", icon: "V" },
-    { name: "Analytics", icon: "A" },
-  ];
-
   return (
-    <div ref={ref} className="space-y-3">
+    <div ref={ref} className="grid grid-cols-2 gap-2">
       {tools.map((tool, i) => (
         <motion.div
           key={tool.name}
-          initial={{ opacity: 0, x: 20 }}
-          animate={isInView ? { opacity: 1, x: 0 } : {}}
-          transition={{ delay: i * 0.15 }}
-          className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-500 ${
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={isInView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ delay: i * 0.08 }}
+          className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-400 ${
             connected[i] 
               ? "bg-emerald-500/5 border-emerald-500/20" 
               : "bg-zinc-900/50 border-zinc-800"
           }`}
         >
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-medium transition-all duration-500 ${
-              connected[i] ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"
-            }`}>
-              {tool.icon}
-            </div>
-            <span className="text-white font-medium">{tool.name}</span>
-          </div>
-          <div className={`text-sm transition-all duration-500 ${
-            connected[i] ? "text-emerald-400" : "text-zinc-600"
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-400 ${
+            connected[i] ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"
           }`}>
-            {connected[i] ? "Connected" : "Connect"}
+            {tool.icon}
           </div>
+          <div className="flex-1 min-w-0">
+            <span className="text-sm text-white truncate block">{tool.name}</span>
+          </div>
+          {connected[i] && (
+            <motion.div 
+              initial={{ scale: 0 }} 
+              animate={{ scale: 1 }}
+              className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center"
+            >
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </motion.div>
+          )}
         </motion.div>
       ))}
     </div>
@@ -133,11 +190,11 @@ function ShipDemo() {
     <div ref={ref} className="bg-[#0c0c0e] border border-zinc-800 rounded-xl overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800/80 bg-[#111113]">
         <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-zinc-700" />
-          <div className="w-3 h-3 rounded-full bg-zinc-700" />
-          <div className="w-3 h-3 rounded-full bg-zinc-700" />
+          <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+          <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
+          <div className="w-3 h-3 rounded-full bg-[#28c840]" />
         </div>
-        <span className="text-xs text-zinc-500">Terminal</span>
+        <span className="text-xs text-zinc-500 ml-2">Terminal</span>
       </div>
       <div className="p-5 font-mono text-sm space-y-2">
         <p className="text-zinc-500">$ git push origin main</p>
@@ -316,21 +373,41 @@ export default function LandingPage() {
             </h1>
             
             <p className="text-xl text-zinc-400 leading-relaxed mb-10 max-w-lg mx-auto">
-              Connect your tools once. Every deploy becomes a tracked experiment with automatic impact analysis.
+              Connect your stack once. We'll track every deploy and tell you what's actually moving the needle.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/signup"
-                className="inline-flex items-center gap-2 bg-white text-black font-medium px-6 py-3 rounded-lg hover:bg-zinc-200 transition-colors"
+            {/* Email form in Hero */}
+            {status === "success" ? (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 max-w-md mx-auto"
               >
-                Get early access
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-              <span className="text-sm text-zinc-600">No credit card required</span>
-            </div>
+                <p className="text-emerald-400 font-medium">You're on the list! We'll be in touch.</p>
+              </motion.div>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                  className="flex-1 bg-zinc-900/80 border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-700 transition-colors"
+                  disabled={status === "loading"}
+                />
+                <button 
+                  type="submit" 
+                  className="bg-white text-black font-medium px-6 py-3 rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50 whitespace-nowrap"
+                  disabled={status === "loading"}
+                >
+                  {status === "loading" ? "..." : "Get early access"}
+                </button>
+              </form>
+            )}
+            
+            <p className="text-sm text-zinc-600 mt-4">
+              Join {waitlistCount}+ others. No spam, just updates.
+            </p>
           </motion.div>
 
           {/* Scroll indicator */}
@@ -355,7 +432,7 @@ export default function LandingPage() {
       <FeatureSection
         label="Step 1"
         title="Connect once, track forever"
-        description="Link your GitHub, Vercel, and analytics in under 5 minutes. No SDK. No code changes. Just authenticate and you're done."
+        description="Authenticate with your existing tools. Takes about 5 minutes, no code changes required. We play nice with everything you already use."
       >
         <ConnectDemo />
       </FeatureSection>
@@ -364,7 +441,7 @@ export default function LandingPage() {
       <FeatureSection
         label="Step 2"
         title="Ship like you always do"
-        description="Push code, deploy features. Briefix watches your commits and deployments, automatically detecting what changed."
+        description="Just keep pushing code. We watch your deploys and automatically figure out what changed. You don't have to remember to log anything."
       >
         <ShipDemo />
       </FeatureSection>
@@ -373,7 +450,7 @@ export default function LandingPage() {
       <FeatureSection
         label="Step 3"
         title="See what actually works"
-        description="Every change is tracked with before/after metrics. No guessing, no spreadsheets—just clear impact data."
+        description="Every change gets tracked with real metrics. No more guessing if that button tweak helped or hurt. You'll know within days, not months."
       >
         <LearnDemo />
       </FeatureSection>
@@ -385,7 +462,7 @@ export default function LandingPage() {
             Ready to ship smarter?
           </h2>
           <p className="text-zinc-400 mb-8">
-            Join {waitlistCount}+ teams already on the waitlist.
+            Stop flying blind. Know exactly what's working.
           </p>
 
           {status === "success" ? (
@@ -396,7 +473,7 @@ export default function LandingPage() {
                 </svg>
               </div>
               <p className="text-white font-medium">You're on the list!</p>
-              <p className="text-sm text-zinc-400 mt-1">We'll be in touch soon.</p>
+              <p className="text-sm text-zinc-400 mt-1">We'll reach out soon.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
@@ -413,7 +490,7 @@ export default function LandingPage() {
                 className="bg-white text-black font-medium px-6 py-3 rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50 whitespace-nowrap"
                 disabled={status === "loading"}
               >
-                {status === "loading" ? "Joining..." : "Join waitlist"}
+                {status === "loading" ? "..." : "Join waitlist"}
               </button>
             </form>
           )}
