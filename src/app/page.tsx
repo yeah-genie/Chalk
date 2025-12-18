@@ -4,43 +4,35 @@ import { useState, useEffect, useRef } from "react";
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
-// Zoom logo - accurate brand style
-function ZoomIcon() {
-  return (
-    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="4" fill="#2D8CFF"/>
-      <path d="M4.5 8C4.5 7.17 5.17 6.5 6 6.5h8c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5H6c-.83 0-1.5-.67-1.5-1.5V8z" fill="white"/>
-      <path d="M16 9.5l3.5-2v7l-3.5-2v-3z" fill="white"/>
-    </svg>
-  );
-}
-
-// Google Meet logo - accurate 4-color brand style
-function MeetIcon() {
-  return (
-    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-      {/* Blue left side */}
-      <path d="M2 6a2 2 0 012-2h2v8H2V6z" fill="#4285F4"/>
-      <path d="M2 12h4v8H4a2 2 0 01-2-2v-6z" fill="#0D65D9"/>
-      {/* Red top-left corner */}
-      <path d="M4 4h4L4 8V4z" fill="#EA4335"/>
-      {/* Yellow/Orange top */}
-      <path d="M8 4h6a2 2 0 012 2v2l-2 2H6V6l2-2z" fill="#FBBC04"/>
-      {/* White center */}
-      <path d="M6 8h8v6H6V8z" fill="white"/>
-      {/* Green bottom and right */}
-      <path d="M6 14h8l2 2v2a2 2 0 01-2 2H6v-6z" fill="#34A853"/>
-      {/* Green play button */}
-      <path d="M16 8l6-3v14l-6-3V8z" fill="#188038"/>
-      <path d="M16 8l6-3v8l-6-1V8z" fill="#34A853"/>
-    </svg>
-  );
-}
-
-function UploadIcon() {
+// Icons
+function MicIcon() {
   return (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+    </svg>
+  );
+}
+
+function ChartIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
     </svg>
   );
 }
@@ -60,150 +52,154 @@ function WindowHeader({ title, variant = "default" }: { title: string; variant?:
 }
 
 // ============================================
-// WOW 1: TIMELINE - Chemistry Lesson
+// DEMO 1: Transformation Story Preview
 // ============================================
-function TimelineDemo() {
+function TransformationDemo() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [activeMarker, setActiveMarker] = useState<number | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
 
-  const markers = [
-    { 
-      time: "03:24", 
-      position: 8, 
-      type: "insight",
-      title: "Analogy clicked",
-      detail: "\"Electrons sharing = friends sharing pizza\"",
-      impact: "+180% engagement"
+  const journey = [
+    {
+      month: "Mar",
+      status: "Start",
+      concept: "Fractions",
+      struggle: "Couldn't add unlike denominators",
+      blockFreq: 8,
+      color: "red"
     },
-    { 
-      time: "15:42", 
-      position: 35, 
-      type: "warning",
-      title: "Attention dropped",
-      detail: "Started listing exceptions",
-      impact: "Consider a visual break"
+    {
+      month: "Apr",
+      status: "Progress",
+      concept: "Linear equations",
+      struggle: "Understanding equals sign",
+      blockFreq: 5,
+      color: "amber"
     },
-    { 
-      time: "28:15", 
-      position: 63, 
-      type: "insight",
-      title: "Best explanation",
-      detail: "Drew molecules on whiteboard",
-      impact: "3.2x retention vs verbal"
+    {
+      month: "May",
+      status: "Breakthrough",
+      concept: "Quadratics",
+      struggle: "Mastered quadratic formula",
+      blockFreq: 3,
+      color: "cyan"
     },
-    { 
-      time: "41:30", 
-      position: 92, 
-      type: "insight",
-      title: "Student breakthrough",
-      detail: "Asked follow-up question",
-      impact: "Deep understanding confirmed"
+    {
+      month: "Jun",
+      status: "Mastery",
+      concept: "Functions",
+      struggle: "None — self-directed learning",
+      blockFreq: 1,
+      color: "emerald"
     },
   ];
 
   useEffect(() => {
     if (!isInView) return;
     const interval = setInterval(() => {
-      setProgress(p => p >= 100 ? 0 : p + 0.5);
-    }, 50);
+      setCurrentStep(s => (s + 1) % journey.length);
+    }, 2500);
     return () => clearInterval(interval);
-  }, [isInView]);
+  }, [isInView, journey.length]);
+
+  const getColorClass = (color: string, type: "bg" | "text" | "border") => {
+    const colors: Record<string, Record<string, string>> = {
+      red: { bg: "bg-red-500", text: "text-red-400", border: "border-red-500/30" },
+      amber: { bg: "bg-amber-500", text: "text-amber-400", border: "border-amber-500/30" },
+      cyan: { bg: "bg-cyan-500", text: "text-cyan-400", border: "border-cyan-500/30" },
+      emerald: { bg: "bg-emerald-500", text: "text-emerald-400", border: "border-emerald-500/30" },
+    };
+    return colors[color]?.[type] || "";
+  };
 
   return (
     <div ref={ref} className="relative">
       <div className="relative bg-[#0a0a0a] border border-zinc-800 rounded-2xl overflow-hidden">
-        <WindowHeader title="Chemistry — Covalent Bonds" variant="dark" />
-        
-        <div className="p-8">
-          {/* Timeline container */}
+        <WindowHeader title="Student A — Transformation Story" variant="dark" />
+
+        <div className="p-6">
+          {/* Progress Timeline */}
           <div className="relative mb-8">
-            {/* Time labels */}
-            <div className="flex justify-between text-xs text-zinc-600 mb-3">
-              <span>0:00</span>
-              <span>45:00</span>
-            </div>
-            
-            {/* Timeline bar */}
-            <div className="relative h-2 bg-zinc-900 rounded-full overflow-hidden">
-              {/* Progress */}
-              <motion.div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-600 to-cyan-400 rounded-full"
-                style={{ width: `${progress}%` }}
-              />
-              
-              {/* Markers */}
-              {markers.map((marker, i) => (
-                <motion.button
-                  key={i}
-                  initial={{ scale: 0 }}
-                  animate={isInView ? { scale: 1 } : {}}
-                  transition={{ delay: 0.3 + i * 0.1 }}
-                  className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full cursor-pointer transition-transform hover:scale-125 ${
-                    marker.type === "insight" 
-                      ? "bg-emerald-500 shadow-lg shadow-emerald-500/30" 
-                      : "bg-amber-500 shadow-lg shadow-amber-500/30"
-                  }`}
-                  style={{ left: `${marker.position}%`, marginLeft: -8 }}
-                  onMouseEnter={() => setActiveMarker(i)}
-                  onMouseLeave={() => setActiveMarker(null)}
-                />
+            <div className="flex justify-between items-center">
+              {journey.map((step, i) => (
+                <div key={i} className="flex flex-col items-center flex-1">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={isInView ? { scale: 1 } : {}}
+                    transition={{ delay: 0.2 + i * 0.1 }}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 ${i === currentStep
+                      ? `${getColorClass(step.color, "bg")} text-white shadow-lg`
+                      : i < currentStep
+                        ? "bg-zinc-700 text-zinc-300"
+                        : "bg-zinc-900 text-zinc-600 border border-zinc-800"
+                      }`}
+                  >
+                    {step.month}
+                  </motion.div>
+                  <span className={`text-[10px] mt-2 ${i === currentStep ? getColorClass(step.color, "text") : "text-zinc-600"}`}>
+                    {step.status}
+                  </span>
+                </div>
               ))}
+            </div>
+
+            {/* Progress line */}
+            <div className="absolute top-5 left-[10%] right-[10%] h-0.5 bg-zinc-800 -z-10">
+              <motion.div
+                className="h-full bg-gradient-to-r from-red-500 via-amber-500 via-cyan-500 to-emerald-500"
+                initial={{ width: 0 }}
+                animate={isInView ? { width: `${(currentStep / (journey.length - 1)) * 100}%` } : {}}
+                transition={{ duration: 0.5 }}
+              />
             </div>
           </div>
 
-          {/* Marker detail popup */}
+          {/* Current Step Detail */}
           <AnimatePresence mode="wait">
-            {activeMarker !== null && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className={`p-4 rounded-xl border ${
-                  markers[activeMarker].type === "insight"
-                    ? "bg-emerald-500/5 border-emerald-500/20"
-                    : "bg-amber-500/5 border-amber-500/20"
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs px-2 py-0.5 rounded ${
-                        markers[activeMarker].type === "insight"
-                          ? "bg-emerald-500/20 text-emerald-400"
-                          : "bg-amber-500/20 text-amber-400"
-                      }`}>
-                        {markers[activeMarker].time}
-                      </span>
-                      <span className={`text-sm font-medium ${
-                        markers[activeMarker].type === "insight" ? "text-emerald-300" : "text-amber-300"
-                      }`}>
-                        {markers[activeMarker].title}
-                      </span>
-                    </div>
-                    <p className="text-zinc-400 text-sm">{markers[activeMarker].detail}</p>
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className={`p-5 rounded-xl border ${getColorClass(journey[currentStep].color, "border")} bg-gradient-to-br from-zinc-900/50 to-zinc-900/20`}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-xs px-2 py-0.5 rounded ${getColorClass(journey[currentStep].color, "bg")} bg-opacity-20 ${getColorClass(journey[currentStep].color, "text")}`}>
+                      {journey[currentStep].month}
+                    </span>
+                    <span className="text-sm font-medium text-white">{journey[currentStep].concept}</span>
                   </div>
-                  <span className={`text-xs ${
-                    markers[activeMarker].type === "insight" ? "text-emerald-400" : "text-amber-400"
-                  }`}>
-                    {markers[activeMarker].impact}
-                  </span>
+                  <p className="text-zinc-400 text-sm">{journey[currentStep].struggle}</p>
                 </div>
-              </motion.div>
-            )}
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-white">{journey[currentStep].blockFreq}</p>
+                  <p className="text-[10px] text-zinc-500">blocks/lesson</p>
+                </div>
+              </div>
+            </motion.div>
           </AnimatePresence>
 
-          {/* Default state */}
-          {activeMarker === null && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center text-zinc-600 text-sm py-4"
-            >
-              Hover on markers to see insights
-            </motion.div>
-          )}
+          {/* Stats summary */}
+          <div className="grid grid-cols-3 gap-3 mt-4">
+            {[
+              { value: "24", label: "Total lessons", change: null },
+              { value: "75%↓", label: "Fewer blocks", change: "emerald" },
+              { value: "12", label: "Concepts mastered", change: "cyan" },
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 10 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ delay: 0.5 + i * 0.1 }}
+                className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-800/50 text-center"
+              >
+                <p className={`text-lg font-bold ${stat.change ? getColorClass(stat.change, "text") : "text-white"}`}>{stat.value}</p>
+                <p className="text-[10px] text-zinc-500">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -211,300 +207,103 @@ function TimelineDemo() {
 }
 
 // ============================================
-// WOW 2: BEFORE/AFTER - Physics Lesson
+// DEMO 2: Proof Card Preview
 // ============================================
-function BeforeAfterDemo() {
+function ProofCardDemo() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [showAfter, setShowAfter] = useState(false);
-
-  useEffect(() => {
-    if (!isInView) return;
-    const timer = setTimeout(() => setShowAfter(true), 1500);
-    return () => clearTimeout(timer);
-  }, [isInView]);
-
-  return (
-    <div ref={ref} className="relative">
-      <div className="grid md:grid-cols-2 gap-4">
-        {/* BEFORE */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={isInView ? { opacity: 1, x: 0 } : {}}
-          className={`relative bg-[#0a0a0a] border rounded-2xl overflow-hidden transition-all duration-500 ${
-            showAfter ? "border-zinc-800 opacity-60" : "border-zinc-700"
-          }`}
-        >
-          <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-            <span className="text-xs text-zinc-500">Physics — Newton's Laws</span>
-            <span className="text-xs text-red-400/80 bg-red-500/10 px-2 py-0.5 rounded">Before</span>
-          </div>
-          
-          <div className="p-6 space-y-4">
-            <div className="font-mono text-sm text-zinc-400 p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
-              "Newton's second law states that F equals m times a, where F is force, m is mass, and a is acceleration..."
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-zinc-500">Student engagement</span>
-                <span className="text-red-400">34%</span>
-              </div>
-              <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={isInView ? { width: "34%" } : {}}
-                  transition={{ duration: 1, delay: 0.5 }}
-                  className="h-full bg-red-500/60 rounded-full"
-                />
-              </div>
-            </div>
-            
-            <p className="text-xs text-zinc-600">
-              Student response: "I don't get why that matters"
-            </p>
-          </div>
-        </motion.div>
-
-        {/* AFTER */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={isInView ? { opacity: 1, x: 0 } : {}}
-          transition={{ delay: 0.3 }}
-          className={`relative bg-[#0a0a0a] border rounded-2xl overflow-hidden transition-all duration-500 ${
-            showAfter ? "border-emerald-500/30 shadow-lg shadow-emerald-500/5" : "border-zinc-800"
-          }`}
-        >
-          <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-            <span className="text-xs text-zinc-500">Physics — Newton's Laws</span>
-            <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">After</span>
-          </div>
-          
-          <div className="p-6 space-y-4">
-            <div className="font-mono text-sm text-zinc-300 p-3 bg-emerald-500/5 rounded-lg border border-emerald-500/20">
-              "Push this textbook across the desk. Feel how hard that was? Now try with your pencil. Easier, right? That's mass affecting force."
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-zinc-500">Student engagement</span>
-                <span className="text-emerald-400">91%</span>
-              </div>
-              <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={showAfter ? { width: "91%" } : {}}
-                  transition={{ duration: 1 }}
-                  className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full"
-                />
-              </div>
-            </div>
-            
-            <p className="text-xs text-emerald-400/80">
-              Student response: "Oh! So heavier things need more force!"
-            </p>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Insight badge */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={showAfter ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 0.5 }}
-        className="mt-6 p-4 bg-gradient-to-r from-cyan-500/5 to-emerald-500/5 border border-cyan-500/20 rounded-xl text-center"
-      >
-        <p className="text-sm text-zinc-300">
-          <span className="text-cyan-400 font-medium">Chalk found:</span> Tactile demonstrations increase retention by <span className="text-emerald-400 font-semibold">2.7x</span> compared to formula-first approaches
-        </p>
-      </motion.div>
-    </div>
-  );
-}
-
-// ============================================
-// WOW 3: WEEKLY REPORT - Premium Dashboard Style
-// ============================================
-function WeeklyReportDemo() {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [activeTab, setActiveTab] = useState(0);
-
-  const weekData = [
-    { day: "M", value: 62, sessions: 2 },
-    { day: "T", value: 71, sessions: 1 },
-    { day: "W", value: 68, sessions: 2 },
-    { day: "T", value: 85, sessions: 1 },
-    { day: "F", value: 89, sessions: 2 },
-  ];
 
   return (
     <div ref={ref} className="relative">
       {/* Glow effect */}
       <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/10 via-transparent to-emerald-500/10 rounded-3xl blur-2xl" />
-      
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
         className="relative"
       >
-        {/* Report container */}
-        <div className="bg-[#0c0c0c] border border-zinc-800/80 rounded-2xl overflow-hidden">
+        {/* Card container - Instagram story aspect */}
+        <div className="max-w-[320px] mx-auto bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 border border-zinc-700/50 rounded-3xl overflow-hidden shadow-2xl">
           {/* Header */}
-          <div className="px-6 py-5 border-b border-zinc-800/50 bg-gradient-to-r from-zinc-900/80 to-zinc-900/40">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-white font-medium">Weekly Report</p>
-                  <p className="text-xs text-zinc-500">Dec 9 - Dec 15, 2024</p>
-                </div>
+          <div className="p-5 pb-4 border-b border-zinc-800/50">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg">
+                E
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-xs text-emerald-400">+18% vs last week</span>
+              <div>
+                <p className="text-white font-semibold">Emma Chen</p>
+                <p className="text-xs text-zinc-500">Math Tutor · 4 years exp.</p>
               </div>
             </div>
           </div>
 
-          <div className="p-6">
-            {/* Stats row */}
-            <div className="grid grid-cols-4 gap-3 mb-6">
-              {[
-                { value: "8", label: "Sessions", trend: null },
-                { value: "76%", label: "Avg. Engagement", trend: "+12%" },
-                { value: "5", label: "Breakthroughs", trend: "+2" },
-                { value: "23min", label: "Avg. Duration", trend: null },
-              ].map((stat, i) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.2 + i * 0.1 }}
-                  className="p-3 bg-zinc-900/50 rounded-xl border border-zinc-800/50"
-                >
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-bold text-white">{stat.value}</span>
-                    {stat.trend && (
-                      <span className="text-xs text-emerald-400">{stat.trend}</span>
-                    )}
-                  </div>
-                  <p className="text-xs text-zinc-500 mt-0.5">{stat.label}</p>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Graph - minimal elegant */}
-            <div className="mb-6 p-4 bg-zinc-900/30 rounded-xl border border-zinc-800/50">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs text-zinc-500">Engagement trend</span>
-                <div className="flex gap-1">
-                  {["1W", "1M", "3M"].map((period, i) => (
-                    <button
-                      key={period}
-                      onClick={() => setActiveTab(i)}
-                      className={`px-2 py-1 text-xs rounded ${
-                        activeTab === i 
-                          ? "bg-zinc-800 text-white" 
-                          : "text-zinc-600 hover:text-zinc-400"
-                      }`}
-                    >
-                      {period}
-                    </button>
-                  ))}
-                </div>
+          {/* Stats */}
+          <div className="p-5 space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+              <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                <ChartIcon />
               </div>
-              
-              {/* Sparkline style graph */}
-              <div className="relative h-20">
-                <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="graphGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="rgb(34, 211, 238)" stopOpacity="0.3" />
-                      <stop offset="100%" stopColor="rgb(34, 211, 238)" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  <motion.path
-                    initial={{ pathLength: 0 }}
-                    animate={isInView ? { pathLength: 1 } : {}}
-                    transition={{ duration: 1.5, delay: 0.5 }}
-                    d="M0,45 Q25,40 40,38 T80,30 T120,25 T160,15 T200,10"
-                    fill="none"
-                    stroke="rgb(34, 211, 238)"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M0,45 Q25,40 40,38 T80,30 T120,25 T160,15 T200,10 L200,60 L0,60 Z"
-                    fill="url(#graphGradient)"
-                  />
-                </svg>
-                
-                {/* Day markers */}
-                <div className="absolute bottom-0 left-0 right-0 flex justify-between px-2">
-                  {weekData.map((day) => (
-                    <span key={day.day} className="text-[10px] text-zinc-600">{day.day}</span>
-                  ))}
-                </div>
+              <div>
+                <p className="text-emerald-400 font-bold text-lg">+23 pts</p>
+                <p className="text-[11px] text-zinc-400">Avg. grade improvement</p>
               </div>
             </div>
 
-            {/* Best moment - premium card */}
+            <div className="grid grid-cols-2 gap-3">
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ delay: 0.3 }}
+                className="p-3 bg-zinc-800/50 rounded-xl text-center"
+              >
+                <p className="text-xl font-bold text-white">87%</p>
+                <p className="text-[10px] text-zinc-500">Retention rate</p>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ delay: 0.4 }}
+                className="p-3 bg-zinc-800/50 rounded-xl text-center"
+              >
+                <p className="text-xl font-bold text-white">520h</p>
+                <p className="text-[10px] text-zinc-500">Total hours</p>
+              </motion.div>
+            </div>
+
+            {/* Transformation badge */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ delay: 0.6 }}
-              className="relative overflow-hidden rounded-xl"
+              transition={{ delay: 0.5 }}
+              className="p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent" />
-              <div className="relative p-4 border border-amber-500/20 rounded-xl">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-6 h-6 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-amber-300">Best Moment</span>
-                      <span className="text-xs text-zinc-600">History — French Revolution</span>
-                    </div>
-                    <p className="text-sm text-white mb-2">
-                      "What would YOU do if bread cost a month's salary?"
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-zinc-500">4-min discussion triggered</span>
-                      <span className="text-xs text-emerald-400 font-medium">2.4x engagement</span>
-                    </div>
-                  </div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="text-amber-400">
+                  <StarIcon />
                 </div>
+                <span className="text-xs text-amber-400 font-medium">Verified Results</span>
               </div>
+              <p className="text-sm text-zinc-300">
+                "24 lessons → <span className="text-emerald-400 font-semibold">75% fewer blocks</span>"
+              </p>
+              <p className="text-[10px] text-zinc-500 mt-1">Anonymized real student data</p>
             </motion.div>
+          </div>
 
-            {/* AI suggestion */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={{ delay: 0.8 }}
-              className="mt-4 p-4 bg-gradient-to-r from-cyan-500/5 to-transparent border border-cyan-500/10 rounded-xl"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-3.5 h-3.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs text-cyan-400 mb-0.5">Try next week</p>
-                  <p className="text-sm text-zinc-400">
-                    Open each topic with a "what if" scenario — your students engage 2x more with hypotheticals.
-                  </p>
-                </div>
+          {/* Footer */}
+          <div className="px-5 py-4 border-t border-zinc-800/50 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded bg-cyan-500/20 flex items-center justify-center">
+                <svg className="w-2.5 h-2.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
               </div>
-            </motion.div>
+              <span className="text-[10px] text-zinc-500">Verified by Chalk</span>
+            </div>
+            <button className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors">
+              View profile →
+            </button>
           </div>
         </div>
       </motion.div>
@@ -513,49 +312,171 @@ function WeeklyReportDemo() {
 }
 
 // ============================================
-// CONNECT SECTION
+// DEMO 3: Parent Report Preview
 // ============================================
-function ConnectDemo() {
+function ParentReportDemo() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
     <div ref={ref} className="relative">
-      <div className="relative bg-[#0a0a0a] border border-zinc-800 rounded-2xl overflow-hidden">
-        <WindowHeader title="Connect your platform" variant="dark" />
-        
-        <div className="p-6 space-y-3">
-          {[
-            { name: "Zoom", icon: <ZoomIcon />, status: "Connect", color: "hover:border-blue-500/30" },
-            { name: "Google Meet", icon: <MeetIcon />, status: "Connect", color: "hover:border-green-500/30" },
-            { name: "Upload recording", icon: <UploadIcon />, status: "Browse", color: "hover:border-zinc-600" },
-          ].map((platform, i) => (
-            <motion.div
-              key={platform.name}
-              initial={{ opacity: 0, x: -20 }}
-              animate={isInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ delay: i * 0.1 }}
-              className={`flex items-center justify-between p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl cursor-pointer transition-all ${platform.color}`}
-            >
-              <div className="flex items-center gap-3">
-                {platform.icon}
-                <span className="text-sm text-zinc-300">{platform.name}</span>
-              </div>
-              <span className="text-xs text-zinc-500">{platform.status}</span>
-            </motion.div>
-          ))}
-          
-          <p className="text-xs text-zinc-600 text-center pt-2">
-            Takes 30 seconds. We never store your recordings.
-          </p>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        className="relative bg-[#0a0a0a] border border-zinc-800 rounded-2xl overflow-hidden"
+      >
+        {/* Email header style */}
+        <div className="px-6 py-4 border-b border-zinc-800 bg-gradient-to-r from-zinc-900 to-zinc-900/50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-xs font-bold">
+              C
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-white">Progress Report #5 — Alex</p>
+              <p className="text-xs text-zinc-500">Emma Chen → Alex's Parents</p>
+            </div>
+            <span className="text-xs text-zinc-600">Just now</span>
+          </div>
         </div>
+
+        <div className="p-6 space-y-5">
+          {/* Summary */}
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ delay: 0.2 }}
+          >
+            <p className="text-xs text-cyan-400 mb-2">Last 5 lessons summary</p>
+            <div className="space-y-2 text-sm text-zinc-300">
+              <p>📚 Covered: Quadratic equations, completing the square</p>
+              <p>✅ Strengths: Formula recall improved, accuracy up</p>
+              <p>📝 Focus area: Word problem interpretation</p>
+            </div>
+          </motion.div>
+
+          {/* Progress bar */}
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ delay: 0.3 }}
+            className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800/50"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-zinc-500">Overall progress</span>
+              <span className="text-xs text-emerald-400">On track</span>
+            </div>
+            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={isInView ? { width: "72%" } : {}}
+                transition={{ duration: 1, delay: 0.5 }}
+                className="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 rounded-full"
+              />
+            </div>
+            <div className="flex justify-between mt-2 text-[10px] text-zinc-600">
+              <span>Start</span>
+              <span>72% complete</span>
+              <span>Goal</span>
+            </div>
+          </motion.div>
+
+          {/* Key insight */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ delay: 0.4 }}
+            className="p-4 bg-gradient-to-r from-emerald-500/10 to-cyan-500/5 border border-emerald-500/20 rounded-xl"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm text-emerald-300 font-medium mb-1">This month's highlight</p>
+                <p className="text-xs text-zinc-400">Confusion frequency down <span className="text-emerald-400">42%</span> compared to last month. Alex is grasping concepts faster.</p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Teacher comment */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.5 }}
+            className="p-4 bg-zinc-900/30 border border-zinc-800/50 rounded-xl"
+          >
+            <p className="text-xs text-zinc-500 mb-1">Tutor's note</p>
+            <p className="text-sm text-zinc-300 italic">"Alex is building real confidence. He's now attempting problems on his own before asking for help!"</p>
+          </motion.div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ============================================
+// How it works
+// ============================================
+function HowItWorks() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  const steps = [
+    {
+      icon: <MicIcon />,
+      title: "Connect once, auto-sync",
+      desc: "Link Zoom or Meet. Lessons upload automatically after each session.",
+      color: "cyan"
+    },
+    {
+      icon: <ChartIcon />,
+      title: "AI tracks transformation",
+      desc: "Question patterns, confusion frequency, concept mastery — all tracked.",
+      color: "emerald"
+    },
+    {
+      icon: <ShareIcon />,
+      title: "Get proof assets",
+      desc: "Portfolio cards and parent reports generated automatically.",
+      color: "amber"
+    },
+  ];
+
+  return (
+    <div ref={ref} className="relative">
+      <div className="grid md:grid-cols-3 gap-6">
+        {steps.map((step, i) => (
+          <motion.div
+            key={step.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: i * 0.15 }}
+            className="relative p-6 bg-zinc-900/50 border border-zinc-800/50 rounded-2xl hover:border-zinc-700/50 transition-colors"
+          >
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${step.color === "cyan" ? "bg-cyan-500/10 text-cyan-400" :
+              step.color === "emerald" ? "bg-emerald-500/10 text-emerald-400" :
+                "bg-amber-500/10 text-amber-400"
+              }`}>
+              {step.icon}
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">{step.title}</h3>
+            <p className="text-sm text-zinc-400">{step.desc}</p>
+
+            {/* Step number */}
+            <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs text-zinc-500 font-medium">
+              {i + 1}
+            </div>
+          </motion.div>
+        ))}
       </div>
     </div>
   );
 }
 
 // ============================================
-// PRIVACY SECTION - Minimal
+// Privacy Section
 // ============================================
 function PrivacyBadges() {
   return (
@@ -564,12 +485,19 @@ function PrivacyBadges() {
         <svg className="w-4 h-4 text-cyan-500" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
         </svg>
-        End-to-end encrypted
+        Fully anonymized
       </span>
       <span className="hidden sm:block text-zinc-700">·</span>
       <span className="flex items-center gap-2">
         <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+        </svg>
+        No student data exposed
+      </span>
+      <span className="hidden sm:block text-zinc-700">·</span>
+      <span className="flex items-center gap-2">
+        <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
         </svg>
         Recordings deleted in 24h
       </span>
@@ -582,19 +510,23 @@ function PrivacyBadges() {
 // ============================================
 function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
-  
+
   const items = [
-    { 
-      q: "How accurate is the analysis?", 
-      a: "Our AI is trained on thousands of tutoring sessions. It identifies engagement patterns through speech cadence, question quality, and response timing with 94% accuracy." 
+    {
+      q: "How is this different from other lesson analysis tools?",
+      a: "Chalk doesn't critique your teaching. Instead, it tracks student transformation over time — documenting growth that becomes provable marketing assets you can share anywhere."
     },
-    { 
-      q: "What subjects does it work for?", 
-      a: "Any subject. We analyze teaching patterns, not content. Whether you teach calculus or creative writing, Chalk identifies what makes your explanations effective." 
+    {
+      q: "How is student privacy protected?",
+      a: "All data is fully anonymized. Students appear as 'Student A' or 'Student B' — never by name. Parent reports are private to each family. Recordings are deleted within 24 hours."
     },
-    { 
-      q: "Is my students' data safe?", 
-      a: "Yes. We analyze speech patterns only — no faces, no personal data. Recordings are processed and deleted within 24 hours. You own all insights." 
+    {
+      q: "What subjects does it work for?",
+      a: "Any subject. Currently most effective for math, science, and subjects with clear concept progression. Language and coding support coming soon."
+    },
+    {
+      q: "How much does it cost?",
+      a: "Free during beta. After launch, pricing starts at $15/month. Your first 2 students are always free, forever."
     },
   ];
 
@@ -607,11 +539,11 @@ function FAQ() {
             className="w-full flex items-center justify-between p-5 text-left hover:bg-zinc-900/30 transition-colors"
           >
             <span className="text-zinc-300">{item.q}</span>
-            <motion.svg 
+            <motion.svg
               animate={{ rotate: open === i ? 180 : 0 }}
-              className="w-5 h-5 text-zinc-600" 
-              fill="none" 
-              stroke="currentColor" 
+              className="w-5 h-5 text-zinc-600 flex-shrink-0 ml-4"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
@@ -649,13 +581,13 @@ export default function LandingPage() {
   const heroY = useTransform(scrollYProgress, [0, 0.5], [0, 50]);
 
   useEffect(() => {
-    fetch("/api/waitlist").then(r => r.json()).then(d => d.count && setCount(d.count)).catch(() => {});
+    fetch("/api/waitlist").then(r => r.json()).then(d => d.count && setCount(d.count)).catch(() => { });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.includes("@") || status === "loading") return;
-    
+
     setStatus("loading");
     try {
       const res = await fetch("/api/waitlist", {
@@ -684,19 +616,19 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link href="/" className="font-semibold text-white">Chalk</Link>
           <div className="flex items-center gap-4">
-            <span className="text-xs text-zinc-600 hidden sm:block">Teaching analytics for tutors</span>
-            <Link 
-              href="/beta" 
-              className="text-xs bg-amber-500/10 text-amber-400 px-3 py-1.5 rounded-lg hover:bg-amber-500/20 transition-colors"
+            <span className="text-xs text-zinc-600 hidden sm:block">Lessons become proof</span>
+            <Link
+              href="/beta"
+              className="text-xs bg-cyan-500/10 text-cyan-400 px-3 py-1.5 rounded-lg hover:bg-cyan-500/20 transition-colors"
             >
-              Try Beta
+              Join Beta
             </Link>
           </div>
         </div>
       </header>
 
       {/* Hero */}
-      <motion.section 
+      <motion.section
         ref={heroRef}
         style={{ opacity: heroOpacity, y: heroY }}
         className="min-h-screen flex items-center justify-center px-6 pt-14"
@@ -708,17 +640,18 @@ export default function LandingPage() {
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-6">
-              See what works
+              Prove your
               <br />
-              <span className="text-zinc-500">in your teaching</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">teaching impact</span>
             </h1>
-            
+
             <p className="text-lg text-zinc-400 mb-10 max-w-md mx-auto">
-              AI analyzes your tutoring sessions. Discover which explanations actually click.
+              Record lessons. AI tracks student growth.<br />
+              Your teaching becomes provable evidence.
             </p>
 
             {status === "success" ? (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg"
@@ -746,21 +679,21 @@ export default function LandingPage() {
                 </button>
               </form>
             )}
-            
+
             {count > 0 && (
               <p className="text-xs text-zinc-600 mt-4">{count} tutors on the waitlist</p>
             )}
           </motion.div>
 
           {/* Scroll indicator */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
             className="absolute bottom-10 left-1/2 -translate-x-1/2"
           >
-            <motion.div 
-              animate={{ y: [0, 8, 0] }} 
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
               transition={{ repeat: Infinity, duration: 2 }}
               className="w-6 h-10 rounded-full border-2 border-zinc-800 flex items-start justify-center p-2"
             >
@@ -770,61 +703,137 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      {/* WOW 1: Timeline */}
+      {/* Section 1: Problem */}
       <section className="py-32 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-sm text-cyan-400 mb-3">Your lesson, decoded</p>
-            <h2 className="text-3xl sm:text-4xl font-semibold text-white">See your entire session at a glance</h2>
-            <p className="text-zinc-500 mt-3 max-w-lg mx-auto">
-              Every breakthrough moment. Every attention dip. All mapped on a timeline.
+            <p className="text-sm text-cyan-400 mb-3">The problem</p>
+            <h2 className="text-3xl sm:text-4xl font-semibold text-white mb-4">
+              How do you prove<br />you're a great tutor?
+            </h2>
+            <p className="text-zinc-500 max-w-lg mx-auto">
+              Everyone claims experience. Reviews are all positive.<br />
+              Parents want real evidence.
             </p>
           </div>
-          <TimelineDemo />
+
+          <div className="grid md:grid-cols-3 gap-4">
+            {[
+              { problem: "5 years experience", reality: "Experience ≠ quality" },
+              { problem: "4.9 star reviews", reality: "Easily manipulated" },
+              { problem: "Top university grad", reality: "Irrelevant to teaching" },
+            ].map((item, i) => (
+              <motion.div
+                key={item.problem}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="p-5 bg-zinc-900/30 border border-zinc-800/50 rounded-xl group"
+              >
+                <div className="relative inline-block mb-1">
+                  <span className="text-zinc-400">{item.problem}</span>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: "100%" }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 + i * 0.15, duration: 0.4, ease: "easeOut" }}
+                    className="absolute left-0 top-1/2 h-[2px] bg-red-400/60"
+                  />
+                </div>
+                <p className="text-red-400/80 text-sm">{item.reality}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* WOW 2: Before/After */}
+      {/* Section 2: Transformation Demo */}
       <section className="py-32 px-6 border-t border-zinc-800/50">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-sm text-cyan-400 mb-3">Same concept, different result</p>
-            <h2 className="text-3xl sm:text-4xl font-semibold text-white">Know exactly what to change</h2>
+            <p className="text-sm text-cyan-400 mb-3">The solution</p>
+            <h2 className="text-3xl sm:text-4xl font-semibold text-white">Student growth is the proof</h2>
             <p className="text-zinc-500 mt-3 max-w-lg mx-auto">
-              Compare how different explanations perform. Data, not guesswork.
+              As lessons accumulate, AI automatically documents the transformation.
             </p>
           </div>
-          <BeforeAfterDemo />
+          <TransformationDemo />
         </div>
       </section>
 
-      {/* WOW 3: Weekly Report */}
-      <section className="py-32 px-6 border-t border-zinc-800/50">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-sm text-cyan-400 mb-3">Every week, get smarter</p>
-            <h2 className="text-3xl sm:text-4xl font-semibold text-white">Your teaching, improving</h2>
-            <p className="text-zinc-500 mt-3 max-w-lg mx-auto">
-              Weekly reports with your best moments, growth trends, and personalized tips.
-            </p>
-          </div>
-          <WeeklyReportDemo />
-        </div>
-      </section>
-
-      {/* Connect + Privacy */}
+      {/* Section 3: Proof Card */}
       <section className="py-32 px-6 border-t border-zinc-800/50">
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <p className="text-sm text-cyan-400 mb-3">Get started in seconds</p>
-              <h2 className="text-3xl font-semibold text-white mb-4">Connect, then forget about it</h2>
+              <p className="text-sm text-cyan-400 mb-3">Marketing asset</p>
+              <h2 className="text-3xl font-semibold text-white mb-4">Share once, attract students</h2>
               <p className="text-zinc-500 mb-6">
-                Link your Zoom or Google Meet. We'll analyze sessions automatically. No extra work.
+                Your lesson history becomes a portfolio automatically.<br />
+                Share anywhere — platforms, social media, your website.
               </p>
-              <PrivacyBadges />
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs px-3 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded-full text-zinc-400">Your website</span>
+                <span className="text-xs px-3 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded-full text-zinc-400">Tutor platforms</span>
+                <span className="text-xs px-3 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded-full text-zinc-400">Instagram</span>
+                <span className="text-xs px-3 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded-full text-zinc-400">LinkedIn</span>
+              </div>
             </div>
-            <ConnectDemo />
+            <ProofCardDemo />
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4: Parent Report */}
+      <section className="py-32 px-6 border-t border-zinc-800/50">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="order-2 md:order-1">
+              <ParentReportDemo />
+            </div>
+            <div className="order-1 md:order-2">
+              <p className="text-sm text-cyan-400 mb-3">Parent trust</p>
+              <h2 className="text-3xl font-semibold text-white mb-4">Reports write themselves</h2>
+              <p className="text-zinc-500 mb-6">
+                After each lesson, parent updates are auto-generated.<br />
+                Stop spending time on admin.
+              </p>
+              <ul className="space-y-3 text-sm text-zinc-400">
+                <li className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Auto-generated lesson summaries
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Visual progress tracking
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Share via email or link
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5: How it works */}
+      <section className="py-32 px-6 border-t border-zinc-800/50">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-sm text-cyan-400 mb-3">How it works</p>
+            <h2 className="text-3xl sm:text-4xl font-semibold text-white">Just teach. We handle the rest.</h2>
+          </div>
+          <HowItWorks />
+          <div className="mt-12">
+            <PrivacyBadges />
           </div>
         </div>
       </section>
@@ -842,9 +851,9 @@ export default function LandingPage() {
       {/* Final CTA */}
       <section className="py-32 px-6 border-t border-zinc-800/50">
         <div className="max-w-md mx-auto text-center">
-          <h2 className="text-2xl font-semibold text-white mb-3">Ready to teach smarter?</h2>
+          <h2 className="text-2xl font-semibold text-white mb-3">Prove your teaching impact</h2>
           <p className="text-zinc-500 mb-8">Free during beta. No credit card required.</p>
-          
+
           {status === "success" ? (
             <p className="text-zinc-400">We'll email you when we launch</p>
           ) : (
