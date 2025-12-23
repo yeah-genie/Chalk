@@ -1,18 +1,17 @@
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Colors, { radius, spacing, shadows } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { PencilIcon, UsersIcon, ChartIcon } from '@/components/Icons';
+import { PencilIcon, UsersIcon, ChartIcon, ClockIcon } from '@/components/Icons';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme() ?? 'dark';
   const colors = Colors[colorScheme];
   const insets = useSafeAreaInsets();
 
-  // 탭바 높이 계산
   const tabBarHeight = 64;
   const tabBarBottom = Math.max(insets.bottom, 16);
 
@@ -25,12 +24,12 @@ export default function TabLayout() {
         tabBarStyle: {
           position: 'absolute',
           bottom: tabBarBottom,
-          left: 20,
-          right: 20,
+          left: 16,
+          right: 16,
           height: tabBarHeight,
           borderRadius: radius.xxl,
           backgroundColor: colorScheme === 'dark' 
-            ? 'rgba(22, 27, 34, 0.95)' 
+            ? 'rgba(18, 30, 25, 0.95)' 
             : 'rgba(255, 255, 255, 0.95)',
           borderTopWidth: 0,
           borderWidth: 1,
@@ -43,22 +42,10 @@ export default function TabLayout() {
           paddingVertical: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '600',
           letterSpacing: 0.3,
           marginTop: 2,
-        },
-        headerStyle: {
-          backgroundColor: colors.background,
-          borderBottomWidth: 0,
-          shadowOpacity: 0,
-          elevation: 0,
-        },
-        headerTintColor: colors.text,
-        headerTitleStyle: {
-          fontWeight: '700',
-          fontSize: 18,
-          letterSpacing: -0.3,
         },
         headerShown: false,
       }}
@@ -81,6 +68,17 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <TabIcon focused={focused} colorScheme={colorScheme}>
               <UsersIcon size={22} color={color} />
+            </TabIcon>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: '기록',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon focused={focused} colorScheme={colorScheme}>
+              <ClockIcon size={22} color={color} />
             </TabIcon>
           ),
         }}
@@ -112,8 +110,7 @@ function TabIcon({
   return (
     <View style={[
       styles.iconContainer,
-      focused && colorScheme === 'dark' && styles.iconContainerFocusedDark,
-      focused && colorScheme === 'light' && styles.iconContainerFocusedLight,
+      focused && styles.iconContainerFocused,
     ]}>
       {children}
     </View>
@@ -122,16 +119,13 @@ function TabIcon({
 
 const styles = StyleSheet.create({
   iconContainer: {
-    width: 40,
-    height: 32,
+    width: 36,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.sm,
   },
-  iconContainerFocusedDark: {
-    backgroundColor: 'rgba(255, 107, 53, 0.15)',
-  },
-  iconContainerFocusedLight: {
-    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+  iconContainerFocused: {
+    backgroundColor: 'rgba(0, 212, 170, 0.15)',
   },
 });

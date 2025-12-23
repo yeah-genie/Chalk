@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -14,11 +14,12 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import Colors, { spacing, typography, radius } from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { GlowCard } from '@/components/ui/GlowCard';
+import { GlowCard, GradientBorderCard } from '@/components/ui/GlowCard';
 import { NeonButton } from '@/components/ui/NeonButton';
 import { StudentPicker } from '@/components/ui/StudentPicker';
 import { Toast, useToast } from '@/components/ui/Toast';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Avatar } from '@/components/ui/Avatar';
 import {
   LevelHighIcon,
   LevelMidIcon,
@@ -27,9 +28,15 @@ import {
   SendIcon,
   ChevronRightIcon,
   CheckCircleIcon,
+  BellIcon,
+  ClockIcon,
 } from '@/components/Icons';
-import { MOCK_STUDENTS, MOCK_OUTCOMES } from '@/data/mockData';
-import { LevelType, OutcomeCheck } from '@/data/types';
+import { 
+  MOCK_STUDENTS, 
+  getUpcomingLessonsToday,
+  generateAIBriefing,
+} from '@/data/mockData';
+import { LevelType, GoalCheck, AIBriefing } from '@/data/types';
 
 // 레벨 라벨
 const LEVEL_LABELS: Record<LevelType, string> = {
@@ -45,25 +52,33 @@ export default function TodayScreen() {
   const toast = useToast();
 
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-  const [outcomeChecks, setOutcomeChecks] = useState<OutcomeCheck[]>([]);
+  const [goalChecks, setGoalChecks] = useState<GoalCheck[]>([]);
   const [feedback, setFeedback] = useState('');
   const [isPolishing, setIsPolishing] = useState(false);
   const [polishedFeedback, setPolishedFeedback] = useState('');
   const [step, setStep] = useState(1);
+  const [startTime, setStartTime] = useState<string | null>(null);
 
   const selectedStudent = MOCK_STUDENTS.find(s => s.id === selectedStudentId);
+  const upcomingLessons = useMemo(() => getUpcomingLessonsToday(), []);
+  
+  // AI 브리핑
+  const currentBriefing = selectedStudentId 
+    ? generateAIBriefing(selectedStudentId) 
+    : null;
 
   useEffect(() => {
-    if (selectedStudentId) {
-      setOutcomeChecks(MOCK_OUTCOMES.map(o => ({ outcomeId: o.id, level: null })));
+    if (selectedStudentId && selectedStudent?.learningGoals) {
+      setGoalChecks(selectedStudent.learningGoals.map(g => ({ goalId: g.id, level: null })));
       setStep(2);
+      setStartTime(new Date().toTimeString().slice(0, 5));
     }
   }, [selectedStudentId]);
 
-  const handleLevelSelect = (outcomeId: string, level: LevelType) => {
-    setOutcomeChecks(prev =>
+  const handleLevelSelect = (goalId: string, level: LevelType) => {
+    setGoalChecks(prev =>
       prev.map(check =>
-        check.outcomeId === outcomeId ? { ...check, level } : check
+        check.goalId === goalId ? { ...check, level } : check
       )
     );
   };
@@ -74,9 +89,9 @@ export default function TodayScreen() {
 
     setTimeout(() => {
       setPolishedFeedback(
-        `안녕하세요, ${selectedStudent?.name} 학부모님.\n\n` +
-        `오늘 수업에서 ${feedback}\n\n` +
-        `궁금하신 점이 있으시면 편하게 말씀해 주세요. 감사합니다!`
+        `안녕하세요, ${selectedStudent?.parentName || selectedStudent?.name + ' 학부모'}님.\n\n` +
+        `오늘 ${selectedStudent?.subject} 수업에서는 ${feedback}\n\n` +
+        `궁금하신 점이 있으시면 편하게 말씀해 주세요.\n감사합니다.\n\n- ${selectedStudent?.name} 담당 선생님`
       );
       setIsPolishing(false);
       toast.success('AI 수정 완료', '피드백이 다듬어졌어요');
@@ -107,10 +122,11 @@ export default function TodayScreen() {
     setFeedback('');
     setPolishedFeedback('');
     setStep(1);
-    setOutcomeChecks([]);
+    setGoalChecks([]);
+    setStartTime(null);
   };
 
-  const allOutcomesChecked = outcomeChecks.every(c => c.level !== null);
+  const allGoalsChecked = goalChecks.every(c => c.level !== null);
   const tabBarHeight = 64 + Math.max(insets.bottom, 16) + 20;
 
   return (
@@ -162,6 +178,78 @@ export default function TodayScreen() {
           </Text>
         </Animated.View>
 
+        {/* 🔔 오늘 예정된 수업 - AI 브리핑 */}
+        {upcomingLessons.length > 0 && !selectedStudentId && (
+          <Animated.View 
+            entering={FadeInDown.delay(150).springify()}
+            style={styles.section}
+          >
+            <View style={styles.sectionHeader}>
+              <BellIcon size={16} color={colors.tint} />
+              <Text style={[styles.sectionLabel, { color: colors.tint, marginLeft: 6 }]}>
+                오늘 예정된 수업
+              </Text>
+            </View>
+
+            {upcomingLessons.map((lesson, idx) => (
+              <Animated.View
+                key={lesson.id}
+                entering={FadeInDown.delay(200 + idx * 50).springify()}
+              >
+                <GradientBorderCard style={styles.briefingCard}>
+                  <View style={styles.briefingHeader}>
+                    <Avatar name={lesson.studentName} size="md" variant="gradient" />
+                    <View style={styles.briefingInfo}>
+                      <Text style={[styles.briefingName, { color: colors.text }]}>
+                        {lesson.studentName}
+                      </Text>
+                      <View style={styles.briefingTime}>
+                        <ClockIcon size={12} color={colors.textMuted} />
+                        <Text style={[styles.briefingTimeText, { color: colors.textMuted }]}>
+                          {lesson.startTime} - {lesson.endTime}
+                        </Text>
+                      </View>
+                    </View>
+                    <NeonButton
+                      title="시작"
+                      variant="gradient"
+                      size="sm"
+                      onPress={() => setSelectedStudentId(lesson.studentId)}
+                    />
+                  </View>
+
+                  {lesson.briefing && (
+                    <View style={[styles.briefingContent, { borderTopColor: colors.border }]}>
+                      <View style={styles.briefingRow}>
+                        <SparklesIcon size={14} color={colors.tint} />
+                        <Text style={[styles.briefingLabel, { color: colors.tint }]}>
+                          AI 브리핑
+                        </Text>
+                      </View>
+                      
+                      <Text style={[styles.briefingText, { color: colors.textSecondary }]}>
+                        📚 {lesson.briefing.lastLessonSummary}
+                      </Text>
+                      
+                      {lesson.briefing.reviewPoints.length > 0 && (
+                        <Text style={[styles.briefingText, { color: colors.textSecondary }]}>
+                          🔄 {lesson.briefing.reviewPoints[0]}
+                        </Text>
+                      )}
+                      
+                      {lesson.briefing.tutorHints.length > 0 && (
+                        <Text style={[styles.briefingText, { color: colors.tint }]}>
+                          💡 {lesson.briefing.tutorHints[0]}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                </GradientBorderCard>
+              </Animated.View>
+            ))}
+          </Animated.View>
+        )}
+
         {/* Empty State */}
         {MOCK_STUDENTS.length === 0 ? (
           <EmptyState
@@ -189,8 +277,30 @@ export default function TodayScreen() {
               />
             </Animated.View>
 
-            {/* Step 2: Outcome Checks */}
-            {step >= 2 && selectedStudentId && (
+            {/* AI 브리핑 카드 (선택된 학생) */}
+            {currentBriefing && step >= 2 && (
+              <Animated.View entering={FadeInDown.springify()}>
+                <GlowCard variant="neon" glowColor="mint" style={styles.selectedBriefing}>
+                  <View style={styles.briefingRow}>
+                    <SparklesIcon size={16} color={colors.tint} />
+                    <Text style={[styles.briefingLabel, { color: colors.tint }]}>
+                      수업 전 브리핑
+                    </Text>
+                  </View>
+                  <Text style={[styles.briefingDetailText, { color: colors.textSecondary }]}>
+                    {currentBriefing.lastLessonSummary}
+                  </Text>
+                  {currentBriefing.tutorHints.map((hint, i) => (
+                    <Text key={i} style={[styles.briefingHint, { color: colors.tint }]}>
+                      💡 {hint}
+                    </Text>
+                  ))}
+                </GlowCard>
+              </Animated.View>
+            )}
+
+            {/* Step 2: Goal Checks */}
+            {step >= 2 && selectedStudentId && selectedStudent?.learningGoals && (
               <Animated.View 
                 entering={FadeInDown.springify()}
                 style={styles.section}
@@ -206,25 +316,25 @@ export default function TodayScreen() {
                   </Pressable>
                 </View>
 
-                <GlowCard variant="glass" style={styles.outcomeCard} contentStyle={{ padding: 0 }}>
-                  {MOCK_OUTCOMES.map((outcome, idx) => {
-                    const check = outcomeChecks.find(c => c.outcomeId === outcome.id);
+                <GlowCard variant="glass" style={styles.goalCard} contentStyle={{ padding: 0 }}>
+                  {selectedStudent.learningGoals.map((goal, idx) => {
+                    const check = goalChecks.find(c => c.goalId === goal.id);
                     return (
                       <View
-                        key={outcome.id}
+                        key={goal.id}
                         style={[
-                          styles.outcomeRow,
-                          idx < MOCK_OUTCOMES.length - 1 && {
+                          styles.goalRow,
+                          idx < selectedStudent.learningGoals!.length - 1 && {
                             borderBottomWidth: 1,
                             borderBottomColor: colors.border
                           }
                         ]}
                       >
                         <Text 
-                          style={[styles.outcomeTitle, { color: colors.text }]}
-                          accessibilityLabel={`${outcome.title} 달성도`}
+                          style={[styles.goalTitle, { color: colors.text }]}
+                          accessibilityLabel={`${goal.title} 달성도`}
                         >
-                          {outcome.title}
+                          {goal.title}
                         </Text>
                         <View style={styles.levelButtons}>
                           {(['high', 'mid', 'low'] as LevelType[]).map((level) => (
@@ -232,7 +342,7 @@ export default function TodayScreen() {
                               key={level}
                               level={level}
                               selected={check?.level === level}
-                              onPress={() => handleLevelSelect(outcome.id, level)}
+                              onPress={() => handleLevelSelect(goal.id, level)}
                               colors={colors}
                             />
                           ))}
@@ -257,7 +367,7 @@ export default function TodayScreen() {
                   ))}
                 </View>
 
-                {allOutcomesChecked && (
+                {allGoalsChecked && (
                   <Animated.View entering={FadeInUp.springify()}>
                     <NeonButton
                       title="피드백 작성하기"
@@ -420,7 +530,7 @@ const styles = StyleSheet.create({
   },
   scrollView: { flex: 1 },
   content: { paddingHorizontal: spacing.lg },
-  header: { marginBottom: spacing.xxl },
+  header: { marginBottom: spacing.xl },
   greeting: { ...typography.bodySmall, marginBottom: spacing.xs },
   title: { ...typography.h1, marginBottom: spacing.xs },
   date: { ...typography.body },
@@ -437,14 +547,59 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   resetText: { ...typography.bodySmall },
-  outcomeCard: {},
-  outcomeRow: {
+  
+  // AI Briefing
+  briefingCard: { marginBottom: spacing.md },
+  briefingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  briefingInfo: { flex: 1, marginLeft: spacing.md },
+  briefingName: { ...typography.bodyMedium },
+  briefingTime: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  briefingTimeText: { ...typography.caption },
+  briefingContent: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+  },
+  briefingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  briefingLabel: { ...typography.caption, fontWeight: '600' },
+  briefingText: {
+    ...typography.bodySmall,
+    marginBottom: spacing.xs,
+    lineHeight: 18,
+  },
+  selectedBriefing: { marginBottom: spacing.xl },
+  briefingDetailText: {
+    ...typography.body,
+    lineHeight: 22,
+    marginBottom: spacing.sm,
+  },
+  briefingHint: {
+    ...typography.bodySmall,
+    marginTop: spacing.xs,
+  },
+
+  // Goals
+  goalCard: {},
+  goalRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: spacing.lg,
   },
-  outcomeTitle: { ...typography.body, flex: 1, marginRight: spacing.md },
+  goalTitle: { ...typography.body, flex: 1, marginRight: spacing.md },
   levelButtons: { flexDirection: 'row', gap: spacing.sm },
   levelBtn: {
     width: 36, height: 36,
@@ -461,6 +616,8 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendText: { ...typography.caption },
+  
+  // Feedback
   feedbackInput: {
     borderRadius: radius.lg,
     padding: spacing.lg,

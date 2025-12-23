@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Path, Circle, Rect, G, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
 
 interface IconProps {
   size?: number;
@@ -10,7 +10,7 @@ interface IconProps {
 // ===================================
 // LEVEL INDICATORS
 // ===================================
-export function LevelHighIcon({ size = 24, color = '#00F5D4' }: IconProps) {
+export function LevelHighIcon({ size = 24, color = '#00D4AA' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
@@ -25,7 +25,7 @@ export function LevelHighIcon({ size = 24, color = '#00F5D4' }: IconProps) {
   );
 }
 
-export function LevelMidIcon({ size = 24, color = '#FF6B35' }: IconProps) {
+export function LevelMidIcon({ size = 24, color = '#00B894' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
@@ -39,7 +39,7 @@ export function LevelMidIcon({ size = 24, color = '#FF6B35' }: IconProps) {
   );
 }
 
-export function LevelLowIcon({ size = 24, color = '#FFD93D' }: IconProps) {
+export function LevelLowIcon({ size = 24, color = '#F59E0B' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
@@ -89,6 +89,21 @@ export function ChartIcon({ size = 24, color = '#9CA3AF' }: IconProps) {
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M3 3V21H21M7 16V13M11 16V9M15 16V12M19 16V7"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function ClockIcon({ size = 24, color = '#9CA3AF' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5" />
+      <Path
+        d="M12 6V12L16 14"
         stroke={color}
         strokeWidth="1.5"
         strokeLinecap="round"
@@ -192,6 +207,27 @@ export function SearchIcon({ size = 24, color = '#9CA3AF' }: IconProps) {
   );
 }
 
+export function BellIcon({ size = 24, color = '#9CA3AF' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 // ===================================
 // UI ICONS
 // ===================================
@@ -251,7 +287,7 @@ export function CheckCircleIcon({ size = 24, color = '#00D4AA' }: IconProps) {
   );
 }
 
-export function AlertCircleIcon({ size = 24, color = '#FFD93D' }: IconProps) {
+export function AlertCircleIcon({ size = 24, color = '#F59E0B' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5" />
@@ -265,7 +301,7 @@ export function AlertCircleIcon({ size = 24, color = '#FFD93D' }: IconProps) {
   );
 }
 
-export function InfoIcon({ size = 24, color = '#4CC9F0' }: IconProps) {
+export function InfoIcon({ size = 24, color = '#00E5BF' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5" />
@@ -280,7 +316,7 @@ export function InfoIcon({ size = 24, color = '#4CC9F0' }: IconProps) {
 }
 
 // ===================================
-// BADGE ICONS (이모지 대체)
+// BADGE ICONS
 // ===================================
 export function FireIcon({ size = 24, color = '#00D4AA' }: IconProps) {
   return (
@@ -305,7 +341,7 @@ export function FireIcon({ size = 24, color = '#00D4AA' }: IconProps) {
   );
 }
 
-export function TargetIcon({ size = 24, color = '#00F5D4' }: IconProps) {
+export function TargetIcon({ size = 24, color = '#00D4AA' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5" />
@@ -315,7 +351,7 @@ export function TargetIcon({ size = 24, color = '#00F5D4' }: IconProps) {
   );
 }
 
-export function CrownIcon({ size = 24, color = '#A855F7' }: IconProps) {
+export function CrownIcon({ size = 24, color = '#00D4AA' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -337,7 +373,7 @@ export function CrownIcon({ size = 24, color = '#A855F7' }: IconProps) {
   );
 }
 
-export function TrendingUpIcon({ size = 24, color = '#00F5D4' }: IconProps) {
+export function TrendingUpIcon({ size = 24, color = '#00D4AA' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -358,7 +394,7 @@ export function TrendingUpIcon({ size = 24, color = '#00F5D4' }: IconProps) {
   );
 }
 
-export function DiamondIcon({ size = 24, color = '#4CC9F0' }: IconProps) {
+export function DiamondIcon({ size = 24, color = '#00D4AA' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -372,37 +408,6 @@ export function DiamondIcon({ size = 24, color = '#4CC9F0' }: IconProps) {
       />
       <Path
         d="M2 9H22M16 3L18 9L12 21L6 9L8 3"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-export function StarIcon({ size = 24, color = '#FFD93D' }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill={color}
-        fillOpacity={0.3}
-      />
-    </Svg>
-  );
-}
-
-export function AwardIcon({ size = 24, color = '#FF6B35' }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx="12" cy="8" r="6" stroke={color} strokeWidth="1.5" fill={color} fillOpacity={0.2} />
-      <Path
-        d="M8.21 13.89L7 23L12 20L17 23L15.79 13.88"
         stroke={color}
         strokeWidth="1.5"
         strokeLinecap="round"
@@ -458,7 +463,7 @@ export function EmptyStudentsIcon({ size = 80, color = '#6B6962' }: IconProps) {
         strokeDasharray="4 4"
         strokeLinecap="round"
       />
-      <Circle cx="56" cy="52" r="12" fill="#282E36" stroke={color} strokeWidth="2" />
+      <Circle cx="56" cy="52" r="12" fill="#1A2923" stroke={color} strokeWidth="2" />
       <Path
         d="M52 52H60M56 48V56"
         stroke={color}
