@@ -228,6 +228,20 @@ export function XIcon({ size = 24, color = '#9CA3AF' }: IconProps) {
     );
 }
 
+export function AlertCircleIcon({ size = 24, color = '#FBBF24' }: IconProps) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5" />
+            <Path
+                d="M12 8V12M12 16H12.01"
+                stroke={color}
+                strokeWidth="1.5"
+                strokeLinecap="round"
+            />
+        </Svg>
+    );
+}
+
 // Linear 스타일의 Verified 배지
 export function VerifiedBadge({ size = 16 }: { size?: number }) {
     return (
