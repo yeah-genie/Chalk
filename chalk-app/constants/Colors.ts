@@ -1,43 +1,45 @@
-const tintColorLight = '#00D4AA'; // Mint/Teal accent
-const tintColorDark = '#00D4AA';
+// Palette based on Tailwind CSS 'Slate' and 'Indigo' (2024 Trending Dark Mode)
+// Reference: chalk-portfolio-extracted
 
-// Enhanced Palette for "Cool/Modern" feel
+const tintColorLight = '#6366F1'; // Indigo 500
+const tintColorDark = '#6366F1';
+
 export const colors = {
   bg: {
-    base: '#0B0D10',      // Almost pure black
-    secondary: '#15171C', // Card background
-    tertiary: '#1F2229',  // Inputs/Hover
-    elevated: '#2A2D36',  // Modals/Popovers
+    base: '#0F172A',      // Slate 900 - Deep, rich blue-grey
+    secondary: '#1E293B', // Slate 800 - Lighter for cards
+    tertiary: '#334155',  // Slate 700 - Inputs/Hover
+    elevated: '#1E293B',  // Slate 800 - Modals
   },
   text: {
-    primary: '#FFFFFF',
-    secondary: '#9CA3AF', // Gray-400
-    muted: '#6B7280',     // Gray-500
-    inverse: '#000000',
+    primary: '#F8FAFC',   // Slate 50 - High contrast white
+    secondary: '#94A3B8', // Slate 400 - Muted text
+    muted: '#64748B',     // Slate 500 - Deep muted
+    inverse: '#FFFFFF',
   },
   accent: {
-    default: '#00D4AA',   // Main Mint
-    gradientStart: '#00D4AA',
-    gradientEnd: '#00B8D4', // Cyan
-    muted: 'rgba(0, 212, 170, 0.15)',
-    subtle: 'rgba(0, 212, 170, 0.05)',
-    glow: 'rgba(0, 212, 170, 0.4)',
+    default: '#6366F1',   // Indigo 500 - Primary Brand
+    gradientStart: '#6366F1', // Indigo 500
+    gradientEnd: '#818CF8',   // Indigo 400
+    muted: 'rgba(99, 102, 241, 0.15)', // Low opacity indigo
+    subtle: 'rgba(99, 102, 241, 0.05)',
+    glow: 'rgba(99, 102, 241, 0.4)',
   },
   status: {
-    success: '#10B981', // Emerald
-    warning: '#F59E0B', // Amber
-    error: '#EF4444',   // Red
-    info: '#3B82F6',    // Blue
+    success: '#10B981', // Emerald 500
+    warning: '#F59E0B', // Amber 500
+    error: '#EF4444',   // Red 500
+    info: '#3B82F6',    // Blue 500
   },
   border: {
-    default: '#27272A', // Zinc-800
-    light: '#3F3F46',   // Zinc-700
-    focus: '#00D4AA',
+    default: '#1E293B', // Slate 800 (Card borders)
+    light: '#334155',   // Slate 700 (Separators)
+    focus: '#6366F1',   // Indigo 500
   },
   level: {
-    high: '#10B981',
-    mid: '#F59E0B',
-    low: '#EF4444',
+    high: '#10B981', // Emerald
+    mid: '#F59E0B',  // Amber
+    low: '#EF4444',  // Red
   },
 };
 
@@ -102,17 +104,17 @@ export const components = {
 
 export default {
   light: {
-    text: '#000',
-    background: '#fff',
+    text: '#0F172A',
+    background: '#FFFFFF',
     tint: tintColorLight,
-    tabIconDefault: '#ccc',
+    tabIconDefault: '#94A3B8',
     tabIconSelected: tintColorLight,
   },
   dark: {
-    text: '#fff',
-    background: '#000',
+    text: '#F8FAFC',
+    background: '#0F172A',
     tint: tintColorDark,
-    tabIconDefault: '#ccc',
+    tabIconDefault: '#475569',
     tabIconSelected: tintColorDark,
   },
 };
