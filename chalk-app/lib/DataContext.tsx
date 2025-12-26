@@ -32,6 +32,13 @@ export interface LessonLog {
     aiInsights?: string;
 }
 
+// Active Session Type (New)
+export interface ActiveSession {
+    studentId: string;
+    studentName: string;
+    startTime: number;
+}
+
 interface DataContextType {
     isLoading: boolean;
     students: Student[];
@@ -49,6 +56,11 @@ interface DataContextType {
     removeLessonLog: (id: string) => void;
     getLogsForStudent: (studentId: string) => LessonLog[];
     getLogsForDate: (date: string) => LessonLog[];
+
+    // Active Session (New)
+    activeSession: ActiveSession | null;
+    startSession: (studentId: string, studentName: string) => void;
+    endSession: () => void;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
@@ -57,6 +69,7 @@ const STORAGE_KEYS = {
     STUDENTS: '@chalk_students',
     SCHEDULED: '@chalk_scheduled',
     LOGS: '@chalk_logs',
+    ACTIVE_SESSION: '@chalk_active_session',
 };
 
 // Default data for first launch
@@ -70,6 +83,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const [students, setStudents] = useState<Student[]>([]);
     const [scheduledLessons, setScheduledLessons] = useState<ScheduledLesson[]>([]);
     const [lessonLogs, setLessonLogs] = useState<LessonLog[]>([]);
+    const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
 
     // Load data on mount
     useEffect(() => {
@@ -81,19 +95,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (!isLoading) {
             saveData();
         }
-    }, [students, scheduledLessons, lessonLogs, isLoading]);
+    }, [students, scheduledLessons, lessonLogs, activeSession, isLoading]);
 
     const loadData = async () => {
         try {
-            const [studentsJson, scheduledJson, logsJson] = await Promise.all([
+            const [studentsJson, scheduledJson, logsJson, activeSessionJson] = await Promise.all([
                 AsyncStorage.getItem(STORAGE_KEYS.STUDENTS),
                 AsyncStorage.getItem(STORAGE_KEYS.SCHEDULED),
                 AsyncStorage.getItem(STORAGE_KEYS.LOGS),
+                AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_SESSION),
             ]);
 
             setStudents(studentsJson ? JSON.parse(studentsJson) : DEFAULT_STUDENTS);
             setScheduledLessons(scheduledJson ? JSON.parse(scheduledJson) : []);
             setLessonLogs(logsJson ? JSON.parse(logsJson) : []);
+            setActiveSession(activeSessionJson ? JSON.parse(activeSessionJson) : null);
         } catch (error) {
             console.error('Error loading data:', error);
             setStudents(DEFAULT_STUDENTS);
@@ -108,6 +124,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 AsyncStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students)),
                 AsyncStorage.setItem(STORAGE_KEYS.SCHEDULED, JSON.stringify(scheduledLessons)),
                 AsyncStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(lessonLogs)),
+                activeSession
+                    ? AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_SESSION, JSON.stringify(activeSession))
+                    : AsyncStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION),
             ]);
         } catch (error) {
             console.error('Error saving data:', error);
@@ -161,6 +180,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return lessonLogs.filter(log => log.date === date);
     };
 
+    // Session functions
+    const startSession = (studentId: string, studentName: string) => {
+        setActiveSession({
+            studentId,
+            studentName,
+            startTime: Date.now(),
+        });
+    };
+
+    const endSession = () => {
+        setActiveSession(null);
+    };
+
     return (
         <DataContext.Provider value={{
             isLoading,
@@ -177,6 +209,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
             removeLessonLog,
             getLogsForStudent,
             getLogsForDate,
+            activeSession,
+            startSession,
+            endSession,
         }}>
             {children}
         </DataContext.Provider>

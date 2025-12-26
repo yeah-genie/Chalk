@@ -239,6 +239,31 @@ export function BellIcon({ size = 24, color = '#9CA3AF' }: IconProps) {
   );
 }
 
+export function VideoIcon({ size = 24, color = '#9CA3AF' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 10L19 6V18L15 14"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Rect
+        x="3"
+        y="8"
+        width="12"
+        height="8"
+        rx="2"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 // ===================================
 // UI ICONS
 // ===================================

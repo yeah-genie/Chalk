@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 
 import { colors, typography, spacing, radius } from '@/constants/Colors';
 import { layout } from '@/components/ui/Theme';
@@ -33,7 +34,8 @@ const STRUGGLES = [
 ];
 
 export default function LogScreen() {
-  const { students, addStudent, removeStudent, addLessonLog, getLogsForDate } = useData();
+  const { students, addStudent, removeStudent, addLessonLog, getLogsForDate, activeSession, endSession } = useData();
+  const params = useLocalSearchParams();
 
   // State
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
@@ -44,6 +46,13 @@ export default function LogScreen() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [aiInsights, setAiInsights] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
+
+  // Active Session or Params Effect
+  useEffect(() => {
+    if (activeSession) {
+        setSelectedStudentId(activeSession.studentId);
+    }
+  }, [activeSession]);
 
   const selectedStudent = students.find(s => s.id === selectedStudentId);
   const today = new Date().toISOString().split('T')[0];
@@ -75,6 +84,14 @@ export default function LogScreen() {
   const handleSave = () => {
     if (!selectedStudent || !rating) return;
 
+    // Calculate duration if active session
+    let duration = 60; // Default
+    if (activeSession) {
+        const diff = Math.floor((Date.now() - activeSession.startTime) / 1000 / 60);
+        duration = diff > 0 ? diff : 1;
+        endSession();
+    }
+
     addLessonLog({
       studentId: selectedStudent.id,
       studentName: selectedStudent.name,
@@ -83,7 +100,7 @@ export default function LogScreen() {
       topic: topic || 'General Review',
       rating,
       struggles,
-      notes,
+      notes: activeSession ? `[Auto-Logged: ${duration} mins] ${notes}` : notes,
       aiInsights: aiInsights || undefined,
     });
 
@@ -120,8 +137,21 @@ export default function LogScreen() {
             </View>
           </View>
 
+          {/* Active Session Banner */}
+          {activeSession && (
+            <Card variant="glow" style={{ marginBottom: 24, borderColor: colors.accent.default }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View style={styles.recordingDot} />
+                    <View>
+                        <Text style={[typography.small, { color: colors.accent.default }]}>CLASS IN PROGRESS</Text>
+                        <Text style={[typography.h3, { color: colors.text.primary }]}>{activeSession.studentName}</Text>
+                    </View>
+                </View>
+            </Card>
+          )}
+
           {/* Today's Count */}
-          {todaysLogs.length > 0 && (
+          {!activeSession && todaysLogs.length > 0 && (
             <View style={styles.statsRow}>
               <Text style={styles.statsText}>
                 <Text style={{ color: colors.accent.default, fontWeight: '700' }}>{todaysLogs.length}</Text> lessons logged today
@@ -218,9 +248,10 @@ export default function LogScreen() {
               {/* Submit Action */}
               <View style={{ marginTop: spacing.xl }}>
                 <Button
-                  title="Save Lesson Log"
+                  title={activeSession ? "Finish Class & Save" : "Save Lesson Log"}
                   onPress={handleSave}
                   disabled={!rating}
+                  variant={activeSession ? 'primary' : 'primary'}
                 />
               </View>
             </>
@@ -347,4 +378,10 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontWeight: '600',
   },
+  recordingDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.status.error,
+  }
 });
