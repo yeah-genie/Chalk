@@ -21,6 +21,7 @@ import { Card } from '@/components/ui/Card';
 import { StudentPicker } from '@/components/ui/StudentPicker';
 import { RatingSelector } from '@/components/ui/RatingSelector';
 import { TopicPicker } from '@/components/ui/TopicPicker';
+import { VoiceRecorder } from '@/components/ui/VoiceRecorder';
 import { useData } from '@/lib/DataContext';
 import { SparklesIcon, CheckCircleIcon, LightbulbIcon, TargetIcon, BookOpenIcon, EyeIcon } from '@/components/Icons';
 
@@ -43,6 +44,7 @@ export default function LogScreen() {
   const [rating, setRating] = useState<'good' | 'okay' | 'struggled' | null>(null);
   const [struggles, setStruggles] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
+  const [homework, setHomework] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [aiInsights, setAiInsights] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
@@ -81,6 +83,10 @@ export default function LogScreen() {
     }, 1500);
   };
 
+  const handleVoiceTranscription = (text: string) => {
+      setNotes(prev => prev ? `${prev}\n\n[Voice Memo]: ${text}` : text);
+  };
+
   const handleSave = () => {
     if (!selectedStudent || !rating) return;
 
@@ -101,6 +107,7 @@ export default function LogScreen() {
       rating,
       struggles,
       notes: activeSession ? `[Auto-Logged: ${duration} mins] ${notes}` : notes,
+      homeworkAssigned: homework,
       aiInsights: aiInsights || undefined,
     });
 
@@ -113,6 +120,7 @@ export default function LogScreen() {
     setRating(null);
     setStruggles([]);
     setNotes('');
+    setHomework('');
     setAiInsights(null);
   };
 
@@ -208,6 +216,9 @@ export default function LogScreen() {
                 </View>
               </View>
 
+              {/* Voice Memo */}
+              <VoiceRecorder onTranscription={handleVoiceTranscription} />
+
               {/* Notes & AI */}
               <View style={styles.section}>
                 <Text style={styles.sectionLabel}>NOTES</Text>
@@ -243,6 +254,18 @@ export default function LogScreen() {
                     </Text>
                   </Card>
                 )}
+              </View>
+
+              {/* Homework Tracker (New) */}
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>HOMEWORK</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Assign homework for next time..."
+                  placeholderTextColor={colors.text.muted}
+                  value={homework}
+                  onChangeText={setHomework}
+                />
               </View>
 
               {/* Submit Action */}
@@ -350,6 +373,15 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     minHeight: 100,
     textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    ...typography.body,
+  },
+  input: {
+    backgroundColor: colors.bg.secondary,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    color: colors.text.primary,
     borderWidth: 1,
     borderColor: colors.border.default,
     ...typography.body,

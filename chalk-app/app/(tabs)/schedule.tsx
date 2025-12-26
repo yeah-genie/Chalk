@@ -10,10 +10,10 @@ import { Button } from '@/components/ui/Button';
 import { useData } from '@/lib/DataContext';
 import { CalendarIcon, ClockIcon, VideoIcon, CheckCircleIcon, UsersIcon } from '@/components/Icons';
 
-// Mock Upcoming Lessons (Phase 2 Placeholder)
+// Mock Upcoming Lessons
 const UPCOMING_LESSONS = [
-  { id: '1', studentId: 'mock1', studentName: 'Alice', time: '14:00', subject: 'Math (Calculus)', link: 'https://zoom.us/j/123456789' },
-  { id: '2', studentId: 'mock2', studentName: 'Brian', time: '16:30', subject: 'Physics', link: 'https://meet.google.com/abc-defg-hij' },
+  { id: '1', studentId: 'mock1', studentName: 'Alice', time: '14:00', subject: 'Math (Calculus)', link: 'https://zoom.us/j/123456789', homeworkDue: 'pg. 42 #1-10' },
+  { id: '2', studentId: 'mock2', studentName: 'Brian', time: '16:30', subject: 'Physics', link: 'https://meet.google.com/abc-defg-hij', homeworkDue: 'Read Chapter 4' },
 ];
 
 export default function ScheduleScreen() {
@@ -21,7 +21,6 @@ export default function ScheduleScreen() {
   const { lessonLogs, startSession, activeSession } = useData();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
 
-  // Launch Class Logic (Phase 2.1)
   const handleStartClass = (lesson: typeof UPCOMING_LESSONS[0]) => {
     if (activeSession) {
         Alert.alert('Session Active', 'You already have an active class. Please finish it first.');
@@ -36,13 +35,8 @@ export default function ScheduleScreen() {
         {
           text: 'Start',
           onPress: () => {
-            // 1. Start session in context
             startSession(lesson.studentId, lesson.studentName);
-
-            // 2. Open the link (Simulation)
             // Linking.openURL(lesson.link).catch(err => console.error("Couldn't load page", err));
-
-            // 3. Navigate to Log screen
             router.push('/(tabs)/');
           }
         }
@@ -108,6 +102,13 @@ export default function ScheduleScreen() {
                     <View style={styles.lessonInfo}>
                       <Text style={styles.studentName}>{lesson.studentName}</Text>
                       <Text style={styles.subject}>{lesson.subject}</Text>
+                      {/* Homework Due Display */}
+                      {lesson.homeworkDue && (
+                          <View style={styles.homeworkBadge}>
+                              <CheckCircleIcon size={12} color={colors.status.warning} />
+                              <Text style={styles.homeworkText}>Due: {lesson.homeworkDue}</Text>
+                          </View>
+                      )}
                     </View>
                   </View>
                   <Button
@@ -149,9 +150,9 @@ export default function ScheduleScreen() {
                                 {log.rating?.toUpperCase()}
                             </Text>
                         </View>
-                        {log.struggles.length > 0 && (
-                            <View style={styles.struggleTag}>
-                                <Text style={styles.struggleTagText}>{log.struggles.length} Struggles</Text>
+                        {log.homeworkAssigned && (
+                            <View style={styles.homeworkTag}>
+                                <Text style={styles.homeworkTagText}>HW: {log.homeworkAssigned}</Text>
                             </View>
                         )}
                     </View>
@@ -267,6 +268,16 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.text.secondary,
   },
+  homeworkBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+      gap: 4,
+  },
+  homeworkText: {
+      ...typography.caption,
+      color: colors.status.warning,
+  },
 
   // History
   emptyState: {
@@ -305,6 +316,7 @@ const styles = StyleSheet.create({
   tagRow: {
     flexDirection: 'row',
     gap: 8,
+    flexWrap: 'wrap',
   },
   ratingTag: {
     paddingHorizontal: 8,
@@ -316,14 +328,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
   },
-  struggleTag: {
+  homeworkTag: {
     backgroundColor: colors.bg.tertiary,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
   },
-  struggleTagText: {
+  homeworkTagText: {
     fontSize: 10,
-    color: colors.text.muted,
+    color: colors.text.secondary,
   },
 });

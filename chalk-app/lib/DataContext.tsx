@@ -17,6 +17,7 @@ export interface ScheduledLesson {
     duration: number;
     subject?: string;
     recurring: boolean;
+    homeworkDue?: string; // New: Expected homework
 }
 
 export interface LessonLog {
@@ -29,10 +30,12 @@ export interface LessonLog {
     rating: 'good' | 'okay' | 'struggled';
     struggles: string[];
     notes?: string;
+    homeworkAssigned?: string; // New: Homework assigned during this lesson
+    homeworkCompleted?: boolean; // New: Was previous homework done?
     aiInsights?: string;
 }
 
-// Active Session Type (New)
+// Active Session Type
 export interface ActiveSession {
     studentId: string;
     studentName: string;
@@ -57,7 +60,6 @@ interface DataContextType {
     getLogsForStudent: (studentId: string) => LessonLog[];
     getLogsForDate: (date: string) => LessonLog[];
 
-    // Active Session (New)
     activeSession: ActiveSession | null;
     startSession: (studentId: string, studentName: string) => void;
     endSession: () => void;
