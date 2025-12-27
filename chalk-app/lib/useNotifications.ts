@@ -93,8 +93,8 @@ export function useNotifications() {
 
         await Notifications.scheduleNotificationAsync({
             content: {
-                title: '📝 수업 기록하기',
-                body: 'Zoom 미팅이 종료되었습니다. 수업 내용을 기록해보세요!',
+                title: '📝 Log Your Lesson',
+                body: 'Your Zoom meeting has ended. Record your lesson notes!',
                 data: { screen: 'index', action: 'record_lesson' },
             },
             trigger: {
@@ -118,8 +118,8 @@ export function useNotifications() {
 
         await Notifications.scheduleNotificationAsync({
             content: {
-                title: '📅 수업 알림',
-                body: `${minutesBefore}분 후 ${studentName}님과 ${subject} 수업이 시작됩니다.`,
+                title: '📅 Lesson Reminder',
+                body: `${subject} lesson with ${studentName} in ${minutesBefore} minutes.`,
                 data: { screen: 'schedule', action: 'view_lesson' },
             },
             trigger: {

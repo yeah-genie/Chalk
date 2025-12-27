@@ -93,7 +93,7 @@ export function useGoogleAuth() {
 
             if (error) {
                 console.error('[Google] OAuth error:', error);
-                Alert.alert('Google 연결 실패', error);
+                Alert.alert('Google Connection Failed', error);
                 return;
             }
 

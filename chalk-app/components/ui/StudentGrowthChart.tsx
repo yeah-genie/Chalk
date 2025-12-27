@@ -38,9 +38,9 @@ export function StudentGrowthChart({ data, studentName }: StudentGrowthChartProp
     if (recentData.length === 0) {
         return (
             <Card style={styles.card}>
-                <Text style={styles.title}>{studentName}님의 성장 그래프</Text>
+                <Text style={styles.title}>{studentName}'s Growth</Text>
                 <View style={styles.emptyState}>
-                    <Text style={styles.emptyText}>아직 수업 기록이 없습니다</Text>
+                    <Text style={styles.emptyText}>No lesson records yet</Text>
                 </View>
             </Card>
         );
@@ -55,23 +55,23 @@ export function StudentGrowthChart({ data, studentName }: StudentGrowthChartProp
 
     return (
         <Card style={styles.card}>
-            <Text style={styles.title}>{studentName}님의 성장 그래프</Text>
+            <Text style={styles.title}>{studentName}'s Growth</Text>
 
             {/* Stats Row */}
             <View style={styles.statsRow}>
                 <View style={styles.statItem}>
                     <Text style={styles.statValue}>{recentData.length}</Text>
-                    <Text style={styles.statLabel}>수업</Text>
+                    <Text style={styles.statLabel}>Lessons</Text>
                 </View>
                 <View style={styles.statItem}>
                     <Text style={styles.statValue}>{Math.round(goodCount / recentData.length * 100)}%</Text>
-                    <Text style={styles.statLabel}>이해도</Text>
+                    <Text style={styles.statLabel}>Understanding</Text>
                 </View>
                 <View style={styles.statItem}>
                     <Text style={[styles.statValue, { color: trend > 0 ? colors.status.success : trend < 0 ? colors.status.error : colors.text.primary }]}>
-                        {trend > 0 ? '↑ 상승' : trend < 0 ? '↓ 하락' : '→ 유지'}
+                        {trend > 0 ? '↑ Up' : trend < 0 ? '↓ Down' : '→ Stable'}
                     </Text>
-                    <Text style={styles.statLabel}>추세</Text>
+                    <Text style={styles.statLabel}>Trend</Text>
                 </View>
             </View>
 

@@ -66,7 +66,7 @@ export function IntegrationCard({
 
     // Get short error message for display
     const getShortError = (msg?: string) => {
-        if (!msg) return '연결 실패';
+        if (!msg) return 'Connection failed';
         // If error is JSON, try to parse it
         if (msg.startsWith('{')) {
             try {
@@ -102,7 +102,7 @@ export function IntegrationCard({
                             <Text style={styles.name}>{name}</Text>
                             <View style={styles.errorBadge}>
                                 <AlertCircleIcon size={12} color={colors.status.error} />
-                                <Text style={styles.errorBadgeText}>연결 실패</Text>
+                                <Text style={styles.errorBadgeText}>Failed</Text>
                             </View>
                         </View>
                         <TouchableOpacity
@@ -111,7 +111,7 @@ export function IntegrationCard({
                             activeOpacity={0.7}
                         >
                             <RefreshIcon size={14} color={colors.accent.default} />
-                            <Text style={styles.retryText}>다시 시도</Text>
+                            <Text style={styles.retryText}>Retry</Text>
                         </TouchableOpacity>
                     </View>
                     {/* Error message row */}
@@ -152,7 +152,7 @@ export function IntegrationCard({
                     {status === 'connecting' && (
                         <View style={styles.statusContainer}>
                             <ActivityIndicator size="small" color={colors.accent.default} />
-                            <Text style={styles.statusText}>연결 중...</Text>
+                            <Text style={styles.statusText}>Connecting...</Text>
                         </View>
                     )}
 
@@ -167,7 +167,7 @@ export function IntegrationCard({
                             ]}
                         >
                             <CheckCircleIcon size={18} color={colors.status.success} />
-                            <Text style={styles.successText}>완료!</Text>
+                            <Text style={styles.successText}>Done!</Text>
                         </Animated.View>
                     )}
 

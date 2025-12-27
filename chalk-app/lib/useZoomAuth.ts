@@ -98,7 +98,7 @@ export function useZoomAuth() {
 
             if (error) {
                 console.error('[Zoom] OAuth error:', error);
-                Alert.alert('Zoom 연결 실패', error);
+                Alert.alert('Zoom Connection Failed', error);
                 return;
             }
 

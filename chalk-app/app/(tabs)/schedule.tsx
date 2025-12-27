@@ -61,17 +61,17 @@ export default function ScheduleScreen() {
 
   const handleStartClass = (lesson: ScheduledLesson) => {
     if (activeSession) {
-      Alert.alert('수업 진행 중', '이미 진행 중인 수업이 있습니다. 먼저 종료해주세요.');
+      Alert.alert('Lesson in Progress', 'You already have an active lesson. Please end it first.');
       return;
     }
 
     Alert.alert(
-      '수업 시작',
-      `${lesson.studentName}님과 수업을 시작할까요?`,
+      'Start Lesson',
+      `Start lesson with ${lesson.studentName}?`,
       [
-        { text: '취소', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: '시작',
+          text: 'Start',
           onPress: () => {
             startSession(lesson.studentId, lesson.studentName);
             router.push('/');
@@ -83,7 +83,7 @@ export default function ScheduleScreen() {
 
   const handleAddLesson = () => {
     if (!selectedStudentId) {
-      Alert.alert('오류', '학생을 선택해주세요.');
+      Alert.alert('Error', 'Please select a student.');
       return;
     }
 
@@ -129,11 +129,11 @@ export default function ScheduleScreen() {
 
   const handleDeleteLesson = (lesson: ScheduledLesson) => {
     Alert.alert(
-      '수업 삭제',
-      `${lesson.studentName}님의 ${DAYS[lesson.day]}요일 수업을 삭제할까요?`,
+      'Delete Lesson',
+      `Delete ${lesson.studentName}'s ${DAYS[lesson.day]} lesson?`,
       [
-        { text: '취소', style: 'cancel' },
-        { text: '삭제', style: 'destructive', onPress: () => removeScheduledLesson(lesson.id) }
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => removeScheduledLesson(lesson.id) }
       ]
     );
   };

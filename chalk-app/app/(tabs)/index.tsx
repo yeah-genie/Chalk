@@ -345,7 +345,7 @@ export default function LogScreen() {
                     onPress={() => setShowTopicPicker(!showTopicPicker)}
                   >
                     <Text style={selectedTopicId ? styles.topicText : styles.topicPlaceholder}>
-                      {selectedTopic?.nameKr || '커리큘럼에서 선택...'}
+                      {selectedTopic?.nameKr || 'Select from curriculum...'}
                     </Text>
                     <ChevronDownIcon size={20} color={colors.text.muted} />
                   </TouchableOpacity>
@@ -421,7 +421,7 @@ export default function LogScreen() {
 
               {/* Photo Attachments */}
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>사진 첨부</Text>
+                <Text style={styles.sectionLabel}>Photos</Text>
                 <View style={styles.photoGrid}>
                   {photos.map((uri, index) => (
                     <View key={index} style={styles.photoContainer}>
@@ -435,11 +435,11 @@ export default function LogScreen() {
                     <View style={styles.addPhotoButtons}>
                       <TouchableOpacity style={styles.addPhotoBtn} onPress={handlePickPhoto}>
                         <PlusIcon size={20} color={colors.text.muted} />
-                        <Text style={styles.addPhotoText}>갤러리</Text>
+                        <Text style={styles.addPhotoText}>Gallery</Text>
                       </TouchableOpacity>
                       <TouchableOpacity style={styles.addPhotoBtn} onPress={handleTakePhoto}>
                         <PlusIcon size={20} color={colors.text.muted} />
-                        <Text style={styles.addPhotoText}>카메라</Text>
+                        <Text style={styles.addPhotoText}>Camera</Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -451,10 +451,10 @@ export default function LogScreen() {
 
               {/* Notes & AI */}
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>메모</Text>
+                <Text style={styles.sectionLabel}>Notes</Text>
                 <TextInput
                   style={styles.notesInput}
-                  placeholder="수업 내용을 기록하세요..."
+                  placeholder="Record lesson notes..."
                   placeholderTextColor={colors.text.muted}
                   multiline
                   value={notes}
@@ -463,7 +463,7 @@ export default function LogScreen() {
 
                 {notes.length > 10 && rating && (
                   <Button
-                    title="AI 인사이트 생성"
+                    title="Generate AI Insights"
                     variant="ghost"
                     size="sm"
                     loading={isGeneratingInsights}
@@ -478,14 +478,14 @@ export default function LogScreen() {
                     <View style={layout.row}>
                       <SparklesIcon size={16} color={colors.accent.default} />
                       <Text style={[typography.small, { color: colors.accent.default, marginLeft: 8 }]}>
-                        AI 인사이트
+                        AI Insights
                       </Text>
                     </View>
                     <Text style={styles.insightSummary}>{aiInsights.summary}</Text>
 
                     {aiInsights.nextSteps?.length > 0 && (
                       <View style={styles.insightSection}>
-                        <Text style={styles.insightLabel}>다음 수업 추천:</Text>
+                        <Text style={styles.insightLabel}>Recommended for next lesson:</Text>
                         {aiInsights.nextSteps.map((step: string, i: number) => (
                           <Text key={i} style={styles.insightItem}>• {step}</Text>
                         ))}
@@ -501,7 +501,7 @@ export default function LogScreen() {
 
               {/* Zoom Recording URL */}
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Zoom 녹화 링크 (선택)</Text>
+                <Text style={styles.sectionLabel}>Zoom Recording (optional)</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="https://zoom.us/rec/..."
@@ -514,10 +514,10 @@ export default function LogScreen() {
 
               {/* Homework */}
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>숙제</Text>
+                <Text style={styles.sectionLabel}>Homework</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="다음 시간까지 할 숙제..."
+                  placeholder="Homework for next time..."
                   placeholderTextColor={colors.text.muted}
                   value={homework}
                   onChangeText={setHomework}
@@ -527,7 +527,7 @@ export default function LogScreen() {
               {/* Submit */}
               <View style={{ marginTop: spacing.xl }}>
                 <Button
-                  title={activeSession ? "수업 종료 & 저장" : "수업 기록 저장"}
+                  title={activeSession ? "End Lesson & Save" : "Save Lesson"}
                   onPress={handleSave}
                   disabled={!rating}
                 />
@@ -542,7 +542,7 @@ export default function LogScreen() {
       {showToast && (
         <View style={styles.toast}>
           <CheckCircleIcon size={20} color={colors.status.success} />
-          <Text style={styles.toastText}>저장 완료!</Text>
+          <Text style={styles.toastText}>Saved!</Text>
         </View>
       )}
     </SafeAreaView>

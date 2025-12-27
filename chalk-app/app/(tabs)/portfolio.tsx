@@ -48,7 +48,7 @@ export default function PortfolioScreen() {
       const dateStr = date.toISOString().split('T')[0];
       const count = lessonLogs.filter(log => log.date === dateStr).length;
       days.push({
-        label: ['일', '월', '화', '수', '목', '금', '토'][date.getDay()],
+        label: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
         count,
         isToday: i === 0,
       });
@@ -64,33 +64,33 @@ export default function PortfolioScreen() {
   // Share portfolio
   const handleShare = async () => {
     const verifications = [];
-    if (googleAuth.isAuthenticated) verifications.push('✓ Google Calendar 인증');
-    if (zoomAuth.isAuthenticated) verifications.push('✓ Zoom 인증');
-    if (stripeAuth.isAuthenticated) verifications.push('✓ Stripe 결제 인증');
+    if (googleAuth.isAuthenticated) verifications.push('✓ Google Calendar Verified');
+    if (zoomAuth.isAuthenticated) verifications.push('✓ Zoom Verified');
+    if (stripeAuth.isAuthenticated) verifications.push('✓ Stripe Payment Verified');
 
     const content = `
-📚 Chalk 과외 포트폴리오
+📚 Chalk Tutor Portfolio
 
-👤 튜터 포트폴리오
-📊 총 ${totalSessions}회 수업 완료
-⏱️ 총 ${totalDuration.toFixed(1)}시간 수업
-👨‍🎓 ${totalStudents}명의 학생
+👤 Tutor Portfolio
+📊 ${totalSessions} Lessons Completed
+⏱️ ${totalDuration.toFixed(1)} Hours of Teaching
+👨‍🎓 ${totalStudents} Students
 
-${verifications.length > 0 ? '\n🔐 인증 정보\n' + verifications.join('\n') : ''}
+${verifications.length > 0 ? '\n🔐 Verifications\n' + verifications.join('\n') : ''}
 
-${earnedAchievements.length > 0 ? '\n🏆 달성 배지\n' + earnedAchievements.map(a => `• ${a.name}`).join('\n') : ''}
+${earnedAchievements.length > 0 ? '\n🏆 Achievements\n' + earnedAchievements.map(a => `• ${a.name}`).join('\n') : ''}
 
 ---
-Chalk - 과외 선생님을 위한 포트폴리오 앱
+Chalk - Portfolio App for Tutors
     `.trim();
 
     try {
       await Share.share({
         message: content,
-        title: 'Chalk 포트폴리오',
+        title: 'Chalk Portfolio',
       });
     } catch (error) {
-      Alert.alert('오류', '공유에 실패했습니다.');
+      Alert.alert('Error', 'Failed to share.');
     }
   };
 
@@ -133,19 +133,19 @@ Chalk - 과외 선생님을 위한 포트폴리오 앱
               <ChartIcon size={24} color={colors.accent.default} />
             </View>
             <Text style={styles.heroValue}>{totalSessions}</Text>
-            <Text style={styles.heroLabel}>총 수업</Text>
+            <Text style={styles.heroLabel}>Total Lessons</Text>
           </Card>
           <Card style={styles.heroCard}>
             <View style={[styles.iconCircle, { backgroundColor: '#F59E0B20' }]}>
               <ClockIcon size={24} color={colors.status.warning} />
             </View>
             <Text style={styles.heroValue}>{totalDuration.toFixed(1)}h</Text>
-            <Text style={styles.heroLabel}>수업 시간</Text>
+            <Text style={styles.heroLabel}>Hours</Text>
           </Card>
         </View>
 
         {/* Weekly Activity (Real Data) */}
-        <Text style={styles.sectionTitle}>주간 활동</Text>
+        <Text style={styles.sectionTitle}>Weekly Activity</Text>
         <Card style={styles.chartCard}>
           <View style={styles.chartBars}>
             {weeklyData.map((day, i) => (
@@ -171,7 +171,7 @@ Chalk - 과외 선생님을 위한 포트폴리오 앱
         </Card>
 
         {/* Achievements */}
-        <Text style={styles.sectionTitle}>달성 배지</Text>
+        <Text style={styles.sectionTitle}>Achievements</Text>
         <View style={styles.achievementsGrid}>
           {ACHIEVEMENTS.map(achievement => {
             const isEarned = totalSessions >= achievement.requirement;
@@ -188,7 +188,7 @@ Chalk - 과외 선생님을 위한 포트폴리오 앱
                   {achievement.name}
                 </Text>
                 <Text style={styles.achievementDesc}>
-                  {isEarned ? achievement.desc : `${achievement.requirement}회 필요`}
+                  {isEarned ? achievement.desc : `${achievement.requirement} needed`}
                 </Text>
               </View>
             );
@@ -196,7 +196,7 @@ Chalk - 과외 선생님을 위한 포트폴리오 앱
         </View>
 
         {/* Students Section */}
-        <Text style={styles.sectionTitle}>학생</Text>
+        <Text style={styles.sectionTitle}>Students</Text>
         <Card style={styles.studentsCard}>
           <View style={styles.studentStatRow}>
             <View style={layout.row}>

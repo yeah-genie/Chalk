@@ -31,7 +31,7 @@ export function ParentReportCard({ studentName, studentId, logs }: ParentReportC
             const generatedReport = await generateParentReport(studentName, recentLogs);
             setReport(generatedReport);
         } catch (error) {
-            Alert.alert('오류', '리포트 생성에 실패했습니다.');
+            Alert.alert('Error', 'Failed to generate report.');
         } finally {
             setIsGenerating(false);
         }
@@ -41,41 +41,41 @@ export function ParentReportCard({ studentName, studentId, logs }: ParentReportC
         if (!report) return;
 
         const fullReport = `
-📚 ${studentName} 학습 리포트
+📚 ${studentName} Learning Report
 
 ${report}
 
 ---
-최근 수업 내역:
-${recentLogs.map(l => `• ${l.date}: ${l.topic} (${l.rating === 'good' ? '✅ 잘함' : l.rating === 'okay' ? '⚠️ 보통' : '❌ 어려움'})`).join('\n')}
+Recent Lessons:
+${recentLogs.map(l => `• ${l.date}: ${l.topic} (${l.rating === 'good' ? '✅ Good' : l.rating === 'okay' ? '⚠️ Okay' : '❌ Struggled'})`).join('\n')}
 
-Chalk - 과외 포트폴리오 앱
+Chalk - Portfolio App for Tutors
     `.trim();
 
         try {
             await Share.share({
                 message: fullReport,
-                title: `${studentName} 학습 리포트`,
+                title: `${studentName} Learning Report`,
             });
         } catch (error) {
-            Alert.alert('오류', '공유에 실패했습니다.');
+            Alert.alert('Error', 'Failed to share.');
         }
     };
 
     return (
         <Card style={styles.card}>
             <View style={styles.header}>
-                <Text style={styles.title}>학부모 리포트</Text>
-                <Text style={styles.subtitle}>{studentName}님</Text>
+                <Text style={styles.title}>Parent Report</Text>
+                <Text style={styles.subtitle}>{studentName}</Text>
             </View>
 
             {logs.length === 0 ? (
-                <Text style={styles.emptyText}>수업 기록이 없습니다.</Text>
+                <Text style={styles.emptyText}>No lesson records.</Text>
             ) : (
                 <>
                     {/* Recent Lessons Summary */}
                     <View style={styles.lessonsSection}>
-                        <Text style={styles.sectionLabel}>최근 수업</Text>
+                        <Text style={styles.sectionLabel}>Recent Lessons</Text>
                         {recentLogs.map((log, i) => (
                             <View key={i} style={styles.lessonRow}>
                                 <View style={[styles.ratingDot, {
@@ -91,7 +91,7 @@ Chalk - 과외 포트폴리오 앱
                     {/* Generate Report */}
                     {!report ? (
                         <Button
-                            title="AI 리포트 생성"
+                            title="Generate AI Report"
                             variant="secondary"
                             size="sm"
                             loading={isGenerating}
@@ -103,13 +103,13 @@ Chalk - 과외 포트폴리오 앱
                         <View style={styles.reportSection}>
                             <View style={styles.reportHeader}>
                                 <SparklesIcon size={14} color={colors.accent.default} />
-                                <Text style={styles.reportLabel}>AI 생성 리포트</Text>
+                                <Text style={styles.reportLabel}>AI Generated Report</Text>
                             </View>
                             <Text style={styles.reportText}>{report}</Text>
 
                             <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
                                 <ShareIcon size={16} color={colors.accent.default} />
-                                <Text style={styles.shareText}>학부모에게 공유</Text>
+                                <Text style={styles.shareText}>Share with Parent</Text>
                             </TouchableOpacity>
                         </View>
                     )}

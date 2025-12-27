@@ -81,7 +81,7 @@ export function useStripeAuth() {
 
             if (error) {
                 console.error('[Stripe] OAuth error:', error);
-                Alert.alert('Stripe 연결 실패', error);
+                Alert.alert('Stripe Connection Failed', error);
                 return;
             }
 
@@ -124,7 +124,7 @@ export function useStripeAuth() {
             }
         } catch (error) {
             console.error('[Stripe] Failed to start auth:', error);
-            Alert.alert('오류', 'Stripe 연결을 시작할 수 없습니다.');
+            Alert.alert('Error', 'Could not connect to Stripe.');
             throw error;
         }
     }, []);
