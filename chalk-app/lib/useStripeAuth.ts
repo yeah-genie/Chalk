@@ -1,24 +1,13 @@
-import * as WebBrowser from 'expo-web-browser';
 import { useState, useEffect, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { makeRedirectUri, useAuthRequest } from 'expo-auth-session';
-
-WebBrowser.maybeCompleteAuthSession();
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 
 const TOKEN_KEY = 'stripe_access_token';
-const ACCOUNT_KEY = 'stripe_account_id';
+const ACCOUNT_KEY = 'stripe_account';
 
-// Stripe Connect credentials from Stripe Dashboard
-const STRIPE_CONFIG = {
-    clientId: 'ca_RvI2IVS2cq4cLzAFXINOvqXRthEIl3aZ', // Stripe Connect OAuth Client ID
-    publishableKey: 'pk_test_51SifoR245eFJG6JOpxWkJ1l1hJ4IjjA5x2o2SD0JeTkECreyTAjBuEMThPmIctjYrNI2UKSopNJdF0JN6yTyOuuN8G8qAR7KHN',
-};
-
-
-const discovery = {
-    authorizationEndpoint: 'https://connect.stripe.com/oauth/authorize',
-    tokenEndpoint: 'https://connect.stripe.com/oauth/token',
-};
+// Supabase Edge Function URL for Stripe OAuth
+const SUPABASE_STRIPE_AUTH_URL = 'https://xnjqsgdapbjnowzwhnaq.supabase.co/functions/v1/stripe-auth';
 
 export interface StripeAccount {
     id: string;
@@ -32,33 +21,15 @@ export function useStripeAuth() {
     const [account, setAccount] = useState<StripeAccount | null>(null);
     const [accessToken, setAccessToken] = useState<string | null>(null);
 
-    const redirectUri = makeRedirectUri({
-        scheme: 'chalk-app',
-        path: 'stripe-callback',
-    });
-
-    const [request, response, promptAsync] = useAuthRequest(
-        {
-            clientId: STRIPE_CONFIG.clientId,
-            scopes: ['read_write'],
-            redirectUri,
-            extraParams: {
-                response_type: 'code',
-                scope: 'read_write',
-            },
-        },
-        discovery
-    );
-
     // Load stored data on mount
     useEffect(() => {
         const loadData = async () => {
             try {
                 const storedToken = await SecureStore.getItemAsync(TOKEN_KEY);
-                const storedAccountId = await SecureStore.getItemAsync(ACCOUNT_KEY);
-                if (storedToken && storedAccountId) {
+                const storedAccount = await SecureStore.getItemAsync(ACCOUNT_KEY);
+                if (storedToken && storedAccount) {
                     setAccessToken(storedToken);
-                    setAccount({ id: storedAccountId });
+                    setAccount(JSON.parse(storedAccount));
                     setIsAuthenticated(true);
                 }
             } catch (error) {
@@ -70,34 +41,45 @@ export function useStripeAuth() {
         loadData();
     }, []);
 
-    // Handle OAuth response
+    // Handle deep link callback
     useEffect(() => {
-        if (response?.type === 'success') {
-            const { code } = response.params;
-            // In production, exchange code for token via your backend
-            handleCodeExchange(code);
-        }
-    }, [response]);
+        const handleDeepLink = async (event: { url: string }) => {
+            const url = event.url;
+            if (url.includes('stripe-callback')) {
+                const params = new URLSearchParams(url.split('?')[1]);
+                const token = params.get('access_token');
+                const accountId = params.get('stripe_user_id');
 
-    const handleCodeExchange = async (code: string) => {
-        // TODO: Implement server-side token exchange with Stripe
-        // This MUST be done server-side as it requires your secret key
-        console.log('Stripe auth code:', code);
+                if (token && accountId) {
+                    await SecureStore.setItemAsync(TOKEN_KEY, token);
+                    const accountData = {
+                        id: accountId,
+                        email: params.get('email') || undefined,
+                        business_name: params.get('business_name') || undefined,
+                    };
+                    await SecureStore.setItemAsync(ACCOUNT_KEY, JSON.stringify(accountData));
+                    setAccessToken(token);
+                    setAccount(accountData);
+                    setIsAuthenticated(true);
+                }
+            }
+        };
 
-        // Simulate success for now
-        setIsAuthenticated(true);
-        setAccount({
-            id: 'acct_mock',
-            email: 'tutor@example.com',
-            business_name: 'Alex Tutoring',
-        });
-    };
+        const subscription = Linking.addEventListener('url', handleDeepLink);
+        return () => subscription.remove();
+    }, []);
 
     const signIn = useCallback(async () => {
-        if (request) {
-            await promptAsync();
+        try {
+            // Open Supabase Edge Function which handles Stripe OAuth
+            const redirectUrl = Linking.createURL('stripe-callback');
+            const authUrl = `${SUPABASE_STRIPE_AUTH_URL}/authorize?redirect_uri=${encodeURIComponent(redirectUrl)}`;
+
+            await WebBrowser.openBrowserAsync(authUrl);
+        } catch (error) {
+            console.error('Failed to start Stripe auth:', error);
         }
-    }, [request, promptAsync]);
+    }, []);
 
     const signOut = useCallback(async () => {
         try {
@@ -118,6 +100,6 @@ export function useStripeAuth() {
         accessToken,
         signIn,
         signOut,
-        isReady: !!request,
+        isReady: true,
     };
 }
