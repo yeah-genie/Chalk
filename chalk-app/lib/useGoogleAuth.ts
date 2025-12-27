@@ -1,19 +1,14 @@
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
 import { useState, useEffect, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
-
-WebBrowser.maybeCompleteAuthSession();
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+import { Alert } from 'react-native';
 
 const TOKEN_KEY = 'google_access_token';
+const USER_KEY = 'google_user';
 
-// Google OAuth credentials from Google Cloud Console
-const GOOGLE_CONFIG = {
-    iosClientId: '410176806836-ke5s4mb9m9slqgr9gfmf3mhucrr8ktjb.apps.googleusercontent.com',
-    webClientId: '410176806836-7e1sbuc739b5663jmj5n978sfrmk68m9.apps.googleusercontent.com',
-    androidClientId: '410176806836-ke5s4mb9m9slqgr9gfmf3mhucrr8ktjb.apps.googleusercontent.com',
-};
-
+// Supabase Edge Function URL for Google OAuth
+const SUPABASE_GOOGLE_AUTH_URL = 'https://xnjqsgdapbjnowzwhnaq.supabase.co/functions/v1/google-auth';
 
 export interface GoogleUser {
     name: string;
@@ -27,87 +22,125 @@ export function useGoogleAuth() {
     const [user, setUser] = useState<GoogleUser | null>(null);
     const [accessToken, setAccessToken] = useState<string | null>(null);
 
-    const [request, response, promptAsync] = Google.useAuthRequest({
-        clientId: GOOGLE_CONFIG.webClientId,
-        iosClientId: GOOGLE_CONFIG.iosClientId,
-        androidClientId: GOOGLE_CONFIG.androidClientId,
-        scopes: [
-            'https://www.googleapis.com/auth/calendar.readonly',
-            'https://www.googleapis.com/auth/userinfo.profile',
-            'https://www.googleapis.com/auth/userinfo.email',
-        ],
-    });
-
-    // Load stored token on mount
+    // Load stored data on mount
     useEffect(() => {
-        const loadToken = async () => {
+        const loadData = async () => {
             try {
                 const storedToken = await SecureStore.getItemAsync(TOKEN_KEY);
-                if (storedToken) {
+                const storedUser = await SecureStore.getItemAsync(USER_KEY);
+                if (storedToken && storedUser) {
                     setAccessToken(storedToken);
-                    await fetchUserInfo(storedToken);
+                    setUser(JSON.parse(storedUser));
                     setIsAuthenticated(true);
+                    console.log('[Google] Loaded stored credentials');
                 }
             } catch (error) {
-                console.error('Failed to load token:', error);
+                console.error('[Google] Failed to load data:', error);
             } finally {
                 setIsLoading(false);
             }
         };
-        loadToken();
+        loadData();
     }, []);
 
-    // Handle OAuth response
+    // Check for initial URL (app opened via deep link)
     useEffect(() => {
-        if (response?.type === 'success') {
-            const { authentication } = response;
-            if (authentication?.accessToken) {
-                handleSignInSuccess(authentication.accessToken);
+        const checkInitialUrl = async () => {
+            try {
+                const initialUrl = await Linking.getInitialURL();
+                if (initialUrl && initialUrl.includes('google-callback')) {
+                    console.log('[Google] Initial URL detected:', initialUrl);
+                    await handleCallback(initialUrl);
+                }
+            } catch (error) {
+                console.error('[Google] Error checking initial URL:', error);
             }
-        }
-    }, [response]);
+        };
+        checkInitialUrl();
+    }, []);
 
-    const fetchUserInfo = async (token: string) => {
-        try {
-            const res = await fetch('https://www.googleapis.com/userinfo/v2/me', {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            const userInfo = await res.json();
-            setUser({
-                name: userInfo.name,
-                email: userInfo.email,
-                photo: userInfo.picture,
-            });
-        } catch (error) {
-            console.error('Failed to fetch user info:', error);
-        }
-    };
+    // Handle deep link callback
+    useEffect(() => {
+        const handleDeepLink = async (event: { url: string }) => {
+            console.log('[Google] Deep link received:', event.url);
+            if (event.url.includes('google-callback')) {
+                await handleCallback(event.url);
+            }
+        };
 
-    const handleSignInSuccess = async (token: string) => {
+        const subscription = Linking.addEventListener('url', handleDeepLink);
+        return () => subscription.remove();
+    }, []);
+
+    const handleCallback = async (url: string) => {
         try {
-            await SecureStore.setItemAsync(TOKEN_KEY, token);
-            setAccessToken(token);
-            await fetchUserInfo(token);
-            setIsAuthenticated(true);
+            const params = new URLSearchParams(url.split('?')[1]);
+            const token = params.get('access_token');
+            const userName = params.get('user_name');
+            const userEmail = params.get('user_email');
+            const userPhoto = params.get('user_photo');
+            const error = params.get('error');
+
+            if (error) {
+                console.error('[Google] OAuth error:', error);
+                Alert.alert('Google 연결 실패', error);
+                return;
+            }
+
+            if (token) {
+                console.log('[Google] Token received, saving...');
+                await SecureStore.setItemAsync(TOKEN_KEY, token);
+                const userData: GoogleUser = {
+                    name: userName || 'Google User',
+                    email: userEmail || '',
+                    photo: userPhoto || undefined,
+                };
+                await SecureStore.setItemAsync(USER_KEY, JSON.stringify(userData));
+                setAccessToken(token);
+                setUser(userData);
+                setIsAuthenticated(true);
+                console.log('[Google] Successfully authenticated!');
+            }
         } catch (error) {
-            console.error('Failed to save token:', error);
+            console.error('[Google] Error handling callback:', error);
         }
     };
 
     const signIn = useCallback(async () => {
-        if (request) {
-            await promptAsync();
+        try {
+            console.log('[Google] Starting OAuth flow...');
+            // Create redirect URL using Expo's Linking
+            const redirectUrl = Linking.createURL('google-callback');
+            console.log('[Google] Redirect URL:', redirectUrl);
+
+            const authUrl = `${SUPABASE_GOOGLE_AUTH_URL}/authorize?redirect_uri=${encodeURIComponent(redirectUrl)}`;
+            console.log('[Google] Auth URL:', authUrl);
+
+            const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+            console.log('[Google] WebBrowser result:', result);
+
+            if (result.type === 'success' && result.url) {
+                await handleCallback(result.url);
+            } else if (result.type === 'cancel') {
+                console.log('[Google] User cancelled');
+            }
+        } catch (error) {
+            console.error('[Google] Failed to start auth:', error);
+            Alert.alert('오류', 'Google 연결을 시작할 수 없습니다.');
+            throw error;
         }
-    }, [request, promptAsync]);
+    }, []);
 
     const signOut = useCallback(async () => {
         try {
             await SecureStore.deleteItemAsync(TOKEN_KEY);
+            await SecureStore.deleteItemAsync(USER_KEY);
             setAccessToken(null);
             setUser(null);
             setIsAuthenticated(false);
+            console.log('[Google] Signed out');
         } catch (error) {
-            console.error('Failed to sign out:', error);
+            console.error('[Google] Failed to sign out:', error);
         }
     }, []);
 
@@ -118,6 +151,6 @@ export function useGoogleAuth() {
         accessToken,
         signIn,
         signOut,
-        isReady: !!request,
+        isReady: true,
     };
 }
