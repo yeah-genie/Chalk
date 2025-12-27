@@ -10,7 +10,7 @@ const TOKEN_KEY = 'google_access_token';
 // Google OAuth credentials from Google Cloud Console
 const GOOGLE_CONFIG = {
     iosClientId: '410176806836-ke5s4mb9m9slqgr9gfmf3mhucrr8ktjb.apps.googleusercontent.com',
-    webClientId: '410176806836-ke5s4mb9m9slqgr9gfmf3mhucrr8ktjb.apps.googleusercontent.com',
+    webClientId: '410176806836-7e1sbuc739b5663jmj5n978sfrmk68m9.apps.googleusercontent.com',
     androidClientId: '410176806836-ke5s4mb9m9slqgr9gfmf3mhucrr8ktjb.apps.googleusercontent.com',
 };
 
