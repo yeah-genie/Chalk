@@ -11,6 +11,7 @@ import {
   Platform,
   Alert,
   Image,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -23,6 +24,7 @@ import { StudentPicker } from '@/components/ui/StudentPicker';
 import { RatingSelector } from '@/components/ui/RatingSelector';
 import { VoiceRecorder } from '@/components/ui/VoiceRecorder';
 import { useData } from '@/lib/DataContext';
+import { useZoomAuth, ZoomRecording } from '@/lib/useZoomAuth';
 import {
   SparklesIcon, CheckCircleIcon, LightbulbIcon, TargetIcon,
   BookOpenIcon, EyeIcon, PlusIcon, XIcon, ChevronDownIcon
@@ -39,6 +41,7 @@ const STRUGGLES = [
 
 export default function LogScreen() {
   const { students, addStudent, removeStudent, addLessonLog, getLogsForDate, getLogsForStudent, activeSession, endSession } = useData();
+  const zoomAuth = useZoomAuth();
 
   // State
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
@@ -51,6 +54,8 @@ export default function LogScreen() {
   const [homework, setHomework] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [zoomRecordingUrl, setZoomRecordingUrl] = useState('');
+  const [selectedRecording, setSelectedRecording] = useState<ZoomRecording | null>(null);
+  const [lessonDuration, setLessonDuration] = useState(60);
 
   // AI States
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
@@ -60,6 +65,16 @@ export default function LogScreen() {
 
   // UI States
   const [showToast, setShowToast] = useState(false);
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+  const [newStudentName, setNewStudentName] = useState('');
+
+  // Time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
 
   // Derived
   const selectedStudent = students.find(s => s.id === selectedStudentId);
@@ -81,6 +96,13 @@ export default function LogScreen() {
       loadTopicRecommendations();
     }
   }, [selectedStudentId]);
+
+  // Fetch Zoom recordings when authenticated
+  useEffect(() => {
+    if (zoomAuth.isAuthenticated && zoomAuth.recordings.length === 0) {
+      zoomAuth.fetchRecordings();
+    }
+  }, [zoomAuth.isAuthenticated]);
 
   const loadTopicRecommendations = async () => {
     if (!selectedStudent) return;
@@ -110,12 +132,16 @@ export default function LogScreen() {
 
   // Handlers
   const handleAddStudent = () => {
-    Alert.prompt('Add Student', 'Enter name', (text) => {
-      if (text?.trim()) {
-        const newStudent = addStudent({ name: text.trim() });
-        setSelectedStudentId(newStudent.id);
-      }
-    });
+    setShowAddStudentModal(true);
+  };
+
+  const confirmAddStudent = () => {
+    if (newStudentName.trim()) {
+      const newStudent = addStudent({ name: newStudentName.trim() });
+      setSelectedStudentId(newStudent.id);
+      setNewStudentName('');
+      setShowAddStudentModal(false);
+    }
   };
 
   const toggleStruggle = (id: string) => {
@@ -245,12 +271,12 @@ export default function LogScreen() {
           {/* Header */}
           <View style={styles.header}>
             <View>
-              <Text style={styles.greeting}>Good Evening,</Text>
+              <Text style={styles.greeting}>{getGreeting()},</Text>
               <Text style={styles.title}>Log Lesson</Text>
             </View>
             <View style={styles.dateBadge}>
               <Text style={styles.dateText}>
-                {new Date().toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </Text>
             </View>
           </View>
@@ -499,17 +525,51 @@ export default function LogScreen() {
                 )}
               </View>
 
-              {/* Zoom Recording URL */}
+              {/* Zoom Recording Selector */}
               <View style={styles.section}>
                 <Text style={styles.sectionLabel}>Zoom Recording (optional)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="https://zoom.us/rec/..."
-                  placeholderTextColor={colors.text.muted}
-                  value={zoomRecordingUrl}
-                  onChangeText={setZoomRecordingUrl}
-                  autoCapitalize="none"
-                />
+                {zoomAuth.isAuthenticated && zoomAuth.recordings.length > 0 ? (
+                  <View>
+                    {zoomAuth.recordings.slice(0, 3).map((rec) => (
+                      <TouchableOpacity
+                        key={rec.id}
+                        style={[
+                          styles.recordingOption,
+                          selectedRecording?.id === rec.id && styles.recordingOptionSelected
+                        ]}
+                        onPress={() => {
+                          setSelectedRecording(rec);
+                          setLessonDuration(rec.duration || 60);
+                          setZoomRecordingUrl(rec.recording_files?.[0]?.play_url || '');
+                        }}
+                      >
+                        <View style={styles.recordingInfo}>
+                          <Text style={styles.recordingTopic} numberOfLines={1}>{rec.topic}</Text>
+                          <Text style={styles.recordingMeta}>
+                            {new Date(rec.start_time).toLocaleDateString()} • {rec.duration} min
+                          </Text>
+                        </View>
+                        {selectedRecording?.id === rec.id && (
+                          <CheckCircleIcon size={18} color={colors.accent.default} />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                    {selectedRecording && (
+                      <Text style={styles.autoDurationText}>
+                        ✓ Duration auto-filled: {lessonDuration} min
+                      </Text>
+                    )}
+                  </View>
+                ) : (
+                  <TextInput
+                    style={styles.input}
+                    placeholder="https://zoom.us/rec/..."
+                    placeholderTextColor={colors.text.muted}
+                    value={zoomRecordingUrl}
+                    onChangeText={setZoomRecordingUrl}
+                    autoCapitalize="none"
+                  />
+                )}
               </View>
 
               {/* Homework */}
@@ -537,6 +597,46 @@ export default function LogScreen() {
 
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Add Student Modal */}
+      <Modal
+        visible={showAddStudentModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAddStudentModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add Student</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter student name"
+              placeholderTextColor={colors.text.muted}
+              value={newStudentName}
+              onChangeText={setNewStudentName}
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => {
+                  setNewStudentName('');
+                  setShowAddStudentModal(false);
+                }}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalConfirmBtn, !newStudentName.trim() && { opacity: 0.5 }]}
+                onPress={confirmAddStudent}
+                disabled={!newStudentName.trim()}
+              >
+                <Text style={styles.modalConfirmText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Toast */}
       {showToast && (
@@ -849,5 +949,97 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     backgroundColor: colors.status.error,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.bg.secondary,
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+    width: '85%',
+    maxWidth: 340,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  modalTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+    marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  modalInput: {
+    backgroundColor: colors.bg.base,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    color: colors.text.primary,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.bg.tertiary,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    ...typography.body,
+    color: colors.text.secondary,
+    fontWeight: '600',
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.accent.default,
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    ...typography.body,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  recordingOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: colors.bg.secondary,
+    borderRadius: radius.md,
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  recordingOptionSelected: {
+    borderColor: colors.accent.default,
+    backgroundColor: colors.accent.default + '10',
+  },
+  recordingInfo: {
+    flex: 1,
+  },
+  recordingTopic: {
+    ...typography.body,
+    color: colors.text.primary,
+    fontWeight: '500',
+  },
+  recordingMeta: {
+    ...typography.caption,
+    color: colors.text.muted,
+    marginTop: 2,
+  },
+  autoDurationText: {
+    ...typography.caption,
+    color: colors.status.success,
+    marginTop: spacing.sm,
+    fontWeight: '500',
   },
 });

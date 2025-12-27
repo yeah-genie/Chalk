@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, Modal, TextInput
 } from 'react-native';
@@ -43,6 +43,13 @@ export default function ScheduleScreen() {
   const [selectedDuration, setSelectedDuration] = useState(60);
   const [isRecurring, setIsRecurring] = useState(true);
   const [subject, setSubject] = useState('');
+
+  // Fetch Google Calendar events on mount
+  useEffect(() => {
+    if (googleAuth.isAuthenticated && !googleAuth.isLoadingEvents) {
+      googleAuth.fetchEvents();
+    }
+  }, [googleAuth.isAuthenticated]);
 
   // Filter today's lessons
   const today = new Date().getDay();
@@ -198,6 +205,30 @@ export default function ScheduleScreen() {
           {/* UPCOMING VIEW */}
           {activeTab === 'upcoming' && (
             <View style={styles.list}>
+              {/* Google Calendar Events */}
+              {googleAuth.calendarEvents.length > 0 && (
+                <View style={{ marginBottom: spacing.lg }}>
+                  <Text style={styles.sectionLabel}>FROM GOOGLE CALENDAR</Text>
+                  {googleAuth.calendarEvents.slice(0, 3).map((event) => {
+                    const startDate = new Date(event.start);
+                    const isToday = startDate.toDateString() === new Date().toDateString();
+                    if (!isToday) return null;
+                    return (
+                      <Card key={event.id} style={styles.calendarEventCard}>
+                        <View style={styles.eventRow}>
+                          <CalendarIcon size={16} color={colors.accent.default} />
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.eventTitle}>{event.summary}</Text>
+                            <Text style={styles.eventTime}>
+                              {startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                            </Text>
+                          </View>
+                        </View>
+                      </Card>
+                    );
+                  })}
+                </View>
+              )}
               {/* Google Calendar Banner */}
               {!googleAuth.isAuthenticated && (
                 <Card variant="glass" style={styles.banner}>
@@ -863,5 +894,32 @@ const styles = StyleSheet.create({
   recurringText: {
     ...typography.body,
     color: colors.text.secondary,
+  },
+  sectionLabel: {
+    ...typography.caption,
+    color: colors.text.muted,
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  calendarEventCard: {
+    marginTop: spacing.sm,
+    backgroundColor: colors.bg.tertiary,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent.default,
+  },
+  eventRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  eventTitle: {
+    ...typography.body,
+    color: colors.text.primary,
+    fontWeight: '500',
+  },
+  eventTime: {
+    ...typography.caption,
+    color: colors.text.muted,
   },
 });

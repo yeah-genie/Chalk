@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Types
@@ -215,13 +215,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setLessonLogs(prev => prev.filter(l => l.id !== id));
     };
 
-    const getLogsForStudent = (studentId: string) => {
+    const getLogsForStudent = useCallback((studentId: string) => {
         return lessonLogs.filter(log => log.studentId === studentId);
-    };
+    }, [lessonLogs]);
 
-    const getLogsForDate = (date: string) => {
+    const getLogsForDate = useCallback((date: string) => {
         return lessonLogs.filter(log => log.date === date);
-    };
+    }, [lessonLogs]);
 
     // Session functions
     const startSession = (studentId: string, studentName: string) => {
