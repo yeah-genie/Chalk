@@ -6,6 +6,8 @@ export interface Student {
     id: string;
     name: string;
     subject?: string;
+    grade?: string;                 // 학년 (예: "고1", "Grade 10", "AP")
+    goal?: string;                  // 목표 (예: "수능 대비", "AP 5점")
     // Payment fields
     hourlyRate?: number;          // 시급 (원)
     paymentCycle?: 'monthly' | 'per-lesson';  // 정산 주기

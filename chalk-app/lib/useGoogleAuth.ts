@@ -3,12 +3,15 @@ import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Alert } from 'react-native';
+import Constants from 'expo-constants';
 
 const TOKEN_KEY = 'google_access_token';
 const USER_KEY = 'google_user';
 
-// Supabase Edge Function URL for Google OAuth
-const SUPABASE_GOOGLE_AUTH_URL = 'https://xnjqsgdapbjnowzwhnaq.supabase.co/functions/v1/google-auth';
+// Supabase Edge Function URL for Google OAuth (from environment)
+const SUPABASE_URL = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_GOOGLE_AUTH_URL = `${SUPABASE_URL}/functions/v1/google-auth`;
+
 
 export interface GoogleUser {
     name: string;

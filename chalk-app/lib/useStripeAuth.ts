@@ -3,12 +3,15 @@ import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Alert } from 'react-native';
+import Constants from 'expo-constants';
 
 const TOKEN_KEY = 'stripe_access_token';
 const ACCOUNT_KEY = 'stripe_account';
 
-// Supabase Edge Function URL for Stripe OAuth
-const SUPABASE_STRIPE_AUTH_URL = 'https://xnjqsgdapbjnowzwhnaq.supabase.co/functions/v1/stripe-auth';
+// Supabase Edge Function URL for Stripe OAuth (from environment)
+const SUPABASE_URL = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_STRIPE_AUTH_URL = `${SUPABASE_URL}/functions/v1/stripe-auth`;
+
 
 export interface StripeAccount {
     id: string;

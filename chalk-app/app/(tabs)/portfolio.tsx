@@ -150,21 +150,20 @@ Chalk - Portfolio App for Tutors
           <View style={styles.chartBars}>
             {weeklyData.map((day, i) => (
               <View key={i} style={styles.barContainer}>
+                <Text style={styles.barCount}>{day.count > 0 ? day.count : ''}</Text>
                 <View
                   style={[
                     styles.bar,
                     {
-                      height: Math.max(day.count * 20, 4),
-                      backgroundColor: day.isToday ? colors.accent.default : colors.bg.tertiary,
+                      height: Math.max(day.count * 20, 8),
+                      backgroundColor: day.isToday ? colors.accent.default :
+                        day.count > 0 ? colors.bg.tertiary : colors.border.light,
                     }
                   ]}
                 />
                 <Text style={[styles.barLabel, day.isToday && { color: colors.accent.default }]}>
                   {day.label}
                 </Text>
-                {day.count > 0 && (
-                  <Text style={styles.barCount}>{day.count}</Text>
-                )}
               </View>
             ))}
           </View>
@@ -205,12 +204,13 @@ Chalk - Portfolio App for Tutors
             </View>
             <Text style={typography.h3}>{totalStudents}</Text>
           </View>
-          {students.map((s) => {
+          {students.map((s, index) => {
             const studentLogs = getLogsForStudent(s.id);
+            const isLast = index === students.length - 1;
             return (
               <TouchableOpacity
                 key={s.id}
-                style={styles.studentRow}
+                style={[styles.studentRow, isLast && { borderBottomWidth: 0 }]}
                 onPress={() => setSelectedStudentId(selectedStudentId === s.id ? null : s.id)}
               >
                 <View style={styles.studentAvatar}>

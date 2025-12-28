@@ -2,7 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const STRIPE_CLIENT_ID = Deno.env.get("STRIPE_CLIENT_ID")
 const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY")
-const SUPABASE_FUNCTION_URL = "https://xnjqsgdapbjnowzwhnaq.supabase.co/functions/v1/stripe-auth"
+const PROJECT_URL = Deno.env.get("PROJECT_URL") || "https://xnjqsgdapbjnowzwhnaq.supabase.co"
+const SUPABASE_FUNCTION_URL = `${PROJECT_URL}/functions/v1/stripe-auth`
+
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',

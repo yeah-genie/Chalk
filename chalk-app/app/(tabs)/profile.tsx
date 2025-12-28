@@ -345,6 +345,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.caption,
     color: colors.text.muted,
+    marginTop: spacing.xl,
     marginBottom: spacing.xs,
     marginLeft: 4,
     letterSpacing: 1,

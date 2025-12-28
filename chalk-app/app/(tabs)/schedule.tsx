@@ -296,32 +296,43 @@ export default function ScheduleScreen() {
 
           {/* WEEK VIEW */}
           {activeTab === 'week' && (
-            <View style={styles.weekContainer}>
-              {weekDays.map(({ day, date, lessons }) => (
-                <View key={day} style={[styles.dayColumn, day === today && styles.dayColumnToday]}>
-                  <View style={styles.dayHeader}>
-                    <Text style={[styles.dayLabel, day === today && styles.dayLabelToday]}>
-                      {DAYS[day]}
-                    </Text>
-                    <Text style={[styles.dateLabel, day === today && styles.dateLabelToday]}>
-                      {date}
-                    </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.weekContainer}>
+                {weekDays.map(({ day, date, lessons }) => (
+                  <View key={day} style={[styles.dayColumn, day === today && styles.dayColumnToday]}>
+                    <View style={styles.dayHeader}>
+                      <Text style={[styles.dayLabel, day === today && styles.dayLabelToday]}>
+                        {DAYS[day]}
+                      </Text>
+                      <View style={[styles.dateBadge, day === today && styles.dateBadgeToday]}>
+                        <Text style={[styles.dateLabel, day === today && styles.dateLabelToday]}>
+                          {date}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.dayLessons}>
+                      {lessons.length === 0 ? (
+                        <Text style={styles.noLessonsText}>No lessons</Text>
+                      ) : (
+                        lessons.map(lesson => (
+                          <TouchableOpacity
+                            key={lesson.id}
+                            style={[styles.weekLesson, { backgroundColor: getStudentColor(lesson.studentId) + '20', borderLeftColor: getStudentColor(lesson.studentId) }]}
+                            onPress={() => handleEditLesson(lesson)}
+                          >
+                            <Text style={styles.weekLessonTime}>{lesson.time}</Text>
+                            <Text style={styles.weekLessonName} numberOfLines={1}>{lesson.studentName}</Text>
+                            {lesson.subject && (
+                              <Text style={styles.weekLessonSubject} numberOfLines={1}>{lesson.subject}</Text>
+                            )}
+                          </TouchableOpacity>
+                        ))
+                      )}
+                    </View>
                   </View>
-                  <View style={styles.dayLessons}>
-                    {lessons.map(lesson => (
-                      <TouchableOpacity
-                        key={lesson.id}
-                        style={[styles.weekLesson, { backgroundColor: getStudentColor(lesson.studentId) + '20', borderLeftColor: getStudentColor(lesson.studentId) }]}
-                        onPress={() => handleEditLesson(lesson)}
-                      >
-                        <Text style={styles.weekLessonTime}>{lesson.time}</Text>
-                        <Text style={styles.weekLessonName} numberOfLines={1}>{lesson.studentName}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+            </ScrollView>
           )}
 
           {/* SETTLE VIEW */}
@@ -625,59 +636,87 @@ const styles = StyleSheet.create({
   // Week view
   weekContainer: {
     flexDirection: 'row',
-    gap: 4,
+    gap: 8,
+    paddingRight: spacing.lg,
   },
   dayColumn: {
-    flex: 1,
+    width: 100,
     backgroundColor: colors.bg.secondary,
-    borderRadius: radius.md,
-    padding: 4,
-    minHeight: 200,
+    borderRadius: radius.lg,
+    padding: spacing.sm,
+    minHeight: 180,
   },
   dayColumnToday: {
-    backgroundColor: colors.accent.default + '10',
-    borderWidth: 1,
-    borderColor: colors.accent.default + '30',
+    backgroundColor: colors.accent.default + '15',
+    borderWidth: 2,
+    borderColor: colors.accent.default + '50',
   },
   dayHeader: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border.light,
+    marginBottom: spacing.xs,
   },
   dayLabel: {
-    fontSize: 10,
+    fontSize: 11,
     color: colors.text.muted,
     fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   dayLabelToday: {
     color: colors.accent.default,
   },
+  dateBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  dateBadgeToday: {
+    backgroundColor: colors.accent.default,
+  },
   dateLabel: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.text.primary,
     fontWeight: '700',
   },
   dateLabelToday: {
-    color: colors.accent.default,
+    color: colors.bg.base,
   },
   dayLessons: {
-    paddingTop: 4,
-    gap: 4,
+    paddingTop: spacing.xs,
+    gap: 6,
+  },
+  noLessonsText: {
+    fontSize: 10,
+    color: colors.text.muted,
+    textAlign: 'center',
+    marginTop: spacing.md,
   },
   weekLesson: {
-    padding: 4,
-    borderRadius: 4,
-    borderLeftWidth: 2,
+    padding: 6,
+    borderRadius: radius.sm,
+    borderLeftWidth: 3,
   },
   weekLessonTime: {
-    fontSize: 8,
+    fontSize: 10,
     color: colors.text.muted,
+    fontWeight: '500',
   },
   weekLessonName: {
-    fontSize: 9,
+    fontSize: 11,
     color: colors.text.primary,
     fontWeight: '600',
+    marginTop: 2,
+  },
+  weekLessonSubject: {
+    fontSize: 9,
+    color: colors.text.secondary,
+    marginTop: 1,
   },
   // History
   emptyState: {
@@ -862,13 +901,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   input: {
+    ...typography.body,
     backgroundColor: colors.bg.secondary,
     borderRadius: radius.md,
     padding: spacing.lg,
     color: colors.text.primary,
     borderWidth: 1,
     borderColor: colors.border.default,
-    ...typography.body,
   },
   recurringRow: {
     flexDirection: 'row',

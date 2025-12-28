@@ -263,13 +263,13 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
     input: {
+        ...typography.body,
         backgroundColor: colors.bg.secondary,
         borderRadius: radius.md,
         padding: spacing.md,
         color: colors.text.primary,
         borderWidth: 1,
         borderColor: colors.border.default,
-        ...typography.body,
     },
     taxRow: {
         flexDirection: 'row',

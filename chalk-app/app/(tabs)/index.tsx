@@ -40,7 +40,7 @@ const STRUGGLES = [
 ];
 
 export default function LogScreen() {
-  const { students, addStudent, removeStudent, addLessonLog, getLogsForDate, getLogsForStudent, activeSession, endSession } = useData();
+  const { students, addStudent, removeStudent, addLessonLog, getLogsForDate, getLogsForStudent, activeSession, endSession, scheduledLessons, removeScheduledLesson } = useData();
   const zoomAuth = useZoomAuth();
 
   // State
@@ -48,7 +48,7 @@ export default function LogScreen() {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [customTopic, setCustomTopic] = useState('');
   const [showTopicPicker, setShowTopicPicker] = useState(false);
-  const [rating, setRating] = useState<'good' | 'okay' | 'struggled' | null>(null);
+  const [rating, setRating] = useState<'good' | 'okay' | 'struggled' | null>('okay');
   const [struggles, setStruggles] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [homework, setHomework] = useState('');
@@ -111,18 +111,41 @@ export default function LogScreen() {
     const previousTopics = studentLogs.map(l => l.topic).slice(0, 5);
     const lastRating = studentLogs[0]?.rating || 'okay';
 
-    // Auto-fill last topic for this student
+    // Auto-fill last topic for this student with auto-increment
     if (studentLogs.length > 0 && !customTopic && !selectedTopicId) {
       const lastTopic = studentLogs[0].topic;
-      setCustomTopic(lastTopic);
+      // Check if topic has session number pattern (e.g., "이차방정식 2회차")
+      const sessionMatch = lastTopic.match(/^(.+?)\s*(\d+)회차$/);
+      if (sessionMatch) {
+        const baseTopic = sessionMatch[1].trim();
+        const nextSession = parseInt(sessionMatch[2]) + 1;
+        setCustomTopic(`${baseTopic} ${nextSession}회차`);
+      } else {
+        // First time - add "2회차" if repeating same topic
+        setCustomTopic(`${lastTopic} 2회차`);
+      }
     }
+
+    // Calculate student stats for personalized recommendations
+    const goodCount = studentLogs.filter(l => l.rating === 'good').length;
+    const goodRate = studentLogs.length > 0 ? goodCount / studentLogs.length : 0;
+    const struggledTopics = studentLogs
+      .filter(l => l.rating === 'struggled')
+      .map(l => l.topic)
+      .filter((v, i, a) => a.indexOf(v) === i);
 
     try {
       const recommendations = await generateTopicRecommendations(
         selectedStudent.name,
         selectedStudent.subject || 'General',
         previousTopics,
-        lastRating
+        lastRating,
+        {
+          grade: selectedStudent.grade,
+          goal: selectedStudent.goal,
+          goodRate,
+          struggledTopics,
+        }
       );
       setTopicRecommendations(recommendations);
     } catch (error) {
@@ -243,6 +266,15 @@ export default function LogScreen() {
       aiInsights: aiInsights || undefined,
     });
 
+    // Mark today's schedule as completed (remove from upcoming)
+    const todayDayOfWeek = new Date().getDay();
+    const todaysSchedule = scheduledLessons.find(
+      l => l.studentId === selectedStudent.id && l.day === todayDayOfWeek
+    );
+    if (todaysSchedule && !todaysSchedule.recurring) {
+      removeScheduledLesson(todaysSchedule.id);
+    }
+
     // Reset form
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
@@ -250,7 +282,7 @@ export default function LogScreen() {
     setSelectedStudentId(null);
     setSelectedTopicId(null);
     setCustomTopic('');
-    setRating(null);
+    setRating('okay'); // Keep default as 'okay' for next lesson
     setStruggles([]);
     setNotes('');
     setHomework('');
@@ -284,12 +316,25 @@ export default function LogScreen() {
           {/* Active Session Banner */}
           {activeSession && (
             <Card variant="glow" style={{ marginBottom: 24, borderColor: colors.accent.default }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={styles.recordingDot} />
-                <View>
-                  <Text style={[typography.small, { color: colors.accent.default }]}>Lesson in Progress</Text>
-                  <Text style={[typography.h3, { color: colors.text.primary }]}>{activeSession.studentName}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={styles.recordingDot} />
+                  <View>
+                    <Text style={[typography.small, { color: colors.accent.default }]}>Lesson in Progress</Text>
+                    <Text style={[typography.h3, { color: colors.text.primary }]}>{activeSession.studentName}</Text>
+                  </View>
                 </View>
+                <TouchableOpacity
+                  style={styles.endSessionBtn}
+                  onPress={() => {
+                    Alert.alert('End Session', 'End this lesson without saving?', [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'End', style: 'destructive', onPress: () => endSession() }
+                    ]);
+                  }}
+                >
+                  <Text style={styles.endSessionText}>End</Text>
+                </TouchableOpacity>
               </View>
             </Card>
           )}
@@ -311,6 +356,21 @@ export default function LogScreen() {
             onAdd={handleAddStudent}
             onDelete={(s) => removeStudent(s.id)}
           />
+
+          {/* Empty State - No Students */}
+          {students.length === 0 && (
+            <Card style={styles.emptyState}>
+              <Text style={styles.emptyStateTitle}>👋 Welcome to Chalk!</Text>
+              <Text style={styles.emptyStateText}>
+                Add your first student to start logging lessons.
+              </Text>
+              <Button
+                title="Add Student"
+                onPress={handleAddStudent}
+                style={{ marginTop: spacing.lg }}
+              />
+            </Card>
+          )}
 
           {selectedStudent && (
             <>
@@ -1038,5 +1098,30 @@ const styles = StyleSheet.create({
     color: colors.status.success,
     marginTop: spacing.sm,
     fontWeight: '500',
+  },
+  endSessionBtn: {
+    backgroundColor: colors.status.error + '20',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: radius.md,
+  },
+  endSessionText: {
+    ...typography.small,
+    color: colors.status.error,
+    fontWeight: '600',
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: spacing['2xl'],
+  },
+  emptyStateTitle: {
+    ...typography.h2,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+  },
+  emptyStateText: {
+    ...typography.body,
+    color: colors.text.secondary,
+    textAlign: 'center',
   },
 });

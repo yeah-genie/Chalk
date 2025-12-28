@@ -2,7 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID")
 const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET")
-const SUPABASE_FUNCTION_URL = "https://xnjqsgdapbjnowzwhnaq.supabase.co/functions/v1/google-auth"
+const PROJECT_URL = Deno.env.get("PROJECT_URL") || "https://xnjqsgdapbjnowzwhnaq.supabase.co"
+const SUPABASE_FUNCTION_URL = `${PROJECT_URL}/functions/v1/google-auth`
+
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',

@@ -102,23 +102,51 @@ Respond in JSON format:
     }
 }
 
-// Generate topic recommendations for next lesson
+// Generate topic recommendations for next lesson (Enhanced with personalization)
+export interface PersonalizedRecommendationInput {
+    studentName: string;
+    subject: string;
+    grade?: string;           // 학년 (예: "고1", "Grade 10")
+    goal?: string;            // 목표 (예: "수능 대비", "AP 5점")
+    previousTopics: string[];
+    lastRating: string;
+    goodRate?: number;        // 이해도 (0-1, good 비율)
+    struggledTopics?: string[]; // 어려워했던 토픽들
+}
+
 export async function generateTopicRecommendations(
     studentName: string,
     subject: string,
     previousTopics: string[],
-    lastRating: string
+    lastRating: string,
+    options?: {
+        grade?: string;
+        goal?: string;
+        goodRate?: number;
+        struggledTopics?: string[];
+    }
 ): Promise<TopicRecommendation[]> {
+    const grade = options?.grade || '';
+    const goal = options?.goal || '';
+    const goodRate = options?.goodRate !== undefined ? Math.round(options.goodRate * 100) : null;
+    const struggledTopics = options?.struggledTopics?.slice(-3) || [];
+
     const prompt = `You are an expert tutor. Recommend 3 topics for the next lesson.
 
 Student: ${studentName}
-Subject: ${subject}
+Subject: ${subject}${grade ? ` (${grade})` : ''}${goal ? `\nGoal: ${goal}` : ''}
 Previous Topics: ${previousTopics.slice(-5).join(', ') || 'None'}
-Last Performance: ${lastRating}
+Last Performance: ${lastRating}${goodRate !== null ? `\nOverall Understanding: ${goodRate}%` : ''}${struggledTopics.length > 0 ? `\nPreviously Struggled: ${struggledTopics.join(', ')}` : ''}
+
+Consider:
+1. If last performance was "struggled", prioritize review or prerequisite topics
+2. If understanding is below 70%, slow down pace
+3. If student has a specific goal (exam prep), stay on track
+4. Balance between progress and mastery
 
 Respond in JSON array format:
 [
-  { "topic": "Topic name", "reason": "Why this topic", "difficulty": "easy|medium|hard" }
+  { "topic": "Topic name", "reason": "Why this topic (1 sentence)", "difficulty": "easy|medium|hard" }
 ]`;
 
     try {
@@ -155,6 +183,27 @@ Respond in JSON array format:
         console.error('[Gemini] Request failed:', error);
         return getDefaultRecommendations(subject);
     }
+}
+
+// Calculate student understanding rate from lesson logs
+export function calculateStudentStats(logs: Array<{ rating: string; topic: string }>) {
+    if (logs.length === 0) {
+        return { goodRate: 0, struggledTopics: [], totalLessons: 0 };
+    }
+
+    const goodCount = logs.filter(l => l.rating === 'good').length;
+    const goodRate = goodCount / logs.length;
+
+    const struggledTopics = logs
+        .filter(l => l.rating === 'struggled')
+        .map(l => l.topic)
+        .filter((v, i, a) => a.indexOf(v) === i); // unique
+
+    return {
+        goodRate,
+        struggledTopics,
+        totalLessons: logs.length,
+    };
 }
 
 // Generate parent report summary

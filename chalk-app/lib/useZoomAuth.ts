@@ -3,12 +3,15 @@ import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Alert, Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 const TOKEN_KEY = 'zoom_access_token';
 const USER_KEY = 'zoom_user';
 
-// Supabase Edge Function URL for Zoom OAuth
-const SUPABASE_ZOOM_AUTH_URL = 'https://xnjqsgdapbjnowzwhnaq.supabase.co/functions/v1/zoom-auth';
+// Supabase Edge Function URL for Zoom OAuth (from environment)
+const SUPABASE_URL = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ZOOM_AUTH_URL = `${SUPABASE_URL}/functions/v1/zoom-auth`;
+
 
 export interface ZoomUser {
     id: string;
