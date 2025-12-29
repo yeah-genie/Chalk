@@ -62,13 +62,21 @@ export function useAuth() {
             password,
             options: {
                 data: { name },
+                // For mobile apps, use app deep link
+                // For Supabase Dashboard: Set Site URL to your production URL
+                // Authentication > URL Configuration > Site URL
+                emailRedirectTo: 'chalk://auth/callback',
             },
         });
         if (error) {
             Alert.alert('Sign Up Error', error.message);
             return false;
         }
-        Alert.alert('Success', 'Please check your email for verification.');
+        Alert.alert(
+            'Success',
+            'Account created! Check your email for verification link.\n\n' +
+            'Note: If the link goes to localhost, please contact support.'
+        );
         return true;
     }, []);
 
