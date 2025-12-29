@@ -133,6 +133,22 @@ export default async function DashboardPage() {
                     </div>
                 </div>
 
+                {/* Quick Actions */}
+                <div className="flex gap-3 mb-10">
+                    <Link
+                        href="/dashboard/students"
+                        className="flex-1 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.04] text-center text-[13px] text-zinc-400 hover:text-white hover:bg-white/[0.05] hover:border-white/[0.1] transition-all"
+                    >
+                        👩‍🎓 학생 관리
+                    </Link>
+                    <Link
+                        href={`/tutor/${user.id}`}
+                        className="flex-1 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.04] text-center text-[13px] text-zinc-400 hover:text-white hover:bg-white/[0.05] hover:border-white/[0.1] transition-all"
+                    >
+                        🌐 공개 프로필
+                    </Link>
+                </div>
+
                 {/* CTA Button */}
                 <Link
                     href="/log/new"

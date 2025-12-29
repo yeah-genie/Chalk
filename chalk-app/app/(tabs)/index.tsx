@@ -24,6 +24,7 @@ import { StudentPicker } from '@/components/ui/StudentPicker';
 import { RatingSelector } from '@/components/ui/RatingSelector';
 import { VoiceRecorder } from '@/components/ui/VoiceRecorder';
 import { RatingNotification } from '@/components/ui/RatingNotification';
+import { TopicPicker } from '@/components/ui/TopicPicker';
 import { useData } from '@/lib/DataContext';
 import { useZoomAuth, ZoomRecording } from '@/lib/useZoomAuth';
 import { useAutoLessonDetection, createAutoLessonLog } from '@/lib/useAutoLessonDetection';
@@ -592,15 +593,14 @@ export default function LogScreen() {
                   </View>
                 )}
 
-                <TextInput
-                  style={styles.customTopicInput}
-                  placeholder="Or type your own..."
-                  placeholderTextColor={colors.text.muted}
+                {/* Smart TopicPicker with autocomplete */}
+                <TopicPicker
                   value={customTopic}
-                  onChangeText={(text) => {
+                  onChange={(text) => {
                     setCustomTopic(text);
                     if (text) setSelectedTopicId(null);
                   }}
+                  recentTopics={recentTopics}
                 />
               </View>
 
