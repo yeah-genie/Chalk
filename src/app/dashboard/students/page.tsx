@@ -163,7 +163,7 @@ export default function StudentsPage() {
                 </div>
             </header>
 
-            <main className="max-w-lg mx-auto px-5 py-6">
+            <main className="max-w-lg mx-auto px-5 py-6 pb-24">
                 {isLoading ? (
                     <div className="text-center py-16">
                         <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
@@ -347,6 +347,29 @@ export default function StudentsPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
+            {/* Bottom Navigation */}
+            <nav className="fixed bottom-0 left-0 right-0 bg-[#0a0a0b] border-t border-zinc-800/50 pb-safe">
+                <div className="max-w-lg mx-auto px-8 py-4 flex items-center justify-around">
+                    <Link href="/dashboard" className="flex flex-col items-center text-zinc-500 hover:text-white transition-colors">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        <span className="text-xs mt-1">Home</span>
+                    </Link>
+                    <Link href="/lessons" className="flex flex-col items-center text-zinc-500 hover:text-white transition-colors">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <span className="text-xs mt-1">Lessons</span>
+                    </Link>
+                    <Link href="/dashboard/students" className="flex flex-col items-center text-emerald-500">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <span className="text-xs mt-1">Students</span>
+                    </Link>
+                </div>
+            </nav>
         </div>
     );
 }
