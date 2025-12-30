@@ -105,7 +105,19 @@ CREATE TABLE IF NOT EXISTS public.recording_analyses (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 6. Student analytics table
+-- 6. Parent notifications table
+CREATE TABLE IF NOT EXISTS public.parent_notifications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  student_id UUID REFERENCES public.students(id) ON DELETE CASCADE NOT NULL,
+  tutor_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  parent_contact TEXT NOT NULL,
+  message TEXT NOT NULL,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')),
+  sent_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 7. Student analytics table
 CREATE TABLE IF NOT EXISTS public.student_analytics (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   student_id UUID REFERENCES public.students(id) ON DELETE CASCADE NOT NULL UNIQUE,
@@ -145,6 +157,7 @@ ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recordings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recording_analyses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.parent_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.student_analytics ENABLE ROW LEVEL SECURITY;
 
 -- =============================================
@@ -277,6 +290,22 @@ CREATE POLICY "Users can update analyses for their recordings"
   );
 
 -- =============================================
+-- Parent notifications policies
+-- =============================================
+
+CREATE POLICY "Users can view their own notifications"
+  ON public.parent_notifications FOR SELECT
+  USING (auth.uid() = tutor_id);
+
+CREATE POLICY "Users can insert their own notifications"
+  ON public.parent_notifications FOR INSERT
+  WITH CHECK (auth.uid() = tutor_id);
+
+CREATE POLICY "Users can update their own notifications"
+  ON public.parent_notifications FOR UPDATE
+  USING (auth.uid() = tutor_id);
+
+-- =============================================
 -- Student analytics policies
 -- =============================================
 
@@ -369,6 +398,10 @@ CREATE INDEX IF NOT EXISTS recordings_student_id_idx ON public.recordings(studen
 CREATE INDEX IF NOT EXISTS recordings_status_idx ON public.recordings(status);
 
 CREATE INDEX IF NOT EXISTS student_analytics_student_id_idx ON public.student_analytics(student_id);
+
+CREATE INDEX IF NOT EXISTS parent_notifications_tutor_id_idx ON public.parent_notifications(tutor_id);
+CREATE INDEX IF NOT EXISTS parent_notifications_student_id_idx ON public.parent_notifications(student_id);
+CREATE INDEX IF NOT EXISTS parent_notifications_created_at_idx ON public.parent_notifications(created_at DESC);
 
 -- =============================================
 -- Storage bucket for recordings

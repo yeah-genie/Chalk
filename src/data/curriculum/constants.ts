@@ -228,6 +228,18 @@ export const SUBJECT_INFO: Record<
     icon: '🌎',
     color: '#64748B',
   },
+  CHINESE: {
+    name: 'Chinese',
+    nameKo: '중국어',
+    icon: '🇨🇳',
+    color: '#DC2626',
+  },
+  JAPANESE: {
+    name: 'Japanese',
+    nameKo: '일본어',
+    icon: '🇯🇵',
+    color: '#BE185D',
+  },
 };
 
 // ============================================

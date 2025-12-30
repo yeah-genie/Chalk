@@ -55,6 +55,31 @@ export default async function DashboardPage() {
 
     const hasInstantFeedbackBadge = sameDayRate >= 80 && (totalLogs || 0) >= 5;
 
+    // Get active students with their analytics
+    const { data: students } = await supabase
+        .from('students')
+        .select('id, name, subject, grade, status')
+        .eq('tutor_id', user.id)
+        .eq('status', 'active')
+        .order('updated_at', { ascending: false })
+        .limit(4);
+
+    // Get analytics for these students
+    const studentIds = students?.map(s => s.id) || [];
+    const { data: studentAnalytics } = studentIds.length > 0
+        ? await supabase
+            .from('student_analytics')
+            .select('student_id, understanding_trend, improvement_rate')
+            .in('student_id', studentIds)
+        : { data: [] };
+
+    // Map analytics to students
+    const analyticsMap = new Map(studentAnalytics?.map(a => [a.student_id, a]) || []);
+    const studentsWithAnalytics = students?.map(student => ({
+        ...student,
+        analytics: analyticsMap.get(student.id),
+    })) || [];
+
     return (
         <div className="min-h-screen relative">
             {/* Background */}
@@ -158,7 +183,7 @@ export default async function DashboardPage() {
                 {/* CTA Button */}
                 <Link
                     href="/log/new"
-                    className="group block w-full py-5 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-2xl text-center relative overflow-hidden mb-12"
+                    className="group block w-full py-5 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-2xl text-center relative overflow-hidden mb-8"
                 >
                     <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <span className="relative text-[16px] font-semibold text-white flex items-center justify-center gap-2">
@@ -168,6 +193,68 @@ export default async function DashboardPage() {
                         오늘 수업 기록하기
                     </span>
                 </Link>
+
+                {/* Student Cards */}
+                {studentsWithAnalytics.length > 0 && (
+                    <div className="mb-10">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-[15px] font-semibold text-zinc-400">내 학생</h2>
+                            <Link
+                                href="/dashboard/students"
+                                className="text-[13px] text-zinc-500 hover:text-white transition"
+                            >
+                                전체 보기 →
+                            </Link>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            {studentsWithAnalytics.map((student) => {
+                                const latestScore = student.analytics?.understanding_trend?.slice(-1)[0];
+                                const improvementRate = student.analytics?.improvement_rate || 0;
+                                const trend = improvementRate > 0 ? 'up' : improvementRate < 0 ? 'down' : 'stable';
+
+                                return (
+                                    <Link
+                                        key={student.id}
+                                        href={`/dashboard/students/${student.id}`}
+                                        className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all group"
+                                    >
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-white font-bold">
+                                                {student.name.charAt(0)}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-white group-hover:text-emerald-400 transition truncate">
+                                                    {student.name}
+                                                </p>
+                                                <p className="text-[12px] text-zinc-500 truncate">
+                                                    {student.subject} {student.grade && `· ${student.grade}`}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {student.analytics ? (
+                                            <div className="flex items-center justify-between text-[12px]">
+                                                <span className="text-zinc-500">
+                                                    이해도 {latestScore || '-'}점
+                                                </span>
+                                                <span className={`flex items-center gap-1 ${
+                                                    trend === 'up' ? 'text-emerald-400' :
+                                                    trend === 'down' ? 'text-red-400' : 'text-zinc-500'
+                                                }`}>
+                                                    {trend === 'up' && '↑'}
+                                                    {trend === 'down' && '↓'}
+                                                    {trend === 'stable' && '→'}
+                                                    {Math.abs(improvementRate)}%
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <p className="text-[12px] text-zinc-600">분석 데이터 없음</p>
+                                        )}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {/* Recent logs */}
                 <div>

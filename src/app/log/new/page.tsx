@@ -103,17 +103,55 @@ export default function NewLogPage() {
         }
     };
 
+    // Poll for analysis completion
+    const pollAnalysisStatus = async (recordingId: string) => {
+        const maxAttempts = 60; // 2 minutes max (2s interval)
+        let attempts = 0;
+
+        const poll = async (): Promise<boolean> => {
+            try {
+                const res = await fetch(`/api/analyze-recording?recordingId=${recordingId}`);
+                const data = await res.json();
+
+                if (data.status === 'completed' && data.hasLog) {
+                    return true;
+                }
+
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    return false;
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                return poll();
+            } catch {
+                attempts++;
+                if (attempts >= maxAttempts) return false;
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                return poll();
+            }
+        };
+
+        return poll();
+    };
+
     // Stop recording and process
     const handleStopRecording = async () => {
         setMode('processing');
         const recording = await stopRecording();
 
         if (recording) {
-            // Wait for analysis to complete (simplified - in production use webhooks)
-            setTimeout(() => {
+            // Real polling for analysis completion
+            const success = await pollAnalysisStatus(recording.id);
+
+            if (success) {
                 setMode('success');
                 setTimeout(() => router.push('/dashboard'), 2000);
-            }, 3000);
+            } else {
+                // Even if polling times out, the analysis might complete later
+                setMode('success');
+                setTimeout(() => router.push('/dashboard'), 2000);
+            }
         } else {
             setError('녹음 저장에 실패했습니다.');
             setMode('select');

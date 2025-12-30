@@ -174,10 +174,13 @@ export async function checkForCurriculumUpdates(
     });
 
     // Check for update indicators
-    const updateKeywords = {
+    const updateKeywords: Record<string, string[]> = {
       KR: ['개정', '변경', '신설', '수정', '추가'],
       US: ['revised', 'updated', 'new standards', 'amended'],
       UK: ['updated', 'changes', 'new specification'],
+      SG: ['revised', 'updated', 'changes', 'new syllabus'],
+      JP: ['改定', '変更', '新設', '修正'],
+      CN: ['修订', '更新', '变更', '新增'],
     };
 
     const keywords = updateKeywords[country] || updateKeywords.US;
