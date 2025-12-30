@@ -524,52 +524,9 @@ export default function LogScreen() {
                 </View>
               )}
 
-              {/* Topic Picker */}
+              {/* Topic Picker - 단순화: TopicPicker만 사용 */}
               <View style={styles.section}>
                 <Text style={styles.sectionLabel}>Topic</Text>
-
-                {topics.length > 0 ? (
-                  <TouchableOpacity
-                    style={styles.topicSelector}
-                    onPress={() => setShowTopicPicker(!showTopicPicker)}
-                  >
-                    <Text style={selectedTopicId ? styles.topicText : styles.topicPlaceholder}>
-                      {selectedTopic?.nameKr || 'Select from curriculum...'}
-                    </Text>
-                    <ChevronDownIcon size={20} color={colors.text.muted} />
-                  </TouchableOpacity>
-                ) : null}
-
-                {showTopicPicker && topics.length > 0 && (
-                  <View style={styles.topicList}>
-                    {['basic', 'intermediate', 'advanced'].map(level => {
-                      const levelTopics = topics.filter(t => t.level === level);
-                      if (levelTopics.length === 0) return null;
-                      return (
-                        <View key={level}>
-                          <Text style={styles.levelLabel}>
-                            {level === 'basic' ? 'Basic' : level === 'intermediate' ? 'Intermediate' : 'Advanced'}
-                          </Text>
-                          {levelTopics.map(topic => (
-                            <TouchableOpacity
-                              key={topic.id}
-                              style={[styles.topicItem, selectedTopicId === topic.id && styles.topicItemActive]}
-                              onPress={() => {
-                                setSelectedTopicId(topic.id);
-                                setCustomTopic('');
-                                setShowTopicPicker(false);
-                              }}
-                            >
-                              <Text style={[styles.topicItemText, selectedTopicId === topic.id && styles.topicItemTextActive]}>
-                                {topic.name}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      );
-                    })}
-                  </View>
-                )}
 
                 {/* Recent Topics (Zero-Action Card) */}
                 {recentTopics.length > 0 && !selectedTopicId && !customTopic && (
@@ -744,24 +701,15 @@ export default function LogScreen() {
                       </Text>
                     )}
                   </View>
-                ) : (
-                  <TextInput
-                    style={styles.input}
-                    placeholder="https://zoom.us/rec/..."
-                    placeholderTextColor={colors.text.muted}
-                    value={zoomRecordingUrl}
-                    onChangeText={setZoomRecordingUrl}
-                    autoCapitalize="none"
-                  />
-                )}
+                ) : null}
               </View>
 
-              {/* Homework */}
+              {/* Homework - 단순화: 한 줄 placeholder */}
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Homework</Text>
+                <Text style={styles.sectionLabel}>Homework (optional)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Homework for next time..."
+                  placeholder="예: 수학익힘책 32-35페이지"
                   placeholderTextColor={colors.text.muted}
                   value={homework}
                   onChangeText={setHomework}
