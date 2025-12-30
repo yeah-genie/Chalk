@@ -5,40 +5,17 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useRecording } from '@/services/recording';
 import type { Student } from '@/lib/supabase/types';
 
 type Mode = 'select' | 'recording' | 'manual' | 'processing' | 'success';
 
-// 프리셋 태그들
-const PROBLEM_TAGS = [
-    { label: '계산실수', icon: '🔢' },
-    { label: '개념이해', icon: '💭' },
-    { label: '문제해석', icon: '📖' },
-    { label: '시간부족', icon: '⏱️' },
-    { label: '공식암기', icon: '📝' },
-    { label: '응용력', icon: '🧩' },
-];
-
-const DIAGNOSIS_TAGS = [
-    { label: '기초부족', icon: '📚' },
-    { label: '부주의', icon: '👀' },
-    { label: '연습부족', icon: '✏️' },
-    { label: '개념혼동', icon: '🔄' },
-    { label: '자신감부족', icon: '💪' },
-    { label: '집중력', icon: '🎯' },
-];
-
-const SOLUTION_TAGS = [
-    { label: '반복연습', icon: '🔁' },
-    { label: '개념정리', icon: '📋' },
-    { label: '유사문제', icon: '📑' },
-    { label: '시각화', icon: '📊' },
-    { label: '오답노트', icon: '📓' },
-    { label: '격려', icon: '🌟' },
-];
-
 export default function NewLogPage() {
+    const t = useTranslations('log');
+    const tCommon = useTranslations('common');
+    const tAuth = useTranslations('auth');
+
     const [mode, setMode] = useState<Mode>('select');
     const [students, setStudents] = useState<Student[]>([]);
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -56,6 +33,34 @@ export default function NewLogPage() {
     const [error, setError] = useState('');
     const router = useRouter();
     const supabase = createClient();
+
+    // Tag definitions with translation keys
+    const PROBLEM_TAGS = [
+        { key: 'calculation', icon: '🔢' },
+        { key: 'concept', icon: '💭' },
+        { key: 'interpretation', icon: '📖' },
+        { key: 'time', icon: '⏱️' },
+        { key: 'formula', icon: '📝' },
+        { key: 'application', icon: '🧩' },
+    ];
+
+    const DIAGNOSIS_TAGS = [
+        { key: 'basics', icon: '📚' },
+        { key: 'careless', icon: '👀' },
+        { key: 'practice', icon: '✏️' },
+        { key: 'confusion', icon: '🔄' },
+        { key: 'confidence', icon: '💪' },
+        { key: 'focus', icon: '🎯' },
+    ];
+
+    const SOLUTION_TAGS = [
+        { key: 'repeat', icon: '🔁' },
+        { key: 'organize', icon: '📋' },
+        { key: 'similar', icon: '📑' },
+        { key: 'visualize', icon: '📊' },
+        { key: 'errorNote', icon: '📓' },
+        { key: 'encourage', icon: '🌟' },
+    ];
 
     // Recording hook
     const {
@@ -103,19 +108,55 @@ export default function NewLogPage() {
         }
     };
 
+    // Poll for analysis completion
+    const pollAnalysisStatus = async (recordingId: string) => {
+        const maxAttempts = 60;
+        let attempts = 0;
+
+        const poll = async (): Promise<boolean> => {
+            try {
+                const res = await fetch(`/api/analyze-recording?recordingId=${recordingId}`);
+                const data = await res.json();
+
+                if (data.status === 'completed' && data.hasLog) {
+                    return true;
+                }
+
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    return false;
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                return poll();
+            } catch {
+                attempts++;
+                if (attempts >= maxAttempts) return false;
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                return poll();
+            }
+        };
+
+        return poll();
+    };
+
     // Stop recording and process
     const handleStopRecording = async () => {
         setMode('processing');
         const recording = await stopRecording();
 
         if (recording) {
-            // Wait for analysis to complete (simplified - in production use webhooks)
-            setTimeout(() => {
+            const success = await pollAnalysisStatus(recording.id);
+
+            if (success) {
                 setMode('success');
                 setTimeout(() => router.push('/dashboard'), 2000);
-            }, 3000);
+            } else {
+                setMode('success');
+                setTimeout(() => router.push('/dashboard'), 2000);
+            }
         } else {
-            setError('녹음 저장에 실패했습니다.');
+            setError(t('error.saveFailed'));
             setMode('select');
         }
     };
@@ -125,7 +166,7 @@ export default function NewLogPage() {
         e.preventDefault();
 
         if (problemTags.length === 0 && diagnosisTags.length === 0 && solutionTags.length === 0) {
-            setError('최소 하나의 태그를 선택해주세요.');
+            setError(t('manual.selectOneTag'));
             return;
         }
 
@@ -135,7 +176,7 @@ export default function NewLogPage() {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-            setError('로그인이 필요합니다.');
+            setError(tAuth('loginRequired'));
             setLoading(false);
             return;
         }
@@ -190,8 +231,8 @@ export default function NewLogPage() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <p className="text-xl font-semibold text-white">기록 완료!</p>
-                            <p className="text-zinc-500 mt-2">대시보드로 이동합니다</p>
+                            <p className="text-xl font-semibold text-white">{t('success.title')}</p>
+                            <p className="text-zinc-500 mt-2">{t('success.subtitle')}</p>
                         </motion.div>
                     </motion.div>
                 )}
@@ -217,8 +258,8 @@ export default function NewLogPage() {
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                 </svg>
                             </div>
-                            <p className="text-xl font-semibold text-white">AI 분석 중...</p>
-                            <p className="text-zinc-500 mt-2">수업 내용을 자동으로 분석하고 있어요</p>
+                            <p className="text-xl font-semibold text-white">{t('processing.title')}</p>
+                            <p className="text-zinc-500 mt-2">{t('processing.subtitle')}</p>
                         </motion.div>
                     </motion.div>
                 )}
@@ -231,9 +272,9 @@ export default function NewLogPage() {
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
-                        <span className="text-[14px] font-medium">돌아가기</span>
+                        <span className="text-[14px] font-medium">{tCommon('back')}</span>
                     </Link>
-                    <span className="text-[14px] text-zinc-500">수업 기록</span>
+                    <span className="text-[14px] text-zinc-500">{t('title')}</span>
                     <div className="w-20" />
                 </div>
             </header>
@@ -246,7 +287,6 @@ export default function NewLogPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="text-center py-16"
                     >
-                        {/* Recording indicator */}
                         <div className="relative inline-block mb-8">
                             <div className="w-32 h-32 rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20 flex items-center justify-center">
                                 <div className={`w-24 h-24 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center ${isRecording ? 'animate-pulse' : ''}`}>
@@ -265,7 +305,9 @@ export default function NewLogPage() {
                             {formattedDuration}
                         </p>
                         <p className="text-zinc-500 mb-8">
-                            {selectedStudent ? `${selectedStudent.name} 수업 녹음 중` : '수업 녹음 중'}
+                            {selectedStudent
+                                ? t('recording.title', { student: selectedStudent.name })
+                                : t('recording.titleNoStudent')}
                         </p>
 
                         <div className="flex justify-center gap-4">
@@ -312,7 +354,7 @@ export default function NewLogPage() {
                         </div>
 
                         <p className="text-zinc-600 text-sm mt-8">
-                            녹음이 끝나면 AI가 자동으로 수업을 분석합니다
+                            {t('recording.aiNote')}
                         </p>
                     </motion.div>
                 )}
@@ -325,8 +367,8 @@ export default function NewLogPage() {
                             animate={{ opacity: 1, y: 0 }}
                             className="mb-8"
                         >
-                            <h1 className="text-[28px] font-bold text-white tracking-tight">수업 기록</h1>
-                            <p className="text-zinc-500 mt-1">녹음만 하면 AI가 자동으로 기록해요</p>
+                            <h1 className="text-[28px] font-bold text-white tracking-tight">{t('title')}</h1>
+                            <p className="text-zinc-500 mt-1">{t('subtitle')}</p>
                         </motion.div>
 
                         {/* Student selection */}
@@ -337,7 +379,7 @@ export default function NewLogPage() {
                                 transition={{ delay: 0.1 }}
                                 className="mb-6"
                             >
-                                <p className="text-[13px] text-zinc-500 mb-3">학생 선택 (선택사항)</p>
+                                <p className="text-[13px] text-zinc-500 mb-3">{t('selectStudent')}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {students.map((student) => (
                                         <button
@@ -375,8 +417,8 @@ export default function NewLogPage() {
                                             <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
                                         </svg>
                                     </div>
-                                    <span className="text-lg font-semibold text-white">수업 녹음 시작</span>
-                                    <span className="text-sm text-zinc-500 mt-1">탭 한 번으로 자동 기록</span>
+                                    <span className="text-lg font-semibold text-white">{t('startRecording')}</span>
+                                    <span className="text-sm text-zinc-500 mt-1">{t('tapToRecord')}</span>
                                 </div>
                             </button>
                         </motion.div>
@@ -384,7 +426,7 @@ export default function NewLogPage() {
                         {/* Divider */}
                         <div className="flex items-center gap-4 mb-8">
                             <div className="flex-1 h-px bg-white/[0.06]" />
-                            <span className="text-[12px] text-zinc-600">또는</span>
+                            <span className="text-[12px] text-zinc-600">{t('or')}</span>
                             <div className="flex-1 h-px bg-white/[0.06]" />
                         </div>
 
@@ -396,7 +438,7 @@ export default function NewLogPage() {
                             onClick={() => setMode('manual')}
                             className="w-full py-4 bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-xl text-[14px] text-zinc-400 hover:text-white transition-all"
                         >
-                            직접 기록하기 (수동)
+                            {t('manualEntry')}
                         </motion.button>
                     </>
                 )}
@@ -416,10 +458,10 @@ export default function NewLogPage() {
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                 </svg>
-                                뒤로
+                                {t('manual.back')}
                             </button>
-                            <h1 className="text-[28px] font-bold text-white tracking-tight">직접 기록</h1>
-                            <p className="text-zinc-500 mt-1">탭 3번 + 한 줄이면 끝</p>
+                            <h1 className="text-[28px] font-bold text-white tracking-tight">{t('manual.title')}</h1>
+                            <p className="text-zinc-500 mt-1">{t('manual.subtitle')}</p>
                         </motion.div>
 
                         <form onSubmit={handleManualSubmit} className="space-y-6">
@@ -449,33 +491,36 @@ export default function NewLogPage() {
                                         <span className="text-red-400 text-[13px] font-bold">P</span>
                                     </div>
                                     <div>
-                                        <span className="text-[15px] font-semibold text-red-400">Problem</span>
-                                        <span className="text-[13px] text-zinc-500 ml-2">어떤 부분이 어려웠나요?</span>
+                                        <span className="text-[15px] font-semibold text-red-400">{t('problem.label')}</span>
+                                        <span className="text-[13px] text-zinc-500 ml-2">{t('problem.question')}</span>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-2 mb-4">
-                                    {PROBLEM_TAGS.map((tag) => (
-                                        <motion.button
-                                            key={tag.label}
-                                            type="button"
-                                            onClick={() => toggleTag(tag.label, problemTags, setProblemTags)}
-                                            whileHover={{ scale: 1.03 }}
-                                            whileTap={{ scale: 0.97 }}
-                                            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-all ${problemTags.includes(tag.label)
-                                                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-                                                    : 'bg-white/[0.05] text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-300'
-                                                }`}
-                                        >
-                                            <span>{tag.icon}</span>
-                                            {tag.label}
-                                        </motion.button>
-                                    ))}
+                                    {PROBLEM_TAGS.map((tag) => {
+                                        const label = t(`tags.problem.${tag.key}`);
+                                        return (
+                                            <motion.button
+                                                key={tag.key}
+                                                type="button"
+                                                onClick={() => toggleTag(label, problemTags, setProblemTags)}
+                                                whileHover={{ scale: 1.03 }}
+                                                whileTap={{ scale: 0.97 }}
+                                                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-all ${problemTags.includes(label)
+                                                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                                                        : 'bg-white/[0.05] text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-300'
+                                                    }`}
+                                            >
+                                                <span>{tag.icon}</span>
+                                                {label}
+                                            </motion.button>
+                                        );
+                                    })}
                                 </div>
                                 <input
                                     type="text"
                                     value={problemDetail}
                                     onChange={(e) => setProblemDetail(e.target.value)}
-                                    placeholder="상세 내용 (선택)"
+                                    placeholder={t('problem.detail')}
                                     className="w-full px-4 py-2.5 bg-black/20 border border-white/[0.06] rounded-xl text-[14px] text-white placeholder-zinc-600 focus:outline-none focus:border-red-500/30 transition-colors"
                                 />
                             </motion.div>
@@ -492,33 +537,36 @@ export default function NewLogPage() {
                                         <span className="text-orange-400 text-[13px] font-bold">D</span>
                                     </div>
                                     <div>
-                                        <span className="text-[15px] font-semibold text-orange-400">Diagnosis</span>
-                                        <span className="text-[13px] text-zinc-500 ml-2">왜 어려워했나요?</span>
+                                        <span className="text-[15px] font-semibold text-orange-400">{t('diagnosis.label')}</span>
+                                        <span className="text-[13px] text-zinc-500 ml-2">{t('diagnosis.question')}</span>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-2 mb-4">
-                                    {DIAGNOSIS_TAGS.map((tag) => (
-                                        <motion.button
-                                            key={tag.label}
-                                            type="button"
-                                            onClick={() => toggleTag(tag.label, diagnosisTags, setDiagnosisTags)}
-                                            whileHover={{ scale: 1.03 }}
-                                            whileTap={{ scale: 0.97 }}
-                                            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-all ${diagnosisTags.includes(tag.label)
-                                                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                                                    : 'bg-white/[0.05] text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-300'
-                                                }`}
-                                        >
-                                            <span>{tag.icon}</span>
-                                            {tag.label}
-                                        </motion.button>
-                                    ))}
+                                    {DIAGNOSIS_TAGS.map((tag) => {
+                                        const label = t(`tags.diagnosis.${tag.key}`);
+                                        return (
+                                            <motion.button
+                                                key={tag.key}
+                                                type="button"
+                                                onClick={() => toggleTag(label, diagnosisTags, setDiagnosisTags)}
+                                                whileHover={{ scale: 1.03 }}
+                                                whileTap={{ scale: 0.97 }}
+                                                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-all ${diagnosisTags.includes(label)
+                                                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+                                                        : 'bg-white/[0.05] text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-300'
+                                                    }`}
+                                            >
+                                                <span>{tag.icon}</span>
+                                                {label}
+                                            </motion.button>
+                                        );
+                                    })}
                                 </div>
                                 <input
                                     type="text"
                                     value={diagnosisDetail}
                                     onChange={(e) => setDiagnosisDetail(e.target.value)}
-                                    placeholder="상세 내용 (선택)"
+                                    placeholder={t('diagnosis.detail')}
                                     className="w-full px-4 py-2.5 bg-black/20 border border-white/[0.06] rounded-xl text-[14px] text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/30 transition-colors"
                                 />
                             </motion.div>
@@ -535,33 +583,36 @@ export default function NewLogPage() {
                                         <span className="text-emerald-400 text-[13px] font-bold">S</span>
                                     </div>
                                     <div>
-                                        <span className="text-[15px] font-semibold text-emerald-400">Solution</span>
-                                        <span className="text-[13px] text-zinc-500 ml-2">어떻게 해결했나요?</span>
+                                        <span className="text-[15px] font-semibold text-emerald-400">{t('solution.label')}</span>
+                                        <span className="text-[13px] text-zinc-500 ml-2">{t('solution.question')}</span>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-2 mb-4">
-                                    {SOLUTION_TAGS.map((tag) => (
-                                        <motion.button
-                                            key={tag.label}
-                                            type="button"
-                                            onClick={() => toggleTag(tag.label, solutionTags, setSolutionTags)}
-                                            whileHover={{ scale: 1.03 }}
-                                            whileTap={{ scale: 0.97 }}
-                                            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-all ${solutionTags.includes(tag.label)
-                                                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                                                    : 'bg-white/[0.05] text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-300'
-                                                }`}
-                                        >
-                                            <span>{tag.icon}</span>
-                                            {tag.label}
-                                        </motion.button>
-                                    ))}
+                                    {SOLUTION_TAGS.map((tag) => {
+                                        const label = t(`tags.solution.${tag.key}`);
+                                        return (
+                                            <motion.button
+                                                key={tag.key}
+                                                type="button"
+                                                onClick={() => toggleTag(label, solutionTags, setSolutionTags)}
+                                                whileHover={{ scale: 1.03 }}
+                                                whileTap={{ scale: 0.97 }}
+                                                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-all ${solutionTags.includes(label)
+                                                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                                                        : 'bg-white/[0.05] text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-300'
+                                                    }`}
+                                            >
+                                                <span>{tag.icon}</span>
+                                                {label}
+                                            </motion.button>
+                                        );
+                                    })}
                                 </div>
                                 <input
                                     type="text"
                                     value={solutionDetail}
                                     onChange={(e) => setSolutionDetail(e.target.value)}
-                                    placeholder="상세 내용 (선택)"
+                                    placeholder={t('solution.detail')}
                                     className="w-full px-4 py-2.5 bg-black/20 border border-white/[0.06] rounded-xl text-[14px] text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/30 transition-colors"
                                 />
                             </motion.div>
@@ -593,9 +644,9 @@ export default function NewLogPage() {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                         </svg>
-                                        저장 중...
+                                        {t('manual.saving')}
                                     </span>
-                                ) : '기록 저장'}
+                                ) : t('manual.saveLog')}
                             </motion.button>
                         </form>
                     </>

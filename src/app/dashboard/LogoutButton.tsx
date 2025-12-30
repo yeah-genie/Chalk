@@ -2,8 +2,10 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export default function LogoutButton() {
+    const t = useTranslations('auth');
     const router = useRouter();
     const supabase = createClient();
 
@@ -17,7 +19,7 @@ export default function LogoutButton() {
             onClick={handleLogout}
             className="text-sm text-zinc-500 hover:text-white transition-colors"
         >
-            로그아웃
+            {t('logout')}
         </button>
     );
 }

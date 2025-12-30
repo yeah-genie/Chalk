@@ -3,10 +3,15 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
-const SUBJECTS = ['수학', '영어', '국어', '과학', '사회', '한국사', '제2외국어', '기타'];
+const SUBJECTS_EN = ['Math', 'English', 'Science', 'History', 'Languages', 'Other'];
+const SUBJECTS_KO = ['수학', '영어', '국어', '과학', '사회', '한국사', '제2외국어', '기타'];
 
 export default function OnboardingPage() {
+    const t = useTranslations('onboarding');
+    const tAuth = useTranslations('auth');
+
     const [name, setName] = useState('');
     const [school, setSchool] = useState('');
     const [subject, setSubject] = useState('');
@@ -14,6 +19,11 @@ export default function OnboardingPage() {
     const [error, setError] = useState('');
     const router = useRouter();
     const supabase = createClient();
+
+    // Determine subjects based on current language
+    const SUBJECTS = typeof window !== 'undefined' && navigator.language.startsWith('ko')
+        ? SUBJECTS_KO
+        : SUBJECTS_EN;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,7 +33,7 @@ export default function OnboardingPage() {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-            setError('로그인이 필요합니다.');
+            setError(tAuth('loginRequired'));
             setLoading(false);
             return;
         }
@@ -59,38 +69,37 @@ export default function OnboardingPage() {
                     <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
                         <span className="text-2xl">👋</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-white">프로필 설정</h1>
-                    <p className="text-zinc-500 text-sm mt-2">공개 프로필에 표시될 정보입니다</p>
+                    <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
                 </div>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm text-zinc-400 mb-2">이름</label>
+                        <label className="block text-sm text-zinc-400 mb-2">{t('name')}</label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="김민준"
+                            placeholder={t('namePlaceholder')}
                             required
                             className="input"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm text-zinc-400 mb-2">학교</label>
+                        <label className="block text-sm text-zinc-400 mb-2">{t('school')}</label>
                         <input
                             type="text"
                             value={school}
                             onChange={(e) => setSchool(e.target.value)}
-                            placeholder="서울대학교 수학교육과"
+                            placeholder={t('schoolPlaceholder')}
                             required
                             className="input"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm text-zinc-400 mb-2">주요 과목</label>
+                        <label className="block text-sm text-zinc-400 mb-2">{t('subject')}</label>
                         <div className="flex flex-wrap gap-2">
                             {SUBJECTS.map((s) => (
                                 <button
@@ -117,7 +126,7 @@ export default function OnboardingPage() {
                         disabled={loading || !name || !school || !subject}
                         className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-medium rounded-lg transition-colors disabled:opacity-50 mt-6"
                     >
-                        {loading ? '저장 중...' : '시작하기'}
+                        {loading ? t('completing') : t('complete')}
                     </button>
                 </form>
             </div>

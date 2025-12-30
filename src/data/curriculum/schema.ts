@@ -27,7 +27,9 @@ export type Subject =
   | 'PHYSICS'
   | 'CHEMISTRY'
   | 'BIOLOGY'
-  | 'EARTH_SCIENCE';
+  | 'EARTH_SCIENCE'
+  | 'CHINESE' // 중국어
+  | 'JAPANESE'; // 일본어
 
 export type GradeLevel =
   | 'ELEMENTARY_1'

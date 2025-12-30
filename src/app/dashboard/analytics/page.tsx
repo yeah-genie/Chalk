@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import type { Student, StudentAnalytics } from '@/lib/supabase/types';
 
 interface StudentWithAnalytics extends Student {
@@ -11,6 +12,8 @@ interface StudentWithAnalytics extends Student {
 }
 
 export default function AnalyticsPage() {
+    const t = useTranslations('analytics');
+    const tCommon = useTranslations('common');
     const [students, setStudents] = useState<StudentWithAnalytics[]>([]);
     const [selectedStudent, setSelectedStudent] = useState<StudentWithAnalytics | null>(null);
     const [loading, setLoading] = useState(true);
