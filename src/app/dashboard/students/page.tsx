@@ -10,7 +10,6 @@ import type { Student } from '@/lib/supabase/types';
 export default function StudentsPage() {
     const t = useTranslations('students');
     const tCommon = useTranslations('common');
-    const tNav = useTranslations('nav');
 
     const [students, setStudents] = useState<Student[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -142,224 +141,205 @@ export default function StudentsPage() {
         setFormData({ name: '', subject: '', grade: '', goal: '', parent_contact: '', notes: '' });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'active':
-                return <span className="px-2 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 rounded-full">{t('status.active')}</span>;
-            case 'paused':
-                return <span className="px-2 py-0.5 text-[10px] bg-yellow-500/20 text-yellow-400 rounded-full">{t('status.paused')}</span>;
-            case 'completed':
-                return <span className="px-2 py-0.5 text-[10px] bg-zinc-500/20 text-zinc-400 rounded-full">{t('status.completed')}</span>;
-            default:
-                return null;
-        }
-    };
-
     return (
-        <div className="min-h-screen bg-[#050506] text-white">
-            <header className="sticky top-0 z-50 bg-[#050506]/80 backdrop-blur-2xl border-b border-white/[0.04]">
-                <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Link href="/dashboard" className="text-zinc-500 hover:text-white transition">
-                            ← {tNav('dashboard')}
+        <div className="min-h-screen bg-[#0a0a0b]">
+            {/* Header */}
+            <header className="sticky top-0 z-50 bg-[#0a0a0b]/95 backdrop-blur-sm border-b border-zinc-800/50">
+                <div className="max-w-lg mx-auto px-5 h-14 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Link href="/dashboard" className="text-zinc-400 hover:text-white transition-colors">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
                         </Link>
-                        <h1 className="text-lg font-semibold">{t('title')}</h1>
+                        <h1 className="text-[15px] font-semibold text-white">{t('title')}</h1>
                     </div>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-sm font-medium transition"
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-medium text-white transition-colors"
                     >
-                        + {t('addStudent')}
+                        {t('addStudent')}
                     </button>
                 </div>
             </header>
 
-            <main className="max-w-4xl mx-auto px-6 py-8">
+            <main className="max-w-lg mx-auto px-5 py-6">
                 {isLoading ? (
-                    <div className="text-center py-16 text-zinc-500">
-                        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                        {tCommon('loading')}
+                    <div className="text-center py-16">
+                        <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                        <p className="text-sm text-zinc-500">{tCommon('loading')}</p>
                     </div>
                 ) : students.length === 0 ? (
                     <div className="text-center py-16">
-                        <div className="w-16 h-16 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-8 h-8 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                        </div>
                         <p className="text-zinc-500 mb-4">{t('noStudents.title')}</p>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-medium transition"
+                            className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm text-white transition-colors"
                         >
                             {t('noStudents.action')}
                         </button>
                     </div>
                 ) : (
-                    <div className="grid gap-4">
-                        {students.map((student, index) => (
-                            <motion.div
+                    <div className="space-y-2">
+                        {students.map((student) => (
+                            <div
                                 key={student.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-emerald-500/30 transition group"
+                                className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 group"
                             >
-                                <div className="flex items-start justify-between">
-                                    <Link href={`/dashboard/students/${student.id}`} className="flex-1">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold ${
-                                                student.status === 'active'
-                                                    ? 'bg-gradient-to-br from-emerald-500 to-cyan-500'
-                                                    : 'bg-zinc-700'
-                                            }`}>
-                                                {student.name.charAt(0)}
+                                <div className="flex items-center justify-between">
+                                    <Link href={`/dashboard/students/${student.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 ${
+                                            student.status === 'active' ? 'bg-emerald-600' : 'bg-zinc-700'
+                                        }`}>
+                                            {student.name.charAt(0)}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <h2 className="text-sm font-medium text-white truncate">{student.name}</h2>
+                                                {student.status !== 'active' && (
+                                                    <span className="px-1.5 py-0.5 text-[10px] bg-zinc-800 text-zinc-500 rounded">
+                                                        {t(`status.${student.status}`)}
+                                                    </span>
+                                                )}
                                             </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h2 className="text-lg font-semibold group-hover:text-emerald-400 transition">{student.name}</h2>
-                                                    {getStatusBadge(student.status)}
-                                                </div>
-                                                <div className="flex gap-3 mt-1 text-sm text-zinc-400">
-                                                    {student.subject && <span>{student.subject}</span>}
-                                                    {student.grade && <span>· {student.grade}</span>}
-                                                </div>
-                                            </div>
+                                            {(student.subject || student.grade) && (
+                                                <p className="text-xs text-zinc-500 truncate">
+                                                    {student.subject}{student.grade && ` · ${student.grade}`}
+                                                </p>
+                                            )}
                                         </div>
                                     </Link>
-                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+
+                                    {/* Actions */}
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
-                                            onClick={(e) => { e.preventDefault(); toggleStatus(student); }}
-                                            className={`px-3 py-1.5 text-xs rounded-lg transition ${
-                                                student.status === 'active'
-                                                    ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20'
-                                                    : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-                                            }`}
+                                            onClick={() => toggleStatus(student)}
+                                            className="p-2 text-zinc-500 hover:text-white transition-colors"
+                                            title={student.status === 'active' ? t('actions.pause') : t('actions.activate')}
                                         >
-                                            {student.status === 'active' ? t('actions.pause') : t('actions.activate')}
+                                            {student.status === 'active' ? (
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            ) : (
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            )}
                                         </button>
                                         <button
-                                            onClick={(e) => { e.preventDefault(); openEditModal(student); }}
-                                            className="px-3 py-1.5 text-xs bg-white/[0.05] hover:bg-white/[0.1] rounded-lg transition"
+                                            onClick={() => openEditModal(student)}
+                                            className="p-2 text-zinc-500 hover:text-white transition-colors"
                                         >
-                                            {tCommon('edit')}
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
                                         </button>
                                         <button
-                                            onClick={(e) => { e.preventDefault(); handleDelete(student.id); }}
-                                            className="px-3 py-1.5 text-xs bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg transition"
+                                            onClick={() => handleDelete(student.id)}
+                                            className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
                                         >
-                                            {tCommon('delete')}
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
                                         </button>
                                     </div>
                                 </div>
-                            </motion.div>
+                            </div>
                         ))}
                     </div>
                 )}
             </main>
 
+            {/* Add/Edit Modal */}
             <AnimatePresence>
                 {showAddModal && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60"
                         onClick={closeModal}
                     >
                         <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 100, opacity: 0 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-[#0a0a0b] rounded-2xl p-6 w-full max-w-md border border-white/[0.08]"
+                            className="bg-[#0a0a0b] rounded-t-2xl sm:rounded-2xl p-5 w-full max-w-lg border-t sm:border border-zinc-800"
                         >
-                            <h2 className="text-xl font-semibold mb-6">
-                                {editingStudent ? t('editStudent') : t('addStudent')}
-                            </h2>
+                            <div className="flex items-center justify-between mb-5">
+                                <h2 className="text-lg font-semibold text-white">
+                                    {editingStudent ? t('editStudent') : t('addStudent')}
+                                </h2>
+                                <button onClick={closeModal} className="text-zinc-500 hover:text-white transition-colors">
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
 
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm text-zinc-400 mb-2">{t('form.name')} *</label>
+                                    <label className="block text-xs text-zinc-500 mb-1.5">{t('form.name')} *</label>
                                     <input
                                         type="text"
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl focus:border-emerald-500 outline-none transition"
+                                        className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white focus:border-zinc-600 outline-none transition-colors"
                                         required
                                         placeholder={t('form.namePlaceholder')}
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-sm text-zinc-400 mb-2">{t('form.subject')}</label>
+                                        <label className="block text-xs text-zinc-500 mb-1.5">{t('form.subject')}</label>
                                         <input
                                             type="text"
                                             value={formData.subject}
                                             onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                                            className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl focus:border-emerald-500 outline-none transition"
+                                            className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white focus:border-zinc-600 outline-none transition-colors"
                                             placeholder={t('form.subjectPlaceholder')}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm text-zinc-400 mb-2">{t('form.grade')}</label>
+                                        <label className="block text-xs text-zinc-500 mb-1.5">{t('form.grade')}</label>
                                         <input
                                             type="text"
                                             value={formData.grade}
                                             onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                                            className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl focus:border-emerald-500 outline-none transition"
+                                            className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white focus:border-zinc-600 outline-none transition-colors"
                                             placeholder={t('form.gradePlaceholder')}
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm text-zinc-400 mb-2">{t('form.goal')}</label>
-                                    <input
-                                        type="text"
-                                        value={formData.goal}
-                                        onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
-                                        className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl focus:border-emerald-500 outline-none transition"
-                                        placeholder={t('form.goalPlaceholder')}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm text-zinc-400 mb-2">{t('form.parentContact')}</label>
+                                    <label className="block text-xs text-zinc-500 mb-1.5">{t('form.parentContact')}</label>
                                     <input
                                         type="text"
                                         value={formData.parent_contact}
                                         onChange={(e) => setFormData({ ...formData, parent_contact: e.target.value })}
-                                        className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl focus:border-emerald-500 outline-none transition"
+                                        className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white focus:border-zinc-600 outline-none transition-colors"
                                         placeholder={t('form.parentContactPlaceholder')}
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm text-zinc-400 mb-2">{t('form.notes')}</label>
-                                    <textarea
-                                        value={formData.notes}
-                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                        className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl focus:border-emerald-500 outline-none transition resize-none"
-                                        rows={2}
-                                        placeholder={t('form.notesPlaceholder')}
-                                    />
-                                </div>
-
-                                <div className="flex gap-3 pt-4">
+                                <div className="flex gap-3 pt-2">
                                     <button
                                         type="button"
                                         onClick={closeModal}
-                                        className="flex-1 px-4 py-3 bg-white/[0.05] hover:bg-white/[0.1] rounded-xl transition"
+                                        className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm text-white transition-colors"
                                     >
                                         {tCommon('cancel')}
                                     </button>
                                     <button
                                         type="submit"
-                                        className="flex-1 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-medium transition"
+                                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-medium text-white transition-colors"
                                     >
-                                        {editingStudent ? tCommon('edit') : tCommon('add')}
+                                        {editingStudent ? tCommon('save') : tCommon('add')}
                                     </button>
                                 </div>
                             </form>

@@ -57,59 +57,53 @@ export default function OnboardingPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-            {/* Background glow */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gradient-to-b from-emerald-500/10 to-transparent rounded-full blur-[100px]" />
-            </div>
-
-            <div className="w-full max-w-sm relative">
+        <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center p-5">
+            <div className="w-full max-w-sm">
                 {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl">👋</span>
-                    </div>
-                    <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
+                <div className="mb-8">
+                    <h1 className="text-2xl font-semibold text-white mb-2">{t('title')}</h1>
+                    <p className="text-sm text-zinc-500">Set up your tutor profile</p>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="block text-sm text-zinc-400 mb-2">{t('name')}</label>
+                        <label className="block text-xs text-zinc-500 mb-1.5">{t('name')}</label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder={t('namePlaceholder')}
                             required
-                            className="input"
+                            className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:border-zinc-600 outline-none transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm text-zinc-400 mb-2">{t('school')}</label>
+                        <label className="block text-xs text-zinc-500 mb-1.5">{t('school')}</label>
                         <input
                             type="text"
                             value={school}
                             onChange={(e) => setSchool(e.target.value)}
                             placeholder={t('schoolPlaceholder')}
                             required
-                            className="input"
+                            className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:border-zinc-600 outline-none transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm text-zinc-400 mb-2">{t('subject')}</label>
+                        <label className="block text-xs text-zinc-500 mb-2">{t('subject')}</label>
                         <div className="flex flex-wrap gap-2">
                             {SUBJECTS.map((s) => (
                                 <button
                                     key={s}
                                     type="button"
                                     onClick={() => setSubject(s)}
-                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${subject === s
-                                            ? 'bg-emerald-500 text-white'
-                                            : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                                        }`}
+                                    className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                                        subject === s
+                                            ? 'bg-emerald-600 text-white'
+                                            : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                                    }`}
                                 >
                                     {s}
                                 </button>
@@ -118,13 +112,15 @@ export default function OnboardingPage() {
                     </div>
 
                     {error && (
-                        <p className="text-red-400 text-sm">{error}</p>
+                        <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                            {error}
+                        </p>
                     )}
 
                     <button
                         type="submit"
                         disabled={loading || !name || !school || !subject}
-                        className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-medium rounded-lg transition-colors disabled:opacity-50 mt-6"
+                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                     >
                         {loading ? t('completing') : t('complete')}
                     </button>
