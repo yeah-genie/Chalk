@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 // ===================================
@@ -32,4 +33,27 @@ export async function createServerSupabaseClient() {
             },
         }
     );
+}
+
+// ===================================
+// SUPABASE ADMIN CLIENT (Server)
+// Bypasses RLS - Use with caution!
+// ===================================
+
+export function createAdminSupabaseClient() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+    if (!supabaseServiceKey) {
+        console.warn("[Admin Client] SUPABASE_SERVICE_ROLE_KEY not set, using anon key");
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+        return createClient(supabaseUrl, supabaseAnonKey);
+    }
+
+    return createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    });
 }
