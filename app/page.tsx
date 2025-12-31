@@ -32,9 +32,9 @@ export default function Home() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium text-[#a1a1aa] hover:text-white transition-colors">Sign in</Link>
+            <Link href="/dashboard" className="text-sm font-medium text-[#a1a1aa] hover:text-white transition-colors">Sign in</Link>
             <Link
-              href="/login"
+              href="/dashboard"
               className="text-sm px-5 py-2.5 bg-[#10b981] text-black rounded-full font-bold hover:opacity-90 transition-all active:scale-95"
             >
               Get Started

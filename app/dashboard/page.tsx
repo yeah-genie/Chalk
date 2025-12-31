@@ -31,11 +31,12 @@ export default async function Dashboard() {
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Redirect to login if not authenticated
+    // Redirect to login if not authenticated (Temporarily disabled for user access)
+    /*
     if (!user) {
-        // For development, we might want to stay on dashboard or redirect
-        // redirect("/login"); 
+        redirect("/login"); 
     }
+    */
 
     // Fetch data
     const students = await getStudents();
