@@ -1,6 +1,7 @@
 "use server";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { transcribeAudio } from "@/lib/services/whisper";
 import { extractTopicsFromTranscript } from "@/lib/services/gemini";
 import { calculateNewScore } from "@/lib/mastery-utils";
 import { revalidatePath } from "next/cache";
@@ -61,8 +62,16 @@ export async function processSessionAudio(formData: FormData) {
         const existingTopics = subject?.topics || [];
         const subjectName = subject?.name || subjectId;
 
-        // Demo/Placeholder transcript for now if no real STT is ready
-        const transcript = "이해가 잘 가나요? 네, 극한값이 수렴한다는 게 무슨 뜻인지 알겠어요. 특히 x가 무한대로 갈 때 f(x)가 어디로 가는지 기호로 쓰는 법도 배웠어요.";
+        // 3. Speech-to-Text via Whisper API
+        console.log('[Analysis] Starting transcription...');
+        const transcriptionResult = await transcribeAudio(blob);
+
+        if (!transcriptionResult.success || !transcriptionResult.transcript) {
+            throw new Error(transcriptionResult.error || 'Transcription failed');
+        }
+
+        const transcript = transcriptionResult.transcript;
+        console.log(`[Analysis] Transcription complete: ${transcript.length} chars`);
 
         const analysis = await extractTopicsFromTranscript(
             transcript,
