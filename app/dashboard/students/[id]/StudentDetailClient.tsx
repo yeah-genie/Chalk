@@ -46,6 +46,12 @@ export default function StudentDetailClient({
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [activeTab, setActiveTab] = useState<'insights' | 'predictions'>('insights');
 
+    // Convert score to level for MasteryMatrix compatibility
+    const masteryForMatrix = initialMastery.map(m => ({
+        topicId: m.topicId,
+        level: m.score
+    }));
+
     // Combine real notes with placeholders for missing fields
     const studentInsights = {
         text: latestNotes || "No student-wide AI summary available yet. Capture a session to generate insights.",
@@ -130,7 +136,7 @@ export default function StudentDetailClient({
                                 <div className="h-[500px] relative">
                                     <MasteryMatrix
                                         subject={subject}
-                                        mastery={initialMastery}
+                                        mastery={masteryForMatrix}
                                         onTopicClick={(topic) => setSelectedTopic(topic)}
                                         isCompact={false}
                                     />
