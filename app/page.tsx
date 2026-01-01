@@ -28,13 +28,13 @@ export default function Home() {
           <nav className="hidden md:flex items-center gap-8">
             <Link href="#how-it-works" className="text-sm text-[#a1a1aa] hover:text-white transition-colors">Features</Link>
             <Link href="#subjects" className="text-sm text-[#a1a1aa] hover:text-white transition-colors">Curriculum</Link>
-            <Link href="/dashboard" className="text-sm text-[#a1a1aa] hover:text-white transition-colors">Pricing</Link>
+            <Link href="/login" className="text-sm text-[#a1a1aa] hover:text-white transition-colors">Pricing</Link>
           </nav>
 
           <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-sm font-medium text-[#a1a1aa] hover:text-white transition-colors">Sign in</Link>
+            <Link href="/login" className="text-sm font-medium text-[#a1a1aa] hover:text-white transition-colors">Sign in</Link>
             <Link
-              href="/dashboard"
+              href="/login"
               className="text-sm px-5 py-2.5 bg-[#10b981] text-black rounded-full font-bold hover:opacity-90 transition-all active:scale-95"
             >
               Get Started
@@ -97,7 +97,7 @@ export default function Home() {
             </div>
             <div className="p-2 md:p-4">
               <Image
-                src="/C:/Users/yejin/.gemini/antigravity/brain/518e1411-fd05-44d6-bffb-f4b3f683ade2/uploaded_image_1767190282982.png"
+                src="/product-preview.png"
                 alt="Chalk Mastery Board"
                 width={1200}
                 height={675}

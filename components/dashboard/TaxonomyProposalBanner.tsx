@@ -19,7 +19,30 @@ export function TaxonomyProposalBanner() {
         refresh();
     }, []);
 
-    if (loading || proposals.length === 0) return null;
+    if (loading) return null;
+
+    if (proposals.length === 0) {
+        // Only show config warning if no proposals but also no real Supabase config
+        const isConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL &&
+            process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co';
+
+        if (!isConfigured) {
+            return (
+                <div className="mb-6 mx-auto max-w-7xl">
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center gap-4">
+                        <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center">
+                            <span className="text-black font-bold">!</span>
+                        </div>
+                        <div>
+                            <p className="text-white font-bold text-sm">Supabase Configuration Missing</p>
+                            <p className="text-white/40 text-[11px]">Please add NEXT_PUBLIC_SUPABASE_URL and ANON_KEY to Vercel env vars.</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    }
 
     return (
         <>
