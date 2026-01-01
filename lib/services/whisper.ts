@@ -37,8 +37,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
         formData.append('file', audioFile);
         formData.append('model', 'whisper-1');
         formData.append('response_format', 'verbose_json');
-        // Auto-detect language, but hint towards English/Korean
-        formData.append('language', 'en'); // Can be 'ko' for Korean-focused tutoring
+        formData.append('language', 'ko'); // Optimized for Korean tutoringcontext
 
         const response = await fetch(WHISPER_API_URL, {
             method: 'POST',
@@ -77,47 +76,9 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscriptionRes
  */
 function getDemoTranscription(): TranscriptionResult {
     const demoTranscripts = [
-        // AP Calculus focused demo
-        `Okay, so today we're going to continue with limits. Remember last time we talked about what happens when x approaches a value?
-
-        Student: Yes, I remember. Like when x goes to 2, we look at what f(x) gets close to.
-
-        Exactly! Now let's talk about limits at infinity. When x gets really, really large, what happens to the function?
-
-        Student: Um, it depends on the function right? Like 1/x would get closer to zero?
-
-        That's exactly right! As x approaches infinity, 1/x approaches zero. We write this as the limit as x approaches infinity of 1/x equals zero. Can you tell me what happens with x squared as x goes to infinity?
-
-        Student: It would get bigger and bigger... so it goes to infinity too?
-
-        Correct! The limit is infinity, which means the function grows without bound. Now here's a trickier one - what about (3x^2 + 2x) / (x^2 + 1) as x approaches infinity?
-
-        Student: Hmm... both top and bottom get really big. How do I know which one wins?
-
-        Great question! We divide everything by the highest power of x. So we get (3 + 2/x) / (1 + 1/x^2). As x goes to infinity, those fractions with x in the denominator go to zero.
-
-        Student: Oh! So it's just 3/1 which is 3?
-
-        Excellent work! You've got it. This is a horizontal asymptote at y = 3.`,
-
-        // SAT Math focused demo
-        `Let's review linear equations today. If we have 2x + 5 = 13, how do we solve for x?
-
-        Student: We subtract 5 from both sides first?
-
-        Right! What do we get?
-
-        Student: 2x equals 8, then divide by 2, so x is 4.
-
-        Perfect. Now let's try something harder. What if we have 3(x - 2) = 2x + 7?
-
-        Student: First I distribute the 3... so 3x minus 6 equals 2x plus 7.
-
-        Good, keep going.
-
-        Student: Subtract 2x from both sides... x minus 6 equals 7. Add 6... x equals 13!
-
-        Excellent! You're really getting the hang of this. The key is always doing the same operation to both sides.`,
+        "선생님, 오늘 배운 극한값이 무한대로 발산할 때랑 특정 값으로 수렴할 때의 차이가 아직 조금 헷갈려요. 그래프로 그릴 때는 알겠는데 수식으로 풀면 자꾸 실수하게 되네요.",
+        "SAT Math에서 이차함수 그래프의 꼭짓점 찾는 공식을 다시 복습했어요. 표준형으로 바꾸는 과정에서 부호 실수가 있었지만 이제는 확실히 이해한 것 같습니다.",
+        "AP Calculus의 연쇄법칙(Chain Rule)을 삼각함수에 적용하는 문제를 풀었습니다. 합성함수의 미분을 할 때 겉함수와 속함수를 구분하는 연습이 더 필요할 것 같아요."
     ];
 
     // Randomly select a demo transcript
@@ -126,16 +87,7 @@ function getDemoTranscription(): TranscriptionResult {
     return {
         success: true,
         transcript,
-        language: 'en',
+        language: 'ko',
         duration: 180, // ~3 minutes simulated
     };
-}
-
-/**
- * Estimate transcription cost (for display purposes)
- * Whisper pricing: $0.006 per minute
- */
-export function estimateTranscriptionCost(durationSeconds: number): number {
-    const minutes = durationSeconds / 60;
-    return Math.round(minutes * 0.006 * 1000) / 1000; // Round to 3 decimal places
 }

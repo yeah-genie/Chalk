@@ -13,6 +13,7 @@ import {
 import { fetchSubjectData } from "@/lib/knowledge-graph-server";
 import StudentDetailClient from './StudentDetailClient';
 import Sidebar from '@/components/layout/Sidebar';
+import { getStudentPredictions } from '@/lib/services/prediction';
 
 export default async function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -47,6 +48,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
     const subject = await fetchSubjectData(student.subject_id);
     const sessions = await getSessions();
     const studentSessions = sessions.filter(s => s.student_id === id);
+    const predictions = await getStudentPredictions(id, student.subject_id);
 
     // 3. Fetch Prediction Data
     const [predictions, weaknesses, progress, nextSession] = await Promise.all([
@@ -91,7 +93,11 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
             initialMastery={initialMastery}
             subject={subject}
             sessions={studentSessions}
+<<<<<<< HEAD
             predictionData={predictionData}
+=======
+            predictions={predictions}
+>>>>>>> 336c457 (Feature: Implement Whisper STT and Prediction Analysis Engine with UI integration)
         />
     );
 }
