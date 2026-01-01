@@ -426,3 +426,356 @@ export async function getNextSessionRecommendations(studentId: string): Promise<
 
     return { focusTopics, suggestedDuration, priority, rationale };
 }
+
+// ===================================
+// PHASE 2: PERSONALIZED PREDICTIONS
+// ===================================
+
+/**
+ * 학생별 개인화된 decay rate 계산
+ * 실제 복습 패턴을 분석하여 토픽별 망각률 학습
+ */
+export async function calculatePersonalizedDecayRate(
+    studentId: string,
+    topicId: string
+): Promise<number> {
+    try {
+        const supabase = await createServerSupabaseClient();
+
+        // 해당 학생의 해당 토픽 세션 히스토리 조회
+        const { data: history } = await supabase
+            .from('session_topics')
+            .select(`
+                status_after,
+                created_at,
+                sessions!inner(student_id)
+            `)
+            .eq('sessions.student_id', studentId)
+            .eq('topic_id', topicId)
+            .order('created_at', { ascending: true });
+
+        if (!history || history.length < 2) {
+            // 데이터 부족 시 기본값 반환
+            return 0.15;
+        }
+
+        // 연속된 세션 간의 점수 변화 분석
+        let totalDecay = 0;
+        let decayCount = 0;
+
+        for (let i = 1; i < history.length; i++) {
+            const prev = history[i - 1];
+            const curr = history[i];
+
+            const prevDate = new Date(prev.created_at);
+            const currDate = new Date(curr.created_at);
+            const daysBetween = Math.floor(
+                (currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
+            );
+
+            if (daysBetween > 0) {
+                const statusOrder = { 'new': 10, 'learning': 35, 'reviewed': 65, 'mastered': 90 };
+                const prevScore = statusOrder[prev.status_after as keyof typeof statusOrder] || 50;
+                const currScore = statusOrder[curr.status_after as keyof typeof statusOrder] || 50;
+
+                // 점수가 떨어졌으면 decay 계산
+                if (currScore < prevScore) {
+                    const dailyDecay = (prevScore - currScore) / prevScore / daysBetween;
+                    totalDecay += dailyDecay;
+                    decayCount++;
+                }
+            }
+        }
+
+        const personalDecayRate = decayCount > 0 ? totalDecay / decayCount : 0.15;
+
+        // 개인화된 decay rate 저장
+        await supabase.from('student_decay_rates').upsert({
+            student_id: studentId,
+            topic_id: topicId,
+            calculated_decay_rate: Math.min(0.5, Math.max(0.05, personalDecayRate)),
+            sample_count: history.length,
+            last_calculated_at: new Date().toISOString(),
+        });
+
+        return Math.min(0.5, Math.max(0.05, personalDecayRate));
+    } catch (e) {
+        console.error('[Personalized Decay] Error:', e);
+        return 0.15;
+    }
+}
+
+/**
+ * 학생의 모든 토픽에 대한 개인화된 decay rate 일괄 계산
+ */
+export async function updateAllDecayRates(studentId: string): Promise<void> {
+    try {
+        const supabase = await createServerSupabaseClient();
+
+        const { data: masteryData } = await supabase
+            .from('student_mastery')
+            .select('topic_id')
+            .eq('student_id', studentId);
+
+        if (!masteryData) return;
+
+        for (const m of masteryData) {
+            await calculatePersonalizedDecayRate(studentId, m.topic_id);
+        }
+    } catch (e) {
+        console.error('[Update All Decay Rates] Error:', e);
+    }
+}
+
+/**
+ * 예측 스냅샷 저장 (정확도 추적용)
+ */
+export async function savePredictionSnapshot(studentId: string): Promise<void> {
+    try {
+        const supabase = await createServerSupabaseClient();
+        const predictions = await getTopicPredictions(studentId);
+
+        // 7일 후 예측 스냅샷 저장
+        const predictionDate = new Date();
+        predictionDate.setDate(predictionDate.getDate() + 7);
+
+        const snapshots = predictions.map(p => ({
+            student_id: studentId,
+            topic_id: p.topicId,
+            predicted_score: p.predictedScore,
+            prediction_date: predictionDate.toISOString(),
+        }));
+
+        if (snapshots.length > 0) {
+            await supabase.from('prediction_snapshots').insert(snapshots);
+        }
+
+        console.log(`[Prediction] Saved ${snapshots.length} snapshots for student ${studentId}`);
+    } catch (e) {
+        console.error('[Prediction Snapshot] Error:', e);
+    }
+}
+
+/**
+ * 예측 정확도 측정 및 업데이트
+ * 예측 날짜가 지난 스냅샷에 대해 실제 점수와 비교
+ */
+export async function measurePredictionAccuracy(studentId: string): Promise<{
+    totalPredictions: number;
+    measuredPredictions: number;
+    averageAccuracy: number;
+    topicAccuracies: Array<{ topicId: string; topicName: string; accuracy: number }>;
+}> {
+    try {
+        const supabase = await createServerSupabaseClient();
+        const now = new Date();
+
+        // 예측 날짜가 지난 미측정 스냅샷 조회
+        const { data: snapshots } = await supabase
+            .from('prediction_snapshots')
+            .select('*')
+            .eq('student_id', studentId)
+            .lte('prediction_date', now.toISOString())
+            .is('actual_score', null);
+
+        if (!snapshots || snapshots.length === 0) {
+            return {
+                totalPredictions: 0,
+                measuredPredictions: 0,
+                averageAccuracy: 0,
+                topicAccuracies: [],
+            };
+        }
+
+        // 현재 mastery 점수 조회
+        const { data: masteryData } = await supabase
+            .from('student_mastery')
+            .select('topic_id, score')
+            .eq('student_id', studentId);
+
+        const masteryMap = new Map(masteryData?.map(m => [m.topic_id, m.score]) || []);
+
+        // 각 스냅샷의 정확도 계산 및 업데이트
+        const topicAccuracies: Array<{ topicId: string; topicName: string; accuracy: number }> = [];
+        let totalAccuracy = 0;
+
+        for (const snapshot of snapshots) {
+            const actualScore = masteryMap.get(snapshot.topic_id) || 0;
+            const error = Math.abs(snapshot.predicted_score - actualScore);
+            const accuracy = Math.max(0, 100 - error);
+
+            await supabase
+                .from('prediction_snapshots')
+                .update({
+                    actual_score: actualScore,
+                    accuracy: accuracy,
+                    measured_at: now.toISOString(),
+                })
+                .eq('id', snapshot.id);
+
+            topicAccuracies.push({
+                topicId: snapshot.topic_id,
+                topicName: snapshot.topic_id, // TODO: topic name lookup
+                accuracy,
+            });
+
+            totalAccuracy += accuracy;
+        }
+
+        // 개인화된 decay rate 재계산
+        await updateAllDecayRates(studentId);
+
+        return {
+            totalPredictions: snapshots.length,
+            measuredPredictions: snapshots.length,
+            averageAccuracy: snapshots.length > 0 ? Math.round(totalAccuracy / snapshots.length) : 0,
+            topicAccuracies,
+        };
+    } catch (e) {
+        console.error('[Measure Accuracy] Error:', e);
+        return {
+            totalPredictions: 0,
+            measuredPredictions: 0,
+            averageAccuracy: 0,
+            topicAccuracies: [],
+        };
+    }
+}
+
+/**
+ * 선생님 피드백 저장
+ */
+export async function savePredictionFeedback(params: {
+    studentId: string;
+    topicId: string;
+    predictedUrgency: string;
+    actualPerformance: 'better' | 'expected' | 'worse';
+    notes?: string;
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const supabase = await createServerSupabaseClient();
+
+        await supabase.from('prediction_feedback').insert({
+            student_id: params.studentId,
+            topic_id: params.topicId,
+            predicted_urgency: params.predictedUrgency,
+            actual_performance: params.actualPerformance,
+            notes: params.notes,
+        });
+
+        // 피드백 기반으로 decay rate 조정
+        const adjustment = params.actualPerformance === 'better' ? -0.02 :
+                          params.actualPerformance === 'worse' ? 0.02 : 0;
+
+        if (adjustment !== 0) {
+            const { data: currentRate } = await supabase
+                .from('student_decay_rates')
+                .select('calculated_decay_rate')
+                .eq('student_id', params.studentId)
+                .eq('topic_id', params.topicId)
+                .single();
+
+            if (currentRate) {
+                const newRate = Math.min(0.5, Math.max(0.05,
+                    currentRate.calculated_decay_rate + adjustment
+                ));
+
+                await supabase
+                    .from('student_decay_rates')
+                    .update({ calculated_decay_rate: newRate })
+                    .eq('student_id', params.studentId)
+                    .eq('topic_id', params.topicId);
+            }
+        }
+
+        return { success: true };
+    } catch (e: any) {
+        console.error('[Prediction Feedback] Error:', e);
+        return { success: false, error: e.message };
+    }
+}
+
+/**
+ * 예측 정확도 대시보드 데이터 조회
+ */
+export async function getPredictionAccuracyDashboard(studentId: string): Promise<{
+    overallAccuracy: number;
+    totalMeasured: number;
+    weeklyTrend: Array<{ week: string; accuracy: number }>;
+    topicBreakdown: Array<{ topicId: string; topicName: string; accuracy: number; sampleCount: number }>;
+}> {
+    try {
+        const supabase = await createServerSupabaseClient();
+
+        // 측정된 스냅샷 조회
+        const { data: snapshots } = await supabase
+            .from('prediction_snapshots')
+            .select('*')
+            .eq('student_id', studentId)
+            .not('accuracy', 'is', null)
+            .order('measured_at', { ascending: false });
+
+        if (!snapshots || snapshots.length === 0) {
+            return {
+                overallAccuracy: 0,
+                totalMeasured: 0,
+                weeklyTrend: [],
+                topicBreakdown: [],
+            };
+        }
+
+        // 전체 정확도
+        const overallAccuracy = Math.round(
+            snapshots.reduce((sum, s) => sum + (s.accuracy || 0), 0) / snapshots.length
+        );
+
+        // 주간 트렌드 (최근 8주)
+        const weeklyMap = new Map<string, number[]>();
+        for (const s of snapshots) {
+            if (!s.measured_at) continue;
+            const date = new Date(s.measured_at);
+            const weekKey = `${date.getFullYear()}-W${Math.ceil((date.getDate()) / 7)}`;
+            const existing = weeklyMap.get(weekKey) || [];
+            existing.push(s.accuracy || 0);
+            weeklyMap.set(weekKey, existing);
+        }
+
+        const weeklyTrend = Array.from(weeklyMap.entries())
+            .slice(0, 8)
+            .map(([week, accuracies]) => ({
+                week,
+                accuracy: Math.round(accuracies.reduce((a, b) => a + b, 0) / accuracies.length),
+            }))
+            .reverse();
+
+        // 토픽별 분석
+        const topicMap = new Map<string, number[]>();
+        for (const s of snapshots) {
+            const existing = topicMap.get(s.topic_id) || [];
+            existing.push(s.accuracy || 0);
+            topicMap.set(s.topic_id, existing);
+        }
+
+        const topicBreakdown = Array.from(topicMap.entries()).map(([topicId, accuracies]) => ({
+            topicId,
+            topicName: topicId, // TODO: lookup
+            accuracy: Math.round(accuracies.reduce((a, b) => a + b, 0) / accuracies.length),
+            sampleCount: accuracies.length,
+        }));
+
+        return {
+            overallAccuracy,
+            totalMeasured: snapshots.length,
+            weeklyTrend,
+            topicBreakdown,
+        };
+    } catch (e) {
+        console.error('[Accuracy Dashboard] Error:', e);
+        return {
+            overallAccuracy: 0,
+            totalMeasured: 0,
+            weeklyTrend: [],
+            topicBreakdown: [],
+        };
+    }
+}

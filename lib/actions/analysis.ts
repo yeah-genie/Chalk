@@ -5,6 +5,9 @@ import { transcribeAudio } from "@/lib/services/whisper";
 import { extractTopicsFromTranscript } from "@/lib/services/gemini";
 import { calculateNewScore } from "@/lib/mastery-utils";
 import { revalidatePath } from "next/cache";
+import { createReportShare } from "@/lib/actions/parent-sharing";
+import { sendReportEmail } from "@/lib/services/email";
+import { savePredictionSnapshot } from "@/lib/services/prediction";
 
 /**
  * 전체 세션 분석 파이프라인
@@ -135,6 +138,54 @@ export async function processSessionAudio(formData: FormData) {
             transcript: transcript,
             notes: analysis.summary
         }).eq('id', session.id);
+
+        // 6. 학부모 공유 및 이메일 발송 (비동기)
+        try {
+            // 학생 정보 조회
+            const { data: student } = await supabase
+                .from('students')
+                .select('name, parent_email, subject_id')
+                .eq('id', studentId)
+                .single();
+
+            if (student?.parent_email) {
+                // 공유 링크 생성
+                const shareResult = await createReportShare(session.id, student.parent_email);
+
+                if (shareResult.success && shareResult.share) {
+                    // 이메일 발송
+                    const emailResult = await sendReportEmail({
+                        parentEmail: student.parent_email,
+                        studentName: student.name,
+                        subjectName: subjectName,
+                        sessionDate: session.scheduled_at,
+                        summary: analysis.summary || '',
+                        topicsCount: analysis.topics.length,
+                        shareToken: shareResult.share.token,
+                    });
+
+                    if (emailResult.success) {
+                        // 이메일 발송 시간 기록
+                        await supabase
+                            .from('report_shares')
+                            .update({ email_sent_at: new Date().toISOString() })
+                            .eq('id', shareResult.share.id);
+
+                        console.log(`[Analysis] Email sent to parent: ${student.parent_email}`);
+                    }
+                }
+            }
+        } catch (emailErr) {
+            // 이메일 발송 실패는 전체 파이프라인을 중단시키지 않음
+            console.error("[Analysis] Email sending failed (non-blocking):", emailErr);
+        }
+
+        // 7. 예측 스냅샷 저장 (Phase 2: 정확도 추적용)
+        try {
+            await savePredictionSnapshot(studentId);
+        } catch (predErr) {
+            console.error("[Analysis] Prediction snapshot failed (non-blocking):", predErr);
+        }
 
         revalidatePath('/dashboard');
         revalidatePath('/dashboard/analysis');

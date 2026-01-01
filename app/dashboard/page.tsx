@@ -7,6 +7,8 @@ import { AP_CALCULUS_AB, getUnits, getTopicsByUnit } from "@/lib/knowledge-graph
 import Sidebar from "@/components/layout/Sidebar";
 import VoiceRecorder from "@/components/monitoring/VoiceRecorder";
 import { TaxonomyProposalBanner } from "@/components/dashboard/TaxonomyProposalBanner";
+import ParentEngagementCard from "@/components/dashboard/ParentEngagementCard";
+import PredictionAccuracyCard from "@/components/dashboard/PredictionAccuracyCard";
 
 // ===================================
 // CHALK DASHBOARD (Server Component)
@@ -170,6 +172,12 @@ export default async function Dashboard() {
                                 )}
                             </div>
                         </div>
+
+                        {/* Parent Engagement Stats */}
+                        <ParentEngagementCard />
+
+                        {/* Prediction Accuracy */}
+                        <PredictionAccuracyCard studentId={students.length > 0 ? students[0].id : undefined} />
 
                         {/* Mastery Overview (Dynamic) */}
                         <div className="rounded-xl bg-[#18181b] border border-[#27272a]">
