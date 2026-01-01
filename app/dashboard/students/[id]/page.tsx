@@ -1,5 +1,15 @@
 import React from 'react';
-import { getStudents, getStudentMastery, getSessions } from '@/lib/actions/crud';
+import { redirect } from 'next/navigation';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import {
+    getStudents,
+    getStudentMastery,
+    getSessions,
+    getTopicPredictions,
+    analyzeWeaknesses,
+    predictProgress,
+    getNextSessionRecommendations
+} from '@/lib/actions/crud';
 import { fetchSubjectData } from "@/lib/knowledge-graph-server";
 import StudentDetailClient from './StudentDetailClient';
 import Sidebar from '@/components/layout/Sidebar';
@@ -38,6 +48,14 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
     const sessions = await getSessions();
     const studentSessions = sessions.filter(s => s.student_id === id);
 
+    // 3. Fetch Prediction Data
+    const [predictions, weaknesses, progress, nextSession] = await Promise.all([
+        getTopicPredictions(id),
+        analyzeWeaknesses(id),
+        predictProgress(id),
+        getNextSessionRecommendations(id),
+    ]);
+
     if (!subject) {
         return (
             <div className="flex h-screen bg-[#09090b] text-white">
@@ -52,12 +70,28 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         );
     }
 
+    // Serialize prediction data for client component
+    const predictionData = {
+        predictions: predictions.map(p => ({
+            ...p,
+            optimalReviewDate: p.optimalReviewDate.toISOString(),
+        })),
+        weaknesses,
+        progress: progress ? {
+            ...progress,
+            targetDate: progress.targetDate.toISOString(),
+            predictedCompletionDate: progress.predictedCompletionDate.toISOString(),
+        } : null,
+        nextSession,
+    };
+
     return (
         <StudentDetailClient
             student={student}
             initialMastery={initialMastery}
             subject={subject}
             sessions={studentSessions}
+            predictionData={predictionData}
         />
     );
 }

@@ -9,6 +9,7 @@ import type { Session, Student } from "@/lib/types/database";
 interface SessionListProps {
     initialSessions: Session[];
     students: Student[];
+    tutorId: string;
 }
 
 function formatDate(isoString: string): string {
@@ -37,7 +38,7 @@ function getStatusBadge(status: string): React.ReactNode {
     }
 }
 
-export function SessionList({ initialSessions, students }: SessionListProps) {
+export function SessionList({ initialSessions, students, tutorId }: SessionListProps) {
     const [sessions, setSessions] = useState(initialSessions);
     const [showAddModal, setShowAddModal] = useState(false);
     const [filter, setFilter] = useState("all");
@@ -53,7 +54,7 @@ export function SessionList({ initialSessions, students }: SessionListProps) {
             scheduled_at: data.scheduled_at,
             duration_minutes: data.duration_minutes,
             status: "scheduled",
-            tutor_id: "placeholder",
+            tutor_id: tutorId,
             notes: data.notes
         });
 

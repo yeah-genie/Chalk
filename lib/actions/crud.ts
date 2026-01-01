@@ -318,6 +318,69 @@ export async function getStudentMastery(studentId: string) {
     }
 }
 
+export async function getStudentAverageMastery(studentId: string): Promise<number> {
+    try {
+        const supabase = await createServerSupabaseClient();
+        const { data, error } = await supabase
+            .from("student_mastery")
+            .select("score")
+            .eq("student_id", studentId);
+
+        if (error || !data || data.length === 0) {
+            return 0;
+        }
+
+        const total = data.reduce((sum, m) => sum + (m.score || 0), 0);
+        return Math.round(total / data.length);
+    } catch (e) {
+        console.error("Error calculating average mastery:", e);
+        return 0;
+    }
+}
+
+export async function getAllStudentsMasteryMap(): Promise<Map<string, number>> {
+    try {
+        const supabase = await createServerSupabaseClient();
+        const { data, error } = await supabase
+            .from("student_mastery")
+            .select("student_id, score");
+
+        if (error || !data) {
+            return new Map();
+        }
+
+        // Group by student and calculate averages
+        const studentScores = new Map<string, number[]>();
+        for (const m of data) {
+            const scores = studentScores.get(m.student_id) || [];
+            scores.push(m.score || 0);
+            studentScores.set(m.student_id, scores);
+        }
+
+        const result = new Map<string, number>();
+        for (const [studentId, scores] of studentScores) {
+            const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+            result.set(studentId, avg);
+        }
+
+        return result;
+    } catch (e) {
+        console.error("Error fetching all students mastery map:", e);
+        return new Map();
+    }
+}
+
+// ===================================
+// PREDICTION ACTIONS (Re-export)
+// ===================================
+
+export {
+    getTopicPredictions,
+    analyzeWeaknesses,
+    predictProgress,
+    getNextSessionRecommendations,
+} from '@/lib/services/prediction';
+
 export async function getTopicInsights(studentId: string, topicId: string) {
     try {
         const supabase = await createServerSupabaseClient();

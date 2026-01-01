@@ -20,6 +20,10 @@ export default async function SessionsPage() {
         console.error("[SessionsPage] Error fetching user:", e);
     }
 
+    if (!user) {
+        redirect("/login");
+    }
+
     // Fetch data
     const sessions = await getSessions();
     const students = await getStudents();
@@ -30,7 +34,7 @@ export default async function SessionsPage() {
 
             {/* Main Content */}
             <main className="ml-64 p-8">
-                <SessionList initialSessions={sessions} students={students} />
+                <SessionList initialSessions={sessions} students={students} tutorId={user.id} />
             </main>
         </div>
     );

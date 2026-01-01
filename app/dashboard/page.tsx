@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getStudents, getSessions } from "@/lib/actions/crud";
+import { getStudents, getSessions, getAllStudentsMasteryMap } from "@/lib/actions/crud";
 import { AP_CALCULUS_AB, getUnits, getTopicsByUnit } from "@/lib/knowledge-graph";
 import Sidebar from "@/components/layout/Sidebar";
 import VoiceRecorder from "@/components/monitoring/VoiceRecorder";
@@ -44,6 +45,7 @@ export default async function Dashboard() {
     // Fetch data
     const students = await getStudents();
     const sessions = await getSessions();
+    const masteryMap = await getAllStudentsMasteryMap();
 
     const calcUnits = students.length > 0 ? getUnits(AP_CALCULUS_AB) : []; // Default or placeholder
     const firstStudentSubject = students.length > 0 ? students[0].subject_id : "No Subject";
@@ -51,9 +53,13 @@ export default async function Dashboard() {
     // Calculate stats
     const totalStudents = students.length;
     const completedSessions = sessions.filter(s => s.status === 'completed').length;
-    const avgMastery = students.length > 0
-        ? Math.round(students.reduce((acc, s) => acc + (0), 0) / students.length) // Placeholder for real mastery
-        : 0;
+
+    // Calculate real average mastery across all students
+    let avgMastery = 0;
+    if (students.length > 0) {
+        const masteries = students.map(s => masteryMap.get(s.id) || 0);
+        avgMastery = Math.round(masteries.reduce((a, b) => a + b, 0) / students.length);
+    }
 
     return (
         <div className="min-h-screen bg-[#09090b] text-white">
@@ -106,31 +112,34 @@ export default async function Dashboard() {
                                 <Link href="/dashboard/students" className="text-sm text-[#10b981]">View All</Link>
                             </div>
                             <div className="divide-y divide-[#27272a]">
-                                {students.slice(0, 5).map((student) => (
-                                    <Link
-                                        key={student.id}
-                                        href={`/dashboard/students/${student.id}`}
-                                        className="flex items-center justify-between p-5 hover:bg-[#1f1f23] transition"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-[#27272a] rounded-full flex items-center justify-center">
-                                                <span className="text-sm font-medium">{student.name[0]}</span>
+                                {students.slice(0, 5).map((student) => {
+                                    const studentMastery = masteryMap.get(student.id) || 0;
+                                    return (
+                                        <Link
+                                            key={student.id}
+                                            href={`/dashboard/students/${student.id}`}
+                                            className="flex items-center justify-between p-5 hover:bg-[#1f1f23] transition"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 bg-[#27272a] rounded-full flex items-center justify-center">
+                                                    <span className="text-sm font-medium">{student.name[0]}</span>
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium">{student.name}</p>
+                                                    <p className="text-sm text-[#71717a]">{student.subject_id}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-medium">{student.name}</p>
-                                                <p className="text-sm text-[#71717a]">{student.subject_id}</p>
+                                            <div className="flex items-center gap-6">
+                                                <div className="text-right">
+                                                    <p className={`font-semibold ${getScoreTextColor(studentMastery)}`}>{studentMastery}%</p>
+                                                </div>
+                                                <svg className="w-5 h-5 text-[#3f3f46]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                </svg>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center gap-6">
-                                            <div className="text-right">
-                                                <p className={`font-semibold ${getScoreTextColor(0)}`}>0%</p>
-                                            </div>
-                                            <svg className="w-5 h-5 text-[#3f3f46]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </div>
-                                    </Link>
-                                ))}
+                                        </Link>
+                                    );
+                                })}
                                 {students.length === 0 && (
                                     <div className="p-10 text-center text-[#71717a]">
                                         No students yet

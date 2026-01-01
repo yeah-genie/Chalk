@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import MasteryMatrix from '@/components/analysis/MasteryMatrix';
+import PredictionPanel from '@/components/insights/PredictionPanel';
 import { Topic, Subject } from '@/lib/knowledge-graph';
 import { Student, Session } from '@/lib/types/database';
 import {
@@ -14,20 +15,58 @@ import {
     ArrowRight,
     Share2,
     ChevronRight,
-    Search
+    Search,
+    Brain
 } from 'lucide-react';
 import TopicInsightPanel from '@/components/analysis/TopicInsightPanel';
+
+interface PredictionData {
+    predictions: any[];
+    weaknesses: any[];
+    progress: {
+        currentMastery: number;
+        targetMastery: number;
+        targetDate: string;
+        predictedCompletionDate: string;
+        sessionsNeeded: number;
+        onTrack: boolean;
+        recommendation: string;
+    } | null;
+    nextSession: {
+        focusTopics: string[];
+        suggestedDuration: number;
+        priority: string;
+        rationale: string;
+    } | null;
+}
 
 interface StudentDetailClientProps {
     student: Student;
     initialMastery: any[];
     subject: Subject;
     sessions: Session[];
+    predictionData?: PredictionData;
 }
 
-export default function StudentDetailClient({ student, initialMastery, subject, sessions }: StudentDetailClientProps) {
+export default function StudentDetailClient({ student, initialMastery, subject, sessions, predictionData }: StudentDetailClientProps) {
     const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+    const [showPredictions, setShowPredictions] = useState(false);
+
+    // Parse serialized dates back to Date objects for PredictionPanel
+    const parsedPredictionData = predictionData ? {
+        predictions: predictionData.predictions.map(p => ({
+            ...p,
+            optimalReviewDate: new Date(p.optimalReviewDate),
+        })),
+        weaknesses: predictionData.weaknesses,
+        progress: predictionData.progress ? {
+            ...predictionData.progress,
+            targetDate: new Date(predictionData.progress.targetDate),
+            predictedCompletionDate: new Date(predictionData.progress.predictedCompletionDate),
+        } : null,
+        nextSession: predictionData.nextSession,
+    } : null;
 
     // Placeholder insights (In real app, fetch from DB)
     const mockInsights = {
@@ -146,39 +185,71 @@ export default function StudentDetailClient({ student, initialMastery, subject, 
                         </section>
                     </div>
 
-                    {/* Right Column: AI Tipping & Summary */}
-                    <div className="col-span-4 space-y-8">
-                        {/* AI Tipping */}
-                        <section className="bg-gradient-to-br from-[#10b981]/10 to-transparent border border-[#10b981]/20 rounded-3xl p-8 space-y-6">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-[#10b981] flex items-center justify-center text-black">
-                                    <Zap size={18} />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-bold uppercase tracking-widest text-[#10b981]">AI Tipping</h3>
-                                    <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest leading-none mt-1">Next Session Co-pilot</p>
-                                </div>
-                            </div>
+                    {/* Right Column: AI Insights & Predictions */}
+                    <div className="col-span-4 space-y-6">
+                        {/* Tab Toggle */}
+                        <div className="flex gap-2 p-1 bg-white/5 rounded-xl">
+                            <button
+                                onClick={() => setShowPredictions(false)}
+                                className={`flex-1 py-2 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                                    !showPredictions ? 'bg-[#10b981] text-black' : 'text-white/60 hover:text-white'
+                                }`}
+                            >
+                                <Zap size={14} />
+                                AI Insights
+                            </button>
+                            <button
+                                onClick={() => setShowPredictions(true)}
+                                className={`flex-1 py-2 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                                    showPredictions ? 'bg-[#10b981] text-black' : 'text-white/60 hover:text-white'
+                                }`}
+                            >
+                                <Brain size={14} />
+                                Predictions
+                            </button>
+                        </div>
 
-                            <div className="space-y-4">
-                                {mockInsights.nextSteps.map((step, i) => (
-                                    <div key={i} className="flex gap-3">
-                                        <div className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[#10b981]/50" />
-                                        <p className="text-sm text-white/70 leading-relaxed font-medium">{step}</p>
+                        {/* Prediction Panel */}
+                        {showPredictions && parsedPredictionData ? (
+                            <PredictionPanel
+                                predictions={parsedPredictionData.predictions}
+                                weaknesses={parsedPredictionData.weaknesses}
+                                progress={parsedPredictionData.progress}
+                                nextSession={parsedPredictionData.nextSession}
+                            />
+                        ) : (
+                            /* AI Tipping (Original) */
+                            <section className="bg-gradient-to-br from-[#10b981]/10 to-transparent border border-[#10b981]/20 rounded-3xl p-8 space-y-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-[#10b981] flex items-center justify-center text-black">
+                                        <Zap size={18} />
                                     </div>
-                                ))}
-                            </div>
-
-                            <div className="pt-4 border-t border-white/10">
-                                <div className="flex items-center gap-2 text-amber-500 mb-2">
-                                    <Target size={14} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Growth Forecast</span>
+                                    <div>
+                                        <h3 className="text-sm font-bold uppercase tracking-widest text-[#10b981]">AI Tipping</h3>
+                                        <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest leading-none mt-1">Next Session Co-pilot</p>
+                                    </div>
                                 </div>
-                                <p className="text-xs text-white/50 italic leading-relaxed">
-                                    "{mockInsights.futureImpact}"
-                                </p>
-                            </div>
-                        </section>
+
+                                <div className="space-y-4">
+                                    {mockInsights.nextSteps.map((step, i) => (
+                                        <div key={i} className="flex gap-3">
+                                            <div className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[#10b981]/50" />
+                                            <p className="text-sm text-white/70 leading-relaxed font-medium">{step}</p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="pt-4 border-t border-white/10">
+                                    <div className="flex items-center gap-2 text-amber-500 mb-2">
+                                        <Target size={14} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Growth Forecast</span>
+                                    </div>
+                                    <p className="text-xs text-white/50 italic leading-relaxed">
+                                        "{mockInsights.futureImpact}"
+                                    </p>
+                                </div>
+                            </section>
+                        )}
 
                         {/* Parent Summary Card */}
                         <section className="bg-white/[0.03] border border-white/5 rounded-3xl p-8 space-y-6">
