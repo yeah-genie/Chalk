@@ -71,7 +71,6 @@ export function ProfileClient({ userId, userEmail, userName, teacherProfile }: P
 
         startTransition(async () => {
             const result = await upsertTeacherProfile({
-                id: userId,
                 display_name: displayName.trim(),
                 bio: bio.trim() || undefined,
                 institution: institution.trim() || undefined,

@@ -70,10 +70,9 @@ export function VerifiedBadge({
     }
 
     return (
-        <Icon
-            className={`${sizeClasses[size]} ${config.color} flex-shrink-0`}
-            title={tooltip || config.label}
-        />
+        <span title={tooltip || config.label} className="inline-flex">
+            <Icon className={`${sizeClasses[size]} ${config.color} flex-shrink-0`} />
+        </span>
     );
 }
 

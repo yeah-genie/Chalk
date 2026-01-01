@@ -149,7 +149,7 @@ export async function getMyCurricula(): Promise<Curriculum[]> {
     }
 }
 
-export async function createCurriculum(curriculum: CurriculumInsert) {
+export async function createCurriculum(curriculum: Omit<CurriculumInsert, 'creator_id'>) {
     try {
         const supabase = await createServerSupabaseClient();
         const { data: { user } } = await supabase.auth.getUser();

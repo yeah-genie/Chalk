@@ -103,7 +103,7 @@ export async function getClassByCode(code: string): Promise<Class | null> {
     }
 }
 
-export async function createClass(classData: ClassInsert) {
+export async function createClass(classData: Omit<ClassInsert, 'teacher_id'>) {
     try {
         const supabase = await createServerSupabaseClient();
         const { data: { user } } = await supabase.auth.getUser();

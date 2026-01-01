@@ -70,10 +70,7 @@ function calculateRetention(
     return Math.max(0, Math.min(1, adjustedRetention));
 }
 
-/**
- * Calculate predicted score after time decay
- */
-export function predictScoreAfterDays(
+function predictScoreAfterDays(
     currentScore: number,
     days: number,
     personalDecayRate: number = 0.15

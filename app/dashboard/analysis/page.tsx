@@ -5,8 +5,8 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import {
     getStudents,
     getAllStudentsMasteryMap,
-    getTopicPredictions,
 } from '@/lib/actions/crud';
+import { getTopicPredictions } from '@/lib/services/prediction';
 import Sidebar from '@/components/layout/Sidebar';
 import { AlertTriangle, TrendingUp, Users, ChevronRight, Brain, Target } from 'lucide-react';
 

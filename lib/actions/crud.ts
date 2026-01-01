@@ -370,17 +370,6 @@ export async function getAllStudentsMasteryMap(): Promise<Map<string, number>> {
     }
 }
 
-// ===================================
-// PREDICTION ACTIONS (Re-export)
-// ===================================
-
-export {
-    getTopicPredictions,
-    analyzeWeaknesses,
-    predictProgress,
-    getNextSessionRecommendations,
-} from '@/lib/services/prediction';
-
 export async function getTopicInsights(studentId: string, topicId: string) {
     try {
         const supabase = await createServerSupabaseClient();

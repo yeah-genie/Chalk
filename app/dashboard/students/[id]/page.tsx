@@ -5,11 +5,14 @@ import {
     getStudents,
     getStudentMastery,
     getSessions,
+} from '@/lib/actions/crud';
+import {
     getTopicPredictions,
     analyzeWeaknesses,
     predictProgress,
-    getNextSessionRecommendations
-} from '@/lib/actions/crud';
+    getNextSessionRecommendations,
+    type TopicPrediction
+} from '@/lib/services/prediction';
 import { fetchSubjectData } from "@/lib/knowledge-graph-server";
 import StudentDetailClient from './StudentDetailClient';
 import Sidebar from '@/components/layout/Sidebar';
@@ -72,7 +75,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
 
     // Serialize prediction data for client component
     const predictionData = {
-        predictions: predictions.map(p => ({
+        predictions: predictions.map((p: TopicPrediction) => ({
             ...p,
             optimalReviewDate: p.optimalReviewDate.toISOString(),
         })),
