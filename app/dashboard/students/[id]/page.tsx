@@ -4,11 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import {
     getStudents,
     getStudentMastery,
-    getSessions,
-    getTopicPredictions,
-    analyzeWeaknesses,
-    predictProgress,
-    getNextSessionRecommendations
+    getSessions
 } from '@/lib/actions/crud';
 import { fetchSubjectData } from "@/lib/knowledge-graph-server";
 import StudentDetailClient from './StudentDetailClient';
@@ -48,15 +44,9 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
     const subject = await fetchSubjectData(student.subject_id);
     const sessions = await getSessions();
     const studentSessions = sessions.filter(s => s.student_id === id);
-    const predictions = await getStudentPredictions(id, student.subject_id);
 
-    // 3. Fetch Prediction Data
-    const [predictions, weaknesses, progress, nextSession] = await Promise.all([
-        getTopicPredictions(id),
-        analyzeWeaknesses(id),
-        predictProgress(id),
-        getNextSessionRecommendations(id),
-    ]);
+    // 3. Fetch Prediction Data via unified service
+    const predictions = await getStudentPredictions(id, student.subject_id);
 
     if (!subject) {
         return (
@@ -72,32 +62,13 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         );
     }
 
-    // Serialize prediction data for client component
-    const predictionData = {
-        predictions: predictions.map(p => ({
-            ...p,
-            optimalReviewDate: p.optimalReviewDate.toISOString(),
-        })),
-        weaknesses,
-        progress: progress ? {
-            ...progress,
-            targetDate: progress.targetDate.toISOString(),
-            predictedCompletionDate: progress.predictedCompletionDate.toISOString(),
-        } : null,
-        nextSession,
-    };
-
     return (
         <StudentDetailClient
             student={student}
             initialMastery={initialMastery}
             subject={subject}
             sessions={studentSessions}
-<<<<<<< HEAD
-            predictionData={predictionData}
-=======
             predictions={predictions}
->>>>>>> 336c457 (Feature: Implement Whisper STT and Prediction Analysis Engine with UI integration)
         />
     );
 }
