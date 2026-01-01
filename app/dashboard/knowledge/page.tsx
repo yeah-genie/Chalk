@@ -10,7 +10,7 @@ export default async function KnowledgePage() {
     return (
         <div className="flex h-screen overflow-hidden bg-[#0a0a0c] text-white">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto p-12">
+            <main className="flex-1 ml-64 overflow-y-auto p-12">
                 <header className="mb-12">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="bg-[#10b981]/20 p-2 rounded-xl">
