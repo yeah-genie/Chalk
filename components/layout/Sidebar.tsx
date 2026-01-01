@@ -4,15 +4,15 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Calendar, BarChart3, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, TrendingUp, Settings } from 'lucide-react';
 
 export default function Sidebar() {
     const pathname = usePathname();
 
     const navItems = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'Analysis', href: '/dashboard/analysis', icon: BarChart3 },
         { name: 'Students', href: '/dashboard/students', icon: Users },
+        { name: 'Insights', href: '/dashboard/analysis', icon: TrendingUp },
         { name: 'Sessions', href: '/dashboard/sessions', icon: Calendar },
     ];
 
