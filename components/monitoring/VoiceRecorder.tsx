@@ -100,10 +100,8 @@ export default function VoiceRecorder({
                 setAudioUrl(url);
                 stream.getTracks().forEach(track => track.stop());
 
-                // Auto-submit for Zero-Action UX
-                setTimeout(() => {
-                    submitRecording(blob);
-                }, 500);
+                // Note: Removed auto-submit for "Trust-First" UX. 
+                // User must now choose to Commit or Trash.
             };
 
             mediaRecorder.start();
@@ -111,13 +109,15 @@ export default function VoiceRecorder({
             setIsPaused(false);
             setDuration(0);
             setAudioBlob(null);
+            setSuccess(false);
+            setError(null);
 
             timerRef.current = setInterval(() => {
                 setDuration(prev => prev + 1);
             }, 1000);
         } catch (err) {
             console.error("Failed to start recording:", err);
-            alert("Microphone access is required to record sessions.");
+            alert("Microphone access is required for AI Scribing.");
         }
     };
 
@@ -145,6 +145,10 @@ export default function VoiceRecorder({
     };
 
     const discardRecording = () => {
+        // Visual feedback for purging
+        const confirmTrash = window.confirm("Are you sure? This session data will be permanently purged from this device and never reach the server.");
+        if (!confirmTrash) return;
+
         setAudioBlob(null);
         setAudioUrl(null);
         setDuration(0);
@@ -152,6 +156,8 @@ export default function VoiceRecorder({
         setSuccess(false);
         setSessionId(null);
         setIsCopied(false);
+        setImages([]);
+        setImageUrls([]);
     };
 
     const copyReportLink = () => {
@@ -175,7 +181,6 @@ export default function VoiceRecorder({
             formData.append('studentId', selectedStudentId);
             formData.append('subjectId', selectedSubjectId);
 
-            // Add multimodal images (P1.3)
             images.forEach((img, i) => {
                 formData.append(`image_${i}`, img);
             });
@@ -187,6 +192,12 @@ export default function VoiceRecorder({
                 setSuccess(true);
                 setSessionId(result.sessionId);
                 if (onRecordingComplete) onRecordingComplete(targetBlob);
+
+                // Auto-cleanup audio URL after successful commit to save memory & enhance trust
+                if (audioUrl) {
+                    URL.revokeObjectURL(audioUrl);
+                    setAudioUrl(null);
+                }
             } else {
                 setError(result.error || "Failed to analyze session");
             }
@@ -199,48 +210,66 @@ export default function VoiceRecorder({
     };
 
     return (
-        <div className={cn("bg-[#18181b] border border-[#27272a] rounded-2xl p-6 transition-all", className)}>
+        <div className={cn("bg-white/[0.02] border border-white/[0.05] rounded-3xl p-6 md:p-8 transition-all hover:bg-white/[0.03]", className)}>
             {!isRecording && !audioBlob ? (
-                <div className="flex flex-col items-center justify-center space-y-6 py-4">
+                <div className="flex flex-col items-center justify-center space-y-8 py-6">
                     {/* Student Selector */}
                     {students.length > 0 && (
-                        <div className="w-full px-4 mb-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-[#71717a] mb-2 block">
-                                Recording For Student
+                        <div className="w-full max-w-sm">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#10b981] mb-3 block ml-1">
+                                Assign Scribe to Student
                             </label>
-                            <select
-                                value={selectedStudentId}
-                                onChange={(e) => {
-                                    const s = students.find(std => std.id === e.target.value);
-                                    if (s) {
-                                        setSelectedStudentId(s.id);
-                                        setSelectedSubjectId(s.subject_id);
-                                    }
-                                }}
-                                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#10b981]/50 transition-colors cursor-pointer appearance-none"
-                            >
-                                {students.map(s => (
-                                    <option key={s.id} value={s.id}>
-                                        {s.name} ({s.subject_id})
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="relative group">
+                                <select
+                                    value={selectedStudentId}
+                                    onChange={(e) => {
+                                        const s = students.find(std => std.id === e.target.value);
+                                        if (s) {
+                                            setSelectedStudentId(s.id);
+                                            setSelectedSubjectId(s.subject_id);
+                                        }
+                                    }}
+                                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-3.5 text-sm text-white focus:outline-none focus:border-[#10b981]/50 transition-all cursor-pointer appearance-none group-hover:bg-black/60"
+                                >
+                                    {students.map(s => (
+                                        <option key={s.id} value={s.id} className="bg-[#09090b]">
+                                            {s.name} — {s.subject_id}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-[#71717a]">
+                                    <Plus size={16} className="rotate-45" />
+                                </div>
+                            </div>
                         </div>
                     )}
 
-                    <div className="w-full px-4 space-y-4">
-                        {/* Image Metadata Capture (P1.3) */}
-                        <div className="flex flex-col gap-2">
-                            <div className="flex items-center justify-between">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-[#71717a]">
-                                    Visual Evidence (Max 3)
-                                </label>
+                    <div className="w-full max-w-sm space-y-6 text-center">
+                        <div className="flex flex-col items-center gap-6">
+                            <button
+                                onClick={startRecording}
+                                className="w-24 h-24 bg-[#10b981] text-black rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(16,185,129,0.3)] ring-4 ring-[#10b981]/10"
+                            >
+                                <Mic size={36} strokeWidth={2.5} />
+                            </button>
+                            <div>
+                                <h3 className="text-xl font-black tracking-tight text-white mb-2">Summon AI Scribe</h3>
+                                <p className="text-xs text-[#71717a] leading-relaxed">
+                                    Start teaching normally. Our AI will capture everything <br />
+                                    and prepare a draft report for your review.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Visual Evidence (P1.3) */}
+                        <div className="pt-4 border-t border-white/[0.05]">
+                            <div className="flex items-center justify-between mb-4 px-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[#52525b]">Visual Artifacts</span>
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="text-[10px] font-black uppercase tracking-widest text-[#10b981] hover:text-emerald-400 transition-colors flex items-center gap-1"
+                                    className="text-[10px] font-black uppercase tracking-widest text-[#10b981] hover:text-emerald-400 transition-colors"
                                 >
-                                    <Plus className="w-3 h-3" />
-                                    Add Image
+                                    + Add Evidence
                                 </button>
                                 <input
                                     type="file"
@@ -252,173 +281,181 @@ export default function VoiceRecorder({
                                 />
                             </div>
 
-                            {imageUrls.length > 0 && (
-                                <div className="flex gap-2">
+                            {imageUrls.length > 0 ? (
+                                <div className="flex justify-center gap-3">
                                     {imageUrls.map((url, i) => (
-                                        <div key={i} className="relative group w-14 h-14">
-                                            <img src={url} className="w-full h-full object-cover rounded-lg border border-white/10" />
+                                        <div key={i} className="relative group w-16 h-16">
+                                            <img src={url} className="w-full h-full object-cover rounded-xl border border-white/10 shadow-lg" />
                                             <button
                                                 onClick={() => removeImage(i)}
-                                                className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                             >
                                                 <X size={10} />
                                             </button>
                                         </div>
                                     ))}
                                 </div>
+                            ) : (
+                                <p className="text-[10px] text-[#3f3f46] italic uppercase tracking-widest">No images attached</p>
                             )}
-                        </div>
-
-                        <div className="flex flex-col items-center gap-4 py-2">
-                            <button
-                                onClick={startRecording}
-                                className="w-16 h-16 bg-[#10b981] text-black rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_#10b98140]"
-                            >
-                                <Mic size={28} />
-                            </button>
-                            <div className="text-center">
-                                <p className="text-sm font-semibold text-white">Start Recording Session</p>
-                                <p className="text-xs text-[#71717a] mt-1">Audio + Visual data for deep analysis</p>
-                            </div>
                         </div>
                     </div>
                 </div>
             ) : isRecording ? (
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between">
+                <div className="space-y-8 py-6">
+                    <div className="flex items-center justify-between px-4">
                         <div className="flex items-center gap-3">
                             <div className="relative flex items-center justify-center">
-                                <span className="absolute w-3 h-3 bg-red-500 rounded-full animate-ping" />
-                                <span className="relative w-3 h-3 bg-red-500 rounded-full" />
+                                <span className="absolute w-4 h-4 bg-[#10b981]/20 rounded-full animate-ping" />
+                                <span className="relative w-2 h-2 bg-[#10b981] rounded-full" />
                             </div>
-                            <span className="text-xs font-black uppercase tracking-widest text-white/40">Recording Live</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#10b981]">AI Scribe Listening...</span>
                         </div>
-                        <span className="text-2xl font-black text-white font-mono">{formatDuration(duration)}</span>
+                        <span className="text-3xl font-black text-white font-mono tracking-tighter">{formatDuration(duration)}</span>
                     </div>
 
-                    {/* Waveform Visualization Placeholder (Simple Pulse for now) */}
-                    <div className="h-20 flex items-center justify-center gap-1">
-                        {[...Array(20)].map((_, i) => (
+                    {/* Minimal Waveform */}
+                    <div className="h-24 flex items-center justify-center gap-1.5 px-4">
+                        {[...Array(30)].map((_, i) => (
                             <div
                                 key={i}
                                 className={cn(
                                     "w-1 bg-[#10b981] rounded-full transition-all duration-300",
-                                    isPaused ? "h-2 opacity-20" : "animate-pulse"
+                                    isPaused ? "h-1 opacity-20" : "animate-pulse"
                                 )}
                                 style={{
-                                    height: isPaused ? '8px' : `${Math.random() * 40 + 10}px`,
-                                    animationDelay: `${i * 0.05}s`
+                                    height: isPaused ? '4px' : `${Math.random() * 60 + 10}px`,
+                                    animationDelay: `${i * 0.03}s`,
+                                    opacity: isPaused ? 0.2 : (0.4 + (i % 10) / 20)
                                 }}
                             />
                         ))}
                     </div>
 
-                    <div className="flex items-center justify-center gap-4">
+                    <div className="flex items-center justify-center gap-6">
                         <button
                             onClick={togglePause}
-                            className="p-4 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all"
+                            className="w-14 h-14 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all flex items-center justify-center border border-white/5"
                         >
-                            {isPaused ? <Play size={20} /> : <Pause size={20} />}
+                            {isPaused ? <Play size={24} fill="currentColor" /> : <Pause size={24} fill="currentColor" />}
                         </button>
                         <button
                             onClick={stopRecording}
-                            className="p-5 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all shadow-lg shadow-red-500/20"
+                            className="w-18 h-18 px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-red-500/20 active:scale-95"
                         >
-                            <Square size={24} fill="currentColor" />
+                            Complete
                         </button>
                     </div>
                 </div>
             ) : (
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between">
+                <div className="space-y-8 py-6">
+                    <div className="flex items-center justify-between px-2">
                         <div className="flex items-center gap-2">
                             {success ? (
-                                <CheckCircle size={14} className="text-[#10b981]" />
+                                <div className="flex items-center gap-2 px-3 py-1 bg-[#10b981]/10 border border-[#10b981]/20 rounded-full">
+                                    <CheckCircle size={12} className="text-[#10b981]" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#10b981]">Growth Recorded</span>
+                                </div>
                             ) : error ? (
-                                <AlertCircle size={14} className="text-red-400" />
+                                <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full">
+                                    <AlertCircle size={12} className="text-red-400" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-red-400">Processing Failed</span>
+                                </div>
                             ) : (
-                                <CheckCircle size={14} className="text-white/40" />
+                                <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
+                                    <Loader2 size={12} className="text-white/40 animate-spin" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Scribe Draft Ready</span>
+                                </div>
                             )}
-                            <span className={cn(
-                                "text-xs font-black uppercase tracking-widest",
-                                success ? "text-[#10b981]" : error ? "text-red-400" : "text-white/40"
-                            )}>
-                                {success ? "Analysis Complete" : error ? "Analysis Failed" : "Ready for AI Analysis"}
-                            </span>
                         </div>
-                        <span className="text-sm font-bold text-white/60 font-mono">{formatDuration(duration)}</span>
+                        <span className="text-sm font-bold text-[#71717a] font-mono">{formatDuration(duration)}</span>
                     </div>
 
                     {success ? (
-                        <div className="space-y-4">
-                            <div className="bg-[#10b981]/10 rounded-2xl p-5 border border-[#10b981]/20">
-                                <p className="text-xs text-[#10b981] leading-relaxed font-semibold">
-                                    Analysis complete! A shareable report for the student's parents is now ready.
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <div className="bg-[#10b981]/5 rounded-3xl p-6 border border-[#10b981]/10 text-center">
+                                <h4 className="text-lg font-bold text-white mb-2">Evidence Successfully Locked</h4>
+                                <p className="text-xs text-[#a1a1aa] leading-relaxed">
+                                    Analysis complete. Student mastery has been updated. <br />
+                                    A shareable growth report is now available for parents.
                                 </p>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-4">
                                 <button
                                     onClick={copyReportLink}
                                     className={cn(
-                                        "py-3 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border",
+                                        "py-4 px-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border",
                                         isCopied
                                             ? "bg-[#10b981] border-[#10b981] text-black"
-                                            : "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                                            : "bg-white/5 border-white/10 text-[#71717a] hover:text-white hover:bg-white/10"
                                     )}
                                 >
-                                    {isCopied ? <CheckCircle size={14} /> : <Share2 size={14} />}
-                                    {isCopied ? "Copied!" : "Copy Link"}
+                                    {isCopied ? <CheckCircle size={16} /> : <Share2 size={16} />}
+                                    {isCopied ? "Copied" : "Copy Link"}
                                 </button>
                                 <Link
                                     href={`/report/${sessionId}`}
                                     target="_blank"
-                                    className="py-3 px-4 bg-white text-black rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 hover:bg-white/90"
+                                    className="py-4 px-4 bg-white text-black rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 hover:opacity-90 active:scale-95"
                                 >
-                                    <ExternalLink size={14} />
-                                    View Report
+                                    <ExternalLink size={16} />
+                                    Review
                                 </Link>
                             </div>
-                        </div>
-                    ) : audioUrl && (
-                        <audio src={audioUrl} controls className="w-full h-8 opacity-60 rounded-lg filter invert" />
-                    )}
-
-                    {error && (
-                        <div className="bg-red-500/10 rounded-xl p-4 border border-red-500/20">
-                            <p className="text-xs text-red-400 leading-relaxed">
-                                {error}
-                            </p>
-                        </div>
-                    )}
-
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={discardRecording}
-                            disabled={isAnalyzing}
-                            className="flex-1 py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-sm font-bold text-white/60 hover:text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                            <Trash2 size={16} />
-                            {success ? "Reset" : "Discard"}
-                        </button>
-                        {!success && (
                             <button
-                                onClick={() => submitRecording()}
-                                disabled={isAnalyzing}
-                                className="flex-[2] py-3 px-4 bg-[#10b981] hover:bg-emerald-400 text-black rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group"
+                                onClick={discardRecording}
+                                className="w-full py-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#3f3f46] hover:text-white transition-colors"
                             >
-                                {isAnalyzing ? (
-                                    <>
-                                        <Loader2 size={16} className="animate-spin" />
-                                        Analyzing...
-                                    </>
-                                ) : (
-                                    <>
-                                        Analyze Session
-                                    </>
-                                )}
+                                Start New Session
                             </button>
-                        )}
-                    </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-8">
+                            <div className="bg-white/[0.03] rounded-3xl p-8 border border-white/[0.05] text-center">
+                                <h4 className="text-xl font-black text-white mb-3 tracking-tight">The Decision Port</h4>
+                                <p className="text-xs text-[#71717a] leading-relaxed mb-6">
+                                    Your session is scribed locally. Choosing **Commit** will update student growth data. Choosing **Trash** will permanently erase this session forever.
+                                </p>
+
+                                <div className="flex flex-col gap-3">
+                                    <button
+                                        onClick={() => submitRecording()}
+                                        disabled={isAnalyzing}
+                                        className="w-full py-5 bg-[#10b981] hover:bg-emerald-400 text-black rounded-2xl font-black text-sm uppercase tracking-widest transition-all disabled:opacity-50 shadow-[0_10px_30px_rgba(16,185,129,0.2)] flex items-center justify-center gap-3"
+                                    >
+                                        {isAnalyzing ? (
+                                            <>
+                                                <Loader2 size={18} className="animate-spin" />
+                                                Analyzing Draft...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle size={18} strokeWidth={3} />
+                                                Commit to Mastery
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={discardRecording}
+                                        disabled={isAnalyzing}
+                                        className="w-full py-5 bg-white/5 hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 text-[#71717a] hover:text-red-400 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-3"
+                                    >
+                                        <Trash2 size={18} strokeWidth={2.5} />
+                                        Purge & Trash
+                                    </button>
+                                </div>
+                            </div>
+
+                            {error && (
+                                <div className="bg-red-500/10 rounded-2xl p-4 border border-red-500/20 animate-in fade-in zoom-in-95">
+                                    <p className="text-xs text-red-400 leading-relaxed font-medium flex items-center gap-2">
+                                        <AlertCircle size={14} />
+                                        {error}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

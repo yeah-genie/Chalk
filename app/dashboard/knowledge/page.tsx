@@ -8,19 +8,18 @@ export default async function KnowledgePage() {
     const proposals = await getPendingProposals();
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[#0a0a0c] text-white">
+        <div className="flex min-h-screen overflow-hidden bg-[#0a0a0c] text-white">
             <Sidebar />
-            <main className="flex-1 ml-64 overflow-y-auto p-12">
-                <header className="mb-12">
-                    <div className="flex items-center gap-3 mb-4">
+            <main className="flex-1 md:ml-20 lg:ml-64 overflow-y-auto p-4 md:p-8 lg:p-12 pb-24 md:pb-12">
+                <header className="mb-8 md:mb-12">
+                    <div className="flex items-center gap-3 mb-3 md:mb-4">
                         <div className="bg-[#10b981]/20 p-2 rounded-xl">
-                            <Database className="text-[#10b981]" size={24} />
+                            <Database className="text-[#10b981]" size={20} />
                         </div>
-                        <h1 className="text-4xl font-black tracking-tight">AI Taxonomy Management</h1>
+                        <h1 className="text-2xl md:text-4xl font-black tracking-tight">AI Taxonomy</h1>
                     </div>
-                    <p className="text-white/40 max-w-2xl text-lg leading-relaxed">
-                        Review and approve new learning topics and units suggested by AI during student sessions.
-                        Keep your knowledge base dynamic and updated.
+                    <p className="text-white/40 max-w-2xl text-sm md:text-lg leading-relaxed">
+                        Review and approve new topics suggested by AI during student sessions.
                     </p>
                 </header>
 

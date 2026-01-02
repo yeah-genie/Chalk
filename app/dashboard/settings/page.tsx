@@ -22,11 +22,11 @@ export default async function SettingsPage() {
         <div className="min-h-screen bg-[#09090b] text-white">
             <Sidebar />
 
-            <main className="ml-64 p-8">
+            <main className="md:ml-20 lg:ml-64 p-4 md:p-6 lg:p-8 pb-24 md:pb-10">
                 <div className="max-w-4xl mx-auto">
-                    <header className="mb-8">
-                        <h1 className="text-3xl font-bold">Settings</h1>
-                        <p className="text-[#71717a] mt-2">Manage your account and platform preferences.</p>
+                    <header className="mb-6 md:mb-8">
+                        <h1 className="text-2xl md:text-3xl font-bold">Settings</h1>
+                        <p className="text-[#71717a] mt-1 md:mt-2 text-sm">Manage your account and preferences.</p>
                     </header>
 
                     <div className="grid gap-6">

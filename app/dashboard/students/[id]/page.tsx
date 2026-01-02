@@ -29,12 +29,12 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
 
     if (!student) {
         return (
-            <div className="flex h-screen bg-[#09090b] text-white">
+            <div className="flex min-h-screen bg-[#09090b] text-white">
                 <Sidebar />
-                <div className="flex-1 flex items-center justify-center p-8 ml-64">
+                <div className="flex-1 flex items-center justify-center p-4 md:p-8 md:ml-20 lg:ml-64 pb-24 md:pb-10">
                     <div className="text-center space-y-4">
-                        <h1 className="text-2xl font-bold">Student Not Found</h1>
-                        <p className="text-[#71717a]">The student you are looking for does not exist or has been removed.</p>
+                        <h1 className="text-xl md:text-2xl font-bold">Student Not Found</h1>
+                        <p className="text-[#71717a] text-sm">The student you are looking for does not exist or has been removed.</p>
                     </div>
                 </div>
             </div>
@@ -54,12 +54,12 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
 
     if (!subject) {
         return (
-            <div className="flex h-screen bg-[#09090b] text-white">
+            <div className="flex min-h-screen bg-[#09090b] text-white">
                 <Sidebar />
-                <div className="flex-1 flex items-center justify-center p-8 ml-64">
+                <div className="flex-1 flex items-center justify-center p-4 md:p-8 md:ml-20 lg:ml-64 pb-24 md:pb-10">
                     <div className="text-center space-y-4">
-                        <h1 className="text-2xl font-bold">Subject Data Missing</h1>
-                        <p className="text-[#71717a]">Curriculum data for "{student.subject_id}" is not available.</p>
+                        <h1 className="text-xl md:text-2xl font-bold">Subject Data Missing</h1>
+                        <p className="text-[#71717a] text-sm">Curriculum data for "{student.subject_id}" is not available.</p>
                     </div>
                 </div>
             </div>

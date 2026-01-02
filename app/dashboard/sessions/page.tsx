@@ -33,7 +33,7 @@ export default async function SessionsPage() {
             <Sidebar />
 
             {/* Main Content */}
-            <main className="ml-64 p-8">
+            <main className="md:ml-20 lg:ml-64 p-4 md:p-6 lg:p-8 pb-24 md:pb-10">
                 <SessionList initialSessions={sessions} students={students} tutorId={user.id} />
             </main>
         </div>

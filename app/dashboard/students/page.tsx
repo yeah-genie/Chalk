@@ -41,7 +41,7 @@ export default async function StudentsPage() {
             <Sidebar />
 
             {/* Main Content (Client Component below handles interactivity) */}
-            <main className="ml-64 p-8">
+            <main className="md:ml-20 lg:ml-64 p-4 md:p-6 lg:p-8 pb-24 md:pb-10">
                 <StudentList initialStudents={students} subjects={subjects} />
             </main>
         </div>

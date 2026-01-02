@@ -64,19 +64,19 @@ export default async function InsightsPage() {
         <div className="min-h-screen bg-[#09090b] text-white">
             <Sidebar />
 
-            <main className="ml-64 p-8">
+            <main className="md:ml-20 lg:ml-64 p-4 md:p-6 lg:p-8 pb-24 md:pb-10">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-6 md:mb-8">
                     <div className="flex items-center gap-2 text-[#10b981] mb-1">
                         <TrendingUp size={14} />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em]">Student Insights</span>
                     </div>
-                    <h1 className="text-2xl font-bold">All Students Overview</h1>
-                    <p className="text-[#71717a] text-sm">Monitor progress and identify who needs attention</p>
+                    <h1 className="text-xl md:text-2xl font-bold">All Students Overview</h1>
+                    <p className="text-[#71717a] text-xs md:text-sm">Monitor progress and identify who needs attention</p>
                 </div>
 
                 {/* Summary Stats */}
-                <div className="grid grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
                     <div className="p-5 rounded-xl bg-[#18181b] border border-[#27272a]">
                         <div className="flex items-center gap-2 text-[#71717a] mb-2">
                             <Users size={14} />
@@ -150,7 +150,7 @@ export default async function InsightsPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                     {/* Priority Attention List */}
                     <div className="rounded-xl bg-[#18181b] border border-[#27272a] overflow-hidden">
                         <div className="px-5 py-4 border-b border-[#27272a] flex items-center gap-2">

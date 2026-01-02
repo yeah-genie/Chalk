@@ -84,17 +84,17 @@ export default function StudentDetailClient({
     };
 
     return (
-        <div className="min-h-screen bg-[#09090b] text-white flex overflow-hidden">
+        <div className="min-h-screen bg-[#09090b] text-white flex flex-col md:flex-row overflow-hidden">
             <Sidebar />
 
-            <div className="flex-1 flex flex-col ml-64 overflow-y-auto">
-                <header className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+            <div className="flex-1 flex flex-col md:ml-20 lg:ml-64 overflow-y-auto pb-24 md:pb-0">
+                <header className="p-4 md:p-8 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between bg-white/[0.01] gap-4">
                     <div>
                         <div className="flex items-center gap-3 text-[#10b981] mb-1">
                             <Zap size={14} className="animate-pulse" />
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Student Intelligence Dashboard</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em]">Student Dashboard</span>
                         </div>
-                        <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3">
+                        <h1 className="text-xl md:text-3xl font-black tracking-tighter flex flex-wrap items-center gap-2 md:gap-3">
                             {student.name}
                             <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[10px] text-white/40 uppercase tracking-widest font-bold">
                                 {subject.name}
@@ -106,34 +106,35 @@ export default function StudentDetailClient({
                         <button
                             onClick={handleGenerateReport}
                             disabled={isGeneratingReport}
-                            className="px-6 py-3 bg-[#10b981] text-black font-black rounded-xl text-xs flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] disabled:opacity-50"
+                            className="w-full md:w-auto px-4 md:px-6 py-3 bg-[#10b981] text-black font-black rounded-xl text-xs flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] disabled:opacity-50"
                         >
                             {isGeneratingReport ? (
                                 <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
                             ) : (
                                 <>
                                     <Share2 size={16} />
-                                    Generate Parent Report
+                                    <span className="hidden md:inline">Generate Parent Report</span>
+                                    <span className="md:hidden">Report</span>
                                 </>
                             )}
                         </button>
                     </div>
                 </header>
 
-                <main className="p-8 grid grid-cols-12 gap-8">
+                <main className="p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
                     {/* Left Column: Mastery & Analysis */}
-                    <div className="col-span-8 space-y-8">
+                    <div className="lg:col-span-8 space-y-6 md:space-y-8 order-2 lg:order-1">
                         {/* Mastery Section */}
-                        <section className="bg-white/[0.02] border border-white/5 rounded-3xl p-8 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <section className="bg-white/[0.02] border border-white/5 rounded-2xl md:rounded-3xl p-4 md:p-8 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity hidden md:block">
                                 <Award size={120} />
                             </div>
                             <div className="relative z-10">
-                                <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                                <h3 className="text-base md:text-lg font-bold mb-4 md:mb-6 flex items-center gap-2">
                                     <Target size={18} className="text-[#10b981]" />
                                     Mastery Matrix
                                 </h3>
-                                <div className="h-[500px] relative">
+                                <div className="h-[300px] md:h-[500px] relative overflow-x-auto">
                                     <MasteryMatrix
                                         subject={subject}
                                         mastery={masteryForMatrix}
@@ -146,11 +147,11 @@ export default function StudentDetailClient({
 
                         {/* Proof of Lesson Section */}
                         <section className="space-y-4">
-                            <h3 className="text-lg font-bold flex items-center gap-2">
+                            <h3 className="text-base md:text-lg font-bold flex items-center gap-2">
                                 <Award size={18} className="text-[#10b981]" />
                                 Proof of Lesson
                             </h3>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                                 {sessions.map((session) => (
                                     <div key={session.id} className="p-6 bg-white/[0.03] border border-white/5 rounded-2xl hover:bg-white/[0.05] transition-all cursor-pointer group">
                                         <div className="flex items-center justify-between mb-4">
@@ -177,7 +178,7 @@ export default function StudentDetailClient({
                         </section>
                     </div>
 
-                    <div className="col-span-4 space-y-6">
+                    <div className="lg:col-span-4 space-y-4 md:space-y-6 order-1 lg:order-2">
                         {/* Session Capture (P0 Integration) */}
                         <div className="rounded-2xl bg-[#18181b] border border-white/5 overflow-hidden shadow-2xl">
                             <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
@@ -310,19 +311,6 @@ export default function StudentDetailClient({
                 masteryLevel={initialMastery.find(m => m.topicId === selectedTopic?.id)?.score || 0}
                 insights={studentInsights}
             />
-
-            <style jsx>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 5px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.05);
-                    border-radius: 20px;
-                }
-            `}</style>
         </div>
     );
 }

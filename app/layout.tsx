@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   keywords: ["tutoring", "AP", "calculus", "physics", "learning analytics", "education", "tutor portfolio"],
 };
 
+import Sidebar from "@/components/layout/Sidebar";
+import BottomNav from "@/components/layout/BottomNav";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,9 +29,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#09090b] text-[#fafafa] min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#09090b] text-[#fafafa] min-h-screen pb-16 md:pb-0`}
       >
         {children}
+        <BottomNav />
       </body>
     </html>
   );
