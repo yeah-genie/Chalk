@@ -7,10 +7,18 @@ import { AP_SUBJECTS, findTopicByCode, type Topic } from "@/lib/knowledge-graph"
 // 전사 → 토픽 추출 + 이해도 평가
 // ===================================
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // Types
+export interface MultimodalImage {
+    inlineData: {
+        data: string;
+        mimeType: string;
+    }
+}
 // Types
 export interface SuggestedNode {
     type: 'unit' | 'topic';
@@ -118,7 +126,8 @@ export async function extractTopicsFromTranscript(
     transcript: string,
     subjectId: string,
     subjectName: string,
-    existingTopics: Topic[]
+    existingTopics: Topic[],
+    images: MultimodalImage[] = []
 ): Promise<ExtractionResult> {
     // Check for API key
     if (!GEMINI_API_KEY) {
@@ -127,33 +136,16 @@ export async function extractTopicsFromTranscript(
     }
 
     const prompt = buildExtractionPrompt(transcript, subjectName, existingTopics);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     try {
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [{ text: prompt }],
-                    },
-                ],
-                generationConfig: {
-                    temperature: 0.2,
-                    topP: 0.8,
-                    maxOutputTokens: 2048,
-                },
-            }),
-        });
+        const result = await model.generateContent([
+            prompt,
+            ...images
+        ]);
 
-        if (!response.ok) {
-            throw new Error(`Gemini API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const response = await result.response;
+        const textContent = response.text();
 
         // Parse JSON from response
         const jsonMatch = textContent.match(/\{[\s\S]*\}/);

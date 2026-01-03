@@ -2,15 +2,16 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { transcribeAudio } from "@/lib/services/whisper";
-import { extractTopicsFromTranscript } from "@/lib/services/gemini";
+import { extractTopicsFromTranscript, type MultimodalImage } from "@/lib/services/gemini";
 import { calculateNewScore } from "@/lib/mastery-utils";
 import { revalidatePath } from "next/cache";
 
 /**
  * 전체 세션 분석 파이프라인
  * 1. 오디오 저장
- * 2. AI 분석 (Gemini)
- * 3. DB 업데이트 (Mastery & Topics)
+ * 2. STT (Whisper)
+ * 3. AI 분석 (Gemini)
+ * 4. DB 업데이트 (Mastery & Topics)
  */
 export async function processSessionAudio(formData: FormData) {
     const blob = formData.get('audio') as Blob;
@@ -26,7 +27,7 @@ export async function processSessionAudio(formData: FormData) {
     if (!user) return { success: false, error: "Unauthorized" };
 
     try {
-        // 1. 세션 기본 정보 생성
+        // 1. 세션 기본 정보 생성 (in_progress)
         const { data: session, error: sessionError } = await supabase
             .from('sessions')
             .insert({
@@ -43,7 +44,7 @@ export async function processSessionAudio(formData: FormData) {
 
         // 2. 오디오 업로드 (Supabase Storage)
         const fileName = `${user.id}/${session.id}.webm`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
             .from('recordings')
             .upload(fileName, blob, {
                 contentType: 'audio/webm',
@@ -56,12 +57,6 @@ export async function processSessionAudio(formData: FormData) {
             .from('recordings')
             .getPublicUrl(fileName);
 
-        // Fetch Subject info for context
-        const { fetchSubjectData } = await import('@/lib/knowledge-graph-server');
-        const subject = await fetchSubjectData(subjectId);
-        const existingTopics = subject?.topics || [];
-        const subjectName = subject?.name || subjectId;
-
         // 3. Speech-to-Text via Whisper API
         console.log('[Analysis] Starting transcription...');
         const transcriptionResult = await transcribeAudio(blob);
@@ -73,16 +68,57 @@ export async function processSessionAudio(formData: FormData) {
         const transcript = transcriptionResult.transcript;
         console.log(`[Analysis] Transcription complete: ${transcript.length} chars`);
 
+        // 4. AI Analysis via Gemini (Multimodal support added P1.3)
+        const { fetchSubjectData } = await import('@/lib/knowledge-graph-server');
+        const subject = await fetchSubjectData(subjectId);
+        const existingTopics = subject?.topics || [];
+        const subjectName = subject?.name || subjectId;
+
+        // Process images for Gemini multimodal analysis
+        const imageCount = parseInt(formData.get('imageCount') as string || '0');
+        const multimodalImages: MultimodalImage[] = [];
+        const evidenceUrls: string[] = [];
+
+        for (let i = 0; i < imageCount; i++) {
+            const imageBlob = formData.get(`image_${i}`) as Blob;
+            if (imageBlob) {
+                // A. Upload to Supabase Storage
+                const imageFileName = `${user.id}/evidence/${session.id}_${i}.jpg`;
+                await supabase.storage
+                    .from('recordings')
+                    .upload(imageFileName, imageBlob, {
+                        contentType: imageBlob.type || 'image/jpeg',
+                        upsert: true
+                    });
+
+                const { data: { publicUrl: imgUrl } } = supabase.storage
+                    .from('recordings')
+                    .getPublicUrl(imageFileName);
+                evidenceUrls.push(imgUrl);
+
+                // B. Prepare for Gemini
+                const buffer = await imageBlob.arrayBuffer();
+                multimodalImages.push({
+                    inlineData: {
+                        data: Buffer.from(buffer).toString('base64'),
+                        mimeType: imageBlob.type || 'image/jpeg'
+                    }
+                });
+            }
+        }
+
+        console.log(`[Analysis] Starting Gemini analysis with ${multimodalImages.length} images...`);
         const analysis = await extractTopicsFromTranscript(
             transcript,
             subjectId,
             subjectName,
-            existingTopics
+            existingTopics,
+            multimodalImages
         );
 
         if (!analysis.success) throw new Error(analysis.error);
 
-        // 4. DB 업데이트 (Topics & Mastery)
+        // 5. DB 업데이트 (Topics & Mastery)
         for (const topic of analysis.topics) {
             // A. 세션 토픽 기록
             await supabase.from('session_topics').insert({
@@ -93,7 +129,7 @@ export async function processSessionAudio(formData: FormData) {
                 future_impact: topic.futureImpact
             });
 
-            // B. 학생 숙련도 업데이트
+            // B. 학생 숙련도 업데이트 (개인화된 분석 데이터 반영)
             const { data: currentMastery } = await supabase
                 .from('student_mastery')
                 .select('score')
@@ -113,7 +149,7 @@ export async function processSessionAudio(formData: FormData) {
             });
         }
 
-        // 4.5. AI Taxonomy Ingestion: Save PROPOSED nodes
+        // 6. AI Taxonomy Ingestion
         if (analysis.suggestedNewNodes && analysis.suggestedNewNodes.length > 0) {
             const proposals = analysis.suggestedNewNodes.map(node => ({
                 session_id: session.id,
@@ -128,15 +164,18 @@ export async function processSessionAudio(formData: FormData) {
             await supabase.from('kb_proposed_taxonomy').insert(proposals);
         }
 
-        // 5. 세션 완료 처리
+        // 7. 세션 완료 및 메타데이터 업데이트
         await supabase.from('sessions').update({
             status: 'completed',
             recording_url: publicUrl,
             transcript: transcript,
+            transcript_segments: transcriptionResult.segments,
+            evidence_urls: evidenceUrls,
             notes: analysis.summary
         }).eq('id', session.id);
 
         revalidatePath('/dashboard');
+        revalidatePath(`/dashboard/students/${studentId}`);
         revalidatePath('/dashboard/analysis');
 
         return {
@@ -146,8 +185,9 @@ export async function processSessionAudio(formData: FormData) {
             proposalsFound: analysis.suggestedNewNodes?.length || 0
         };
 
-    } catch (err: any) {
-        console.error("Analysis Pipeline Error:", err);
-        return { success: false, error: err.message };
+    } catch (e) {
+        const error = e as Error;
+        console.error("Error processing session audio:", error);
+        return { success: false, error: error.message || 'Analysis failed' };
     }
 }

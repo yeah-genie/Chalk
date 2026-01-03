@@ -3,6 +3,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Student, StudentInsert, Session, SessionInsert } from "@/lib/types/database";
+import { getStudentPredictions as internalGetStudentPredictions } from '@/lib/services/prediction';
 
 // ===================================
 // STUDENT CRUD ACTIONS
@@ -89,9 +90,10 @@ export async function createStudent(student: StudentInsert) {
         revalidatePath("/dashboard/students");
 
         return { success: true, data };
-    } catch (e: any) {
-        console.error("Error creating student (System):", e);
-        return { success: false, error: `Critical system error: ${e.message || 'Unknown error'}` };
+    } catch (e) {
+        const error = e as Error;
+        console.error("Error creating student (System):", error);
+        return { success: false, error: `Critical system error: ${error.message || 'Unknown error'}` };
     }
 }
 
@@ -149,9 +151,10 @@ export async function registerStudentWithSubject(data: {
         revalidatePath("/dashboard/students");
 
         return { success: true, data: studentData };
-    } catch (e: any) {
-        console.error("[Register] Error creating student (System):", e);
-        return { success: false, error: `Critical system error: ${e.message || 'Unknown error'}` };
+    } catch (e) {
+        const error = e as Error;
+        console.error("[Register] Error creating student (System):", error);
+        return { success: false, error: `Critical system error: ${error.message || 'Unknown error'}` };
     }
 }
 
@@ -310,7 +313,7 @@ export async function getStudentMastery(studentId: string) {
         // Map database topic_id to the UI's topicId
         return (data || []).map(m => ({
             topicId: m.topic_id,
-            level: m.score
+            score: m.score
         }));
     } catch (e) {
         console.error("Error fetching student mastery (System):", e);
@@ -370,6 +373,35 @@ export async function getAllStudentsMasteryMap(): Promise<Map<string, number>> {
     }
 }
 
+
+
+/**
+ * Prediction Alias for backward compatibility
+ * Provides predictions for a student's main subject
+ */
+export async function getTopicPredictions(studentId: string) {
+    try {
+        const supabase = await createServerSupabaseClient();
+        const { data: student } = await supabase
+            .from('students')
+            .select('subject_id')
+            .eq('id', studentId)
+            .single();
+
+        if (!student) return [];
+
+        const predictions = await internalGetStudentPredictions(studentId, student.subject_id);
+        return predictions.retentionAlerts;
+    } catch (e) {
+        console.error("Error in getTopicPredictions:", e);
+        return [];
+    }
+}
+
+export async function getStudentPredictions(studentId: string, subjectId: string) {
+    return internalGetStudentPredictions(studentId, subjectId);
+}
+
 export async function getTopicInsights(studentId: string, topicId: string) {
     try {
         const supabase = await createServerSupabaseClient();
@@ -399,7 +431,7 @@ export async function getTopicInsights(studentId: string, topicId: string) {
         }
 
         return {
-            text: (Array.isArray(data.sessions) ? data.sessions[0]?.notes : (data.sessions as any)?.notes) || "No recent AI narrative available for this topic.",
+            text: (Array.isArray(data.sessions) ? data.sessions[0]?.notes : (data.sessions as { notes: string } | null)?.notes) || "No recent AI narrative available for this topic.",
             nextSteps: [
                 "Review session evidence below",
                 "Focus on identified struggle points",
@@ -411,5 +443,69 @@ export async function getTopicInsights(studentId: string, topicId: string) {
     } catch (e) {
         console.error("Error fetching topic insights (System):", e);
         return null;
+    }
+}
+
+export async function getLatestStudentSessionNotes(studentId: string) {
+    try {
+        const supabase = await createServerSupabaseClient();
+        const { data, error } = await supabase
+            .from("sessions")
+            .select("notes")
+            .eq("student_id", studentId)
+            .eq("status", "completed")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+
+        if (error || !data) return null;
+        return data.notes;
+    } catch (e) {
+        console.error("Error fetching latest session notes:", e);
+        return null;
+    }
+}
+
+export async function getStudentMasteryHistory(studentId: string) {
+    try {
+        const supabase = await createServerSupabaseClient();
+
+        // Fetch all session topics with their session dates
+        const { data, error } = await supabase
+            .from('session_topics')
+            .select(`
+                status_after,
+                created_at,
+                sessions!inner (
+                    scheduled_at,
+                    student_id
+                )
+            `)
+            .eq('sessions.student_id', studentId)
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        // Group by day and calculate average score (approximate)
+        // new: 25, learning: 50, reviewed: 75, mastered: 100
+        const statusMap: Record<string, number> = {
+            'new': 25,
+            'learning': 50,
+            'reviewed': 75,
+            'mastered': 100
+        };
+
+        const history = data.map(item => {
+            const session = Array.isArray(item.sessions) ? item.sessions[0] : (item.sessions as { scheduled_at: string } | null);
+            return {
+                date: session?.scheduled_at || item.created_at,
+                score: statusMap[item.status_after || 'new'] || 25
+            };
+        });
+
+        return history;
+    } catch (e) {
+        console.error("Error fetching mastery history:", e);
+        return [];
     }
 }

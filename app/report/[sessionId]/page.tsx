@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { CheckCircle2, AlertCircle, Target, TrendingUp, Mic, Brain } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { AP_SUBJECTS } from "@/lib/knowledge-graph";
+import InteractiveTranscript from '@/components/sessions/InteractiveTranscript';
 
 export default async function ReportPage({ params }: { params: { sessionId: string } }) {
     const supabase = await createServerSupabaseClient();
@@ -70,6 +71,12 @@ export default async function ReportPage({ params }: { params: { sessionId: stri
                         Recorded Analysis Powered by Gemini
                     </div>
                 </div>
+
+                {/* Interactive Transcript Section (P1) */}
+                <InteractiveTranscript
+                    recordingUrl={session.recording_url}
+                    segments={session.transcript_segments}
+                />
 
                 {/* Topics Covered Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

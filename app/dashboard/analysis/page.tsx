@@ -64,19 +64,19 @@ export default async function InsightsPage() {
         <div className="min-h-screen bg-[#09090b] text-white">
             <Sidebar />
 
-            <main className="ml-64 p-8">
+            <main className="md:ml-20 lg:ml-64 p-4 md:p-6 lg:p-8 pb-24 md:pb-10">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-6 md:mb-8">
                     <div className="flex items-center gap-2 text-[#10b981] mb-1">
                         <TrendingUp size={14} />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em]">Student Insights</span>
                     </div>
-                    <h1 className="text-2xl font-bold">All Students Overview</h1>
-                    <p className="text-[#71717a] text-sm">Monitor progress and identify who needs attention</p>
+                    <h1 className="text-xl md:text-2xl font-bold">All Students Overview</h1>
+                    <p className="text-[#71717a] text-xs md:text-sm">Monitor progress and identify who needs attention</p>
                 </div>
 
                 {/* Summary Stats */}
-                <div className="grid grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
                     <div className="p-5 rounded-xl bg-[#18181b] border border-[#27272a]">
                         <div className="flex items-center gap-2 text-[#71717a] mb-2">
                             <Users size={14} />
@@ -111,7 +111,46 @@ export default async function InsightsPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                {/* Class Performance Distribution (Phase 4.2) */}
+                <div className="mb-8 p-6 rounded-2xl bg-gradient-to-br from-[#10b981]/10 to-transparent border border-[#10b981]/20">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-sm font-bold text-white mb-1">Class Mastery Distribution</h3>
+                            <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Peer Performance Analysis</p>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                <span className="text-[10px] text-white/40 font-bold uppercase">High (70+)</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                                <span className="text-[10px] text-white/40 font-bold uppercase">Med (40-70)</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                <span className="text-[10px] text-white/40 font-bold uppercase">Low (&lt;40)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="h-4 flex rounded-full overflow-hidden bg-white/5">
+                        <div
+                            className="h-full bg-emerald-500 transition-all duration-1000"
+                            style={{ width: `${(allPredictions.filter(p => p.mastery >= 70).length / Math.max(1, totalStudents)) * 100}%` }}
+                        ></div>
+                        <div
+                            className="h-full bg-yellow-500 transition-all duration-1000"
+                            style={{ width: `${(allPredictions.filter(p => p.mastery >= 40 && p.mastery < 70).length / Math.max(1, totalStudents)) * 100}%` }}
+                        ></div>
+                        <div
+                            className="h-full bg-red-500 transition-all duration-1000"
+                            style={{ width: `${(allPredictions.filter(p => p.mastery < 40).length / Math.max(1, totalStudents)) * 100}%` }}
+                        ></div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                     {/* Priority Attention List */}
                     <div className="rounded-xl bg-[#18181b] border border-[#27272a] overflow-hidden">
                         <div className="px-5 py-4 border-b border-[#27272a] flex items-center gap-2">
@@ -177,12 +216,11 @@ export default async function InsightsPage() {
                                         className="flex items-center justify-between p-4 hover:bg-[#1f1f23] transition"
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                                                index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
                                                 index === 1 ? 'bg-gray-400/20 text-gray-400' :
-                                                index === 2 ? 'bg-amber-600/20 text-amber-600' :
-                                                'bg-[#27272a] text-[#71717a]'
-                                            }`}>
+                                                    index === 2 ? 'bg-amber-600/20 text-amber-600' :
+                                                        'bg-[#27272a] text-[#71717a]'
+                                                }`}>
                                                 {index + 1}
                                             </div>
                                             <div className="w-10 h-10 bg-[#27272a] rounded-full flex items-center justify-center">
@@ -195,11 +233,10 @@ export default async function InsightsPage() {
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <div className="text-right">
-                                                <p className={`font-bold ${
-                                                    item.mastery >= 70 ? 'text-emerald-400' :
+                                                <p className={`font-bold ${item.mastery >= 70 ? 'text-emerald-400' :
                                                     item.mastery >= 50 ? 'text-yellow-400' :
-                                                    item.mastery >= 30 ? 'text-orange-400' : 'text-red-400'
-                                                }`}>
+                                                        item.mastery >= 30 ? 'text-orange-400' : 'text-red-400'
+                                                    }`}>
                                                     {item.mastery}%
                                                 </p>
                                             </div>

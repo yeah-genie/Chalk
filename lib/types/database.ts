@@ -24,8 +24,10 @@ export interface Session {
     duration_minutes?: number;
     status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
     transcript?: string;
+    transcript_segments?: any[];
     notes?: string;
     recording_url?: string;
+    evidence_urls?: string[];
     created_at: string;
     updated_at: string;
 }
