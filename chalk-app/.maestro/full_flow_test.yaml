@@ -1,0 +1,54 @@
+appId: com.chalk.tutor
+name: Full User Flow E2E Test
+tags:
+  - e2e
+  - critical
+---
+# 앱 실행 (이미 Metro에 연결된 상태 가정)
+- launchApp:
+    clearState: false
+
+# 5초 대기 - 앱 로딩
+- extendedWaitUntil:
+    visible: "Welcome Back"
+    timeout: 15000
+    
+- takeScreenshot: flow_01_dashboard
+
+# 스크롤하여 전체 대시보드 확인
+- swipe:
+    direction: UP
+    duration: 500
+    
+- takeScreenshot: flow_02_scrolled
+
+# 위로 다시 스크롤
+- swipe:
+    direction: DOWN
+    duration: 500
+
+# 학생 추가 버튼 탭 (있는 경우)
+- tapOn:
+    text: "Add"
+    optional: true
+    
+- takeScreenshot: flow_03_after_add_tap
+
+# AI Scribe 버튼 탭
+- tapOn:
+    text: "AI SCRIBE"
+    optional: true
+    
+- takeScreenshot: flow_04_ai_scribe
+
+# 뒤로 가기
+- pressKey: Back
+
+- takeScreenshot: flow_05_back_to_dashboard
+
+# 설정 화면 확인
+- tapOn:
+    text: "Settings"
+    optional: true
+    
+- takeScreenshot: flow_06_settings
