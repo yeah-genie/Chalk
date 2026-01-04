@@ -64,5 +64,317 @@
             "Visual Reasoning"
         ],
         "summary": "Student initially struggled with fraction multiplication but successfully used visualization to find the correct answer (1/8)."
+    },
+    {
+        "id": "mathdial_003",
+        "subject": "Mathematics",
+        "topic": "Quadratic Equations",
+        "conversation": [
+            {
+                "role": "teacher",
+                "content": "Let's solve x² - 5x + 6 = 0. First, can you find two numbers that multiply to give 6?"
+            },
+            {
+                "role": "student",
+                "content": "2 and 3?"
+            },
+            {
+                "role": "teacher",
+                "content": "Great! Now, do those same numbers add up to 5?"
+            },
+            {
+                "role": "student",
+                "content": "Yes! 2 + 3 = 5!"
+            },
+            {
+                "role": "teacher",
+                "content": "Perfect. So we can factor this as (x - 2)(x - 3) = 0. What values of x make this true?"
+            },
+            {
+                "role": "student",
+                "content": "x = 2 or x = 3?"
+            },
+            {
+                "role": "teacher",
+                "content": "Exactly right! You've just solved a quadratic equation by factoring."
+            }
+        ],
+        "concepts": [
+            "Quadratic Equations",
+            "Factoring",
+            "Zero Product Property"
+        ],
+        "summary": "Student successfully learned to solve quadratic equations by factoring, identifying factor pairs and applying the zero product property."
+    },
+    {
+        "id": "mathdial_004",
+        "subject": "Mathematics",
+        "topic": "Percentages",
+        "conversation": [
+            {
+                "role": "teacher",
+                "content": "A shirt originally costs $40 and is on sale for 25% off. How much do you save?"
+            },
+            {
+                "role": "student",
+                "content": "I need to find 25% of 40..."
+            },
+            {
+                "role": "teacher",
+                "content": "Right. What's an easy way to find 25% of something?"
+            },
+            {
+                "role": "student",
+                "content": "Divide by 4?"
+            },
+            {
+                "role": "teacher",
+                "content": "Exactly! 25% is one quarter. So what's 40 divided by 4?"
+            },
+            {
+                "role": "student",
+                "content": "$10! So I save $10 and pay $30."
+            },
+            {
+                "role": "teacher",
+                "content": "Perfect! You found both the discount and the final price."
+            }
+        ],
+        "concepts": [
+            "Percentages",
+            "Mental Math",
+            "Real-world Applications"
+        ],
+        "summary": "Student learned to calculate percentages using the relationship between 25% and dividing by 4, applying it to a practical shopping scenario."
+    },
+    {
+        "id": "science_001",
+        "subject": "Science",
+        "topic": "Photosynthesis",
+        "conversation": [
+            {
+                "role": "teacher",
+                "content": "Plants make their own food through photosynthesis. What do you think plants need to do this?"
+            },
+            {
+                "role": "student",
+                "content": "Sunlight and water?"
+            },
+            {
+                "role": "teacher",
+                "content": "Yes! And there's one more thing from the air. What gas do we breathe out that plants love?"
+            },
+            {
+                "role": "student",
+                "content": "Carbon dioxide?"
+            },
+            {
+                "role": "teacher",
+                "content": "Excellent! And what gas do plants give us back in return?"
+            },
+            {
+                "role": "student",
+                "content": "Oxygen! So we help each other."
+            },
+            {
+                "role": "teacher",
+                "content": "Exactly right! It's a beautiful cycle in nature."
+            }
+        ],
+        "concepts": [
+            "Photosynthesis",
+            "Gas Exchange",
+            "Plant Biology"
+        ],
+        "summary": "Student understood the basic inputs and outputs of photosynthesis and recognized the symbiotic relationship between plants and animals."
+    },
+    {
+        "id": "science_002",
+        "subject": "Science",
+        "topic": "States of Matter",
+        "conversation": [
+            {
+                "role": "teacher",
+                "content": "Water can exist as ice, liquid water, or steam. What do we call these three forms?"
+            },
+            {
+                "role": "student",
+                "content": "Solid, liquid, and gas?"
+            },
+            {
+                "role": "teacher",
+                "content": "Perfect! Now, when ice melts into water, what's happening to the molecules?"
+            },
+            {
+                "role": "student",
+                "content": "They're moving faster?"
+            },
+            {
+                "role": "teacher",
+                "content": "Yes! Heat gives them energy to move. And when water becomes steam?"
+            },
+            {
+                "role": "student",
+                "content": "They move even faster and spread apart!"
+            },
+            {
+                "role": "teacher",
+                "content": "Excellent understanding of molecular motion!"
+            }
+        ],
+        "concepts": [
+            "States of Matter",
+            "Phase Transitions",
+            "Molecular Motion"
+        ],
+        "summary": "Student demonstrated understanding of the three states of matter and how molecular motion changes with temperature."
+    },
+    {
+        "id": "cima_001",
+        "subject": "Language Arts",
+        "topic": "Reading Comprehension",
+        "conversation": [
+            {
+                "role": "teacher",
+                "content": "In the story, why do you think the character decided to help the stranger?"
+            },
+            {
+                "role": "student",
+                "content": "Because they were nice?"
+            },
+            {
+                "role": "teacher",
+                "content": "That's part of it. Look at paragraph 3. What happened to the character before this scene?"
+            },
+            {
+                "role": "student",
+                "content": "Oh, someone helped them when they were lost!"
+            },
+            {
+                "role": "teacher",
+                "content": "Exactly! So the character is..."
+            },
+            {
+                "role": "student",
+                "content": "Paying it forward! Helping others because someone helped them."
+            },
+            {
+                "role": "teacher",
+                "content": "Great inference! You connected the events to understand the motivation."
+            }
+        ],
+        "concepts": [
+            "Reading Comprehension",
+            "Character Motivation",
+            "Making Inferences"
+        ],
+        "summary": "Student learned to make inferences about character motivation by connecting events from different parts of the text."
+    },
+    {
+        "id": "cima_002",
+        "subject": "Language Arts",
+        "topic": "Grammar",
+        "conversation": [
+            {
+                "role": "teacher",
+                "content": "Look at this sentence: 'The dog chased it's tail.' Is there anything wrong with it?"
+            },
+            {
+                "role": "student",
+                "content": "It looks okay to me?"
+            },
+            {
+                "role": "teacher",
+                "content": "Let's check 'it's.' What does the apostrophe mean here?"
+            },
+            {
+                "role": "student",
+                "content": "It's short for 'it is'?"
+            },
+            {
+                "role": "teacher",
+                "content": "Right! So 'The dog chased it is tail' doesn't make sense. What should it be?"
+            },
+            {
+                "role": "student",
+                "content": "Oh! 'Its' without the apostrophe, because it's showing possession!"
+            },
+            {
+                "role": "teacher",
+                "content": "Perfect! It's/its is one of the trickiest grammar rules."
+            }
+        ],
+        "concepts": [
+            "Grammar",
+            "Apostrophe Usage",
+            "Its vs It's"
+        ],
+        "summary": "Student learned to distinguish between 'it's' (contraction) and 'its' (possessive) through guided error analysis."
+    },
+    {
+        "id": "mathdial_005",
+        "subject": "Mathematics",
+        "topic": "Geometry - Area",
+        "conversation": [
+            {
+                "role": "teacher",
+                "content": "How would you find the area of a triangle with base 8 and height 6?"
+            },
+            {
+                "role": "student",
+                "content": "Multiply them? 8 times 6 is 48."
+            },
+            {
+                "role": "teacher",
+                "content": "That would give us a rectangle's area. A triangle is what fraction of a rectangle?"
+            },
+            {
+                "role": "student",
+                "content": "Oh, half! So it's 48 divided by 2, which is 24."
+            },
+            {
+                "role": "teacher",
+                "content": "Exactly! The formula is (base × height) ÷ 2. You figured it out from logic!"
+            }
+        ],
+        "concepts": [
+            "Geometry",
+            "Area Formulas",
+            "Spatial Reasoning"
+        ],
+        "summary": "Student derived the triangle area formula by understanding its relationship to a rectangle, showing strong logical reasoning."
+    },
+    {
+        "id": "science_003",
+        "subject": "Science",
+        "topic": "Simple Machines",
+        "conversation": [
+            {
+                "role": "teacher",
+                "content": "A ramp is a type of simple machine. Why is it easier to push a heavy box up a ramp than to lift it straight up?"
+            },
+            {
+                "role": "student",
+                "content": "Because... you push less hard?"
+            },
+            {
+                "role": "teacher",
+                "content": "Yes! But is there a trade-off? What do you have to do more of?"
+            },
+            {
+                "role": "student",
+                "content": "Push for a longer distance?"
+            },
+            {
+                "role": "teacher",
+                "content": "Exactly! Simple machines trade force for distance. Less force, but more distance."
+            }
+        ],
+        "concepts": [
+            "Simple Machines",
+            "Inclined Plane",
+            "Mechanical Advantage"
+        ],
+        "summary": "Student understood the fundamental trade-off of simple machines: reducing force at the cost of increased distance."
     }
 ]
