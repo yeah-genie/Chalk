@@ -6,34 +6,18 @@ import {
     TouchableOpacity,
     Animated,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAudioRecorder, RecordingOptions, AudioModule } from 'expo-audio';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+// ✅ expo-av 사용 (Expo Go 호환)
+import { Audio } from 'expo-av';
+import { colors, spacing, radius } from '../../constants/theme';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useStore } from '../../lib/store';
 
 // ===================================
-// UTILS
-// ===================================
-
-const retryPromise = async <T,>(
-    fn: () => Promise<T>,
-    retries = 3,
-    delay = 1000
-): Promise<T> => {
-    try {
-        return await fn();
-    } catch (err) {
-        if (retries <= 0) throw err;
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return retryPromise(fn, retries - 1, delay * 2);
-    }
-};
-
-// ===================================
-// WAVEFORM COMPONENT
+// WAVEFORM COMPONENT (애니메이션 파형)
 // ===================================
 
 const Waveform = ({ isRecording }: { isRecording: boolean }) => {
@@ -42,7 +26,7 @@ const Waveform = ({ isRecording }: { isRecording: boolean }) => {
 
     useEffect(() => {
         if (isRecording) {
-            const animations = animValues.map((anim, i) => {
+            const animations = animValues.map((anim) => {
                 return Animated.loop(
                     Animated.sequence([
                         Animated.timing(anim, {
@@ -98,77 +82,80 @@ const waveformStyles = StyleSheet.create({
 });
 
 // ===================================
-// AI SCRIBE RECORDING SCREEN
-// Using expo-audio (not deprecated expo-av)
+// MAIN RECORDING SCREEN
 // ===================================
 
-type RecordingState = 'idle' | 'recording' | 'analyzing' | 'complete';
-
-const recordingOptions: RecordingOptions = {
-    extension: '.m4a',
-    sampleRate: 44100,
-    numberOfChannels: 2,
-    bitRate: 128000,
-    android: {
-        extension: '.m4a',
-        outputFormat: 'mpeg_4',
-        audioEncoder: 'aac',
-        sampleRate: 44100,
-        numberOfChannels: 2,
-        bitRate: 128000,
-    },
-    ios: {
-        extension: '.m4a',
-        outputFormat: 'mpeg4aac',
-        audioQuality: 'high',
-        sampleRate: 44100,
-        numberOfChannels: 2,
-        bitRate: 128000,
-    },
-};
+type RecordingState = 'loading' | 'idle' | 'recording' | 'analyzing' | 'complete';
 
 export default function RecordingScreen() {
-    const [state, setState] = useState<RecordingState>('idle');
+    const [state, setState] = useState<RecordingState>('loading');
     const [duration, setDuration] = useState(0);
     const [analysisResult, setAnalysisResult] = useState<any>(null);
-    const pulseAnim = useRef(new Animated.Value(1)).current;
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const audioRecorder = useAudioRecorder(recordingOptions);
+    const recordingRef = useRef<Audio.Recording | null>(null);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+
     const { selectedStudent } = useStore();
 
-    // Request permissions and setup audio mode on mount
+    // ===================================
+    // 초기 설정: 마이크 권한 요청
+    // ===================================
     useEffect(() => {
         let isMounted = true;
-        (async () => {
+
+        const setupAudio = async () => {
             try {
-                // IMPORTANT for iOS: Set audio mode to allow recording
-                await AudioModule.setAudioModeAsync({
-                    staysActiveInBackground: true,
-                    interruptionModeIOS: 1, // DoNotMix
+                console.log('[Recording] Setting up audio...');
+
+                // 1. 마이크 권한 요청
+                const { status } = await Audio.requestPermissionsAsync();
+
+                if (!isMounted) return;
+
+                if (status !== 'granted') {
+                    setErrorMessage('Microphone permission is required');
+                    setState('idle');
+                    return;
+                }
+
+                // 2. 오디오 모드 설정 (iOS에서 녹음 허용)
+                await Audio.setAudioModeAsync({
+                    allowsRecordingIOS: true,
                     playsInSilentModeIOS: true,
-                    shouldRouteThroughEarpieceIOS: false,
-                    interruptionModeAndroid: 1, // DoNotMix
-                    shouldDuckAndroid: true,
-                    playThroughEarpieceAndroid: false,
-                    allowsRecording: true,
+                    staysActiveInBackground: false,
                 });
 
-                if (isMounted) {
-                    const status = await AudioModule.requestRecordingPermissionsAsync();
-                    console.log('[Recording] Initial permission check:', status.granted);
-                    if (!status.granted) {
-                        Alert.alert('Permission Required', 'Microphone access is needed for recording.');
-                    }
-                }
-            } catch (err) {
+                console.log('[Recording] Audio setup complete!');
+                setState('idle');
+
+            } catch (err: any) {
                 console.error('[Recording] Setup failed:', err);
+                if (isMounted) {
+                    setErrorMessage('Failed to setup microphone');
+                    setState('idle');
+                }
             }
-        })();
-        return () => { isMounted = false; };
+        };
+
+        setupAudio();
+
+        // 화면 벗어날 때 정리
+        return () => {
+            isMounted = false;
+            if (recordingRef.current) {
+                recordingRef.current.stopAndUnloadAsync().catch(() => {});
+            }
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+            }
+        };
     }, []);
 
-    // Pulse animation for recording indicator
+    // ===================================
+    // 녹음 중 펄스 애니메이션
+    // ===================================
     useEffect(() => {
         if (state === 'recording') {
             Animated.loop(
@@ -191,12 +178,14 @@ export default function RecordingScreen() {
         }
     }, [state]);
 
-    // Timer for duration
+    // ===================================
+    // 녹음 시간 타이머
+    // ===================================
     useEffect(() => {
         if (state === 'recording') {
             timerRef.current = setInterval(() => {
                 setDuration(d => d + 1);
-            }, 1000) as any;
+            }, 1000);
         } else {
             if (timerRef.current) {
                 clearInterval(timerRef.current);
@@ -214,106 +203,184 @@ export default function RecordingScreen() {
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
+    // ===================================
+    // 녹음 시작
+    // ===================================
     const startRecording = async () => {
-        console.log('[Recording] Attempting to start recording...');
         try {
-            const permission = await AudioModule.getRecordingPermissionsAsync();
-            if (permission.status !== 'granted') {
-                const request = await AudioModule.requestRecordingPermissionsAsync();
-                if (request.status !== 'granted') {
-                    Alert.alert('Permission Denied', 'Microphone access is required.');
-                    return;
-                }
+            setErrorMessage(null);
+            console.log('[Recording] Starting...');
+
+            // 권한 다시 확인
+            const { status } = await Audio.requestPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Required', 'Please allow microphone access to record lessons.');
+                return;
             }
 
-            if (!audioRecorder) {
-                throw new Error('Audio recorder not initialized');
-            }
+            // 오디오 모드 설정
+            await Audio.setAudioModeAsync({
+                allowsRecordingIOS: true,
+                playsInSilentModeIOS: true,
+            });
 
-            await audioRecorder.record();
-            console.log('[Recording] Started successfully');
+            // 새 녹음 시작
+            const recording = new Audio.Recording();
+            await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+            await recording.startAsync();
+
+            recordingRef.current = recording;
             setState('recording');
             setDuration(0);
+
+            console.log('[Recording] Started successfully!');
+
         } catch (err: any) {
             console.error('[Recording] Failed to start:', err);
-            Alert.alert('Error', `Failed to start recording: ${err.message || 'Unknown error'}`);
+            Alert.alert('Error', 'Could not start recording. Please try again.');
             setState('idle');
         }
     };
 
+    // ===================================
+    // 녹음 중지 및 분석
+    // ===================================
     const stopRecording = async () => {
-        console.log('[Recording] Stopping recording...');
+        if (!recordingRef.current) return;
+
         try {
-            if (!audioRecorder) return;
+            console.log('[Recording] Stopping...');
+
+            // 타이머 정지
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
 
             setState('analyzing');
-            await audioRecorder.stop();
-            console.log('[Recording] Stopped. URI:', audioRecorder.uri);
 
-            // Using Hugging Face based samples for more realistic feedback
+            // 녹음 중지
+            await recordingRef.current.stopAndUnloadAsync();
+            const uri = recordingRef.current.getURI();
+            console.log('[Recording] Saved to:', uri);
+
+            // 오디오 모드 리셋
+            await Audio.setAudioModeAsync({
+                allowsRecordingIOS: false,
+            });
+
+            recordingRef.current = null;
+
+            // AI 분석 시뮬레이션 (실제 서비스에서는 API 호출)
             setTimeout(() => {
-                const samples = require('../../assets/data/lesson_test_samples.json');
-                const randomSample = samples[Math.floor(Math.random() * samples.length)];
+                try {
+                    const samples = require('../../assets/data/lesson_test_samples.json');
+                    const randomSample = samples[Math.floor(Math.random() * samples.length)];
 
-                setAnalysisResult({
-                    concepts: randomSample.concepts,
-                    summary: randomSample.summary,
-                    duration: duration,
-                    subject: randomSample.subject,
-                    topic: randomSample.topic,
-                });
-                setState('complete');
-            }, 3000);
-        } catch (err) {
-            console.error('[Recording] Failed to stop:', err);
+                    setAnalysisResult({
+                        concepts: randomSample.concepts,
+                        summary: randomSample.summary,
+                        duration: duration,
+                        subject: randomSample.subject,
+                        topic: randomSample.topic,
+                    });
+                    setState('complete');
+                } catch (e) {
+                    console.error('[Recording] Analysis failed:', e);
+                    setAnalysisResult({
+                        concepts: ['Lesson recorded'],
+                        summary: 'Recording saved successfully.',
+                        duration: duration,
+                        subject: 'General',
+                        topic: 'Lesson',
+                    });
+                    setState('complete');
+                }
+            }, 2500);
+
+        } catch (err: any) {
+            console.error('[Recording] Stop failed:', err);
+            Alert.alert('Error', 'Failed to save recording. Please try again.');
             setState('idle');
-            Alert.alert('Error', 'Failed to save recording');
         }
     };
 
+    // ===================================
+    // 포트폴리오에 저장
+    // ===================================
     const handleCommit = async () => {
         try {
             setState('analyzing');
 
-            await retryPromise(async () => {
-                console.log('[Recording] Saving session for:', selectedStudent?.name);
-                // Simulate network latency
-                await new Promise(resolve => setTimeout(resolve, 1500));
-            });
+            // 실제 서비스에서는 여기서 Supabase에 저장
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
-            Alert.alert('Success! 🎉', 'The lesson insights have been added to the student\'s portfolio.');
-            router.replace('/dashboard'); // Go back to dashboard to see update
+            Alert.alert('Success! 🎉', 'Lesson insights have been added to the portfolio.');
+            router.replace('/');
+
         } catch (err: any) {
-            console.error('[Recording] Failed to save:', err);
-            Alert.alert(
-                'Upload Failed',
-                'Connection issue. Would you like to try saving again?',
-                [{ text: 'Retry', onPress: handleCommit }, { text: 'Cancel', style: 'cancel', onPress: () => setState('complete') }]
-            );
+            console.error('[Recording] Save failed:', err);
+            Alert.alert('Save Failed', 'Would you like to try again?', [
+                { text: 'Retry', onPress: handleCommit },
+                { text: 'Cancel', style: 'cancel', onPress: () => setState('complete') }
+            ]);
         }
     };
 
+    // ===================================
+    // 로딩 화면
+    // ===================================
+    if (state === 'loading') {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.centerContainer}>
+                    <ActivityIndicator size="large" color={colors.accent.primary} />
+                    <Text style={styles.loadingText}>Setting up microphone...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    // ===================================
+    // 메인 UI
+    // ===================================
     return (
         <SafeAreaView style={styles.container}>
-            {/* Header */}
+            {/* 헤더 */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} disabled={state === 'analyzing'}>
-                    <Ionicons name="close" size={24} color={state === 'analyzing' ? colors.text.muted : colors.text.primary} />
+                <TouchableOpacity
+                    onPress={() => router.back()}
+                    disabled={state === 'analyzing'}
+                >
+                    <Ionicons
+                        name="close"
+                        size={24}
+                        color={state === 'analyzing' ? colors.text.muted : colors.text.primary}
+                    />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>AI Scribe</Text>
                 <View style={{ width: 24 }} />
             </View>
 
             <View style={styles.content}>
-                {/* Student Info */}
+                {/* 학생 정보 */}
                 <View style={[styles.studentBadge, { opacity: (state === 'idle' || state === 'recording') ? 1 : 0.5 }]}>
                     <Text style={styles.studentBadgeText}>
-                        {selectedStudent ? `Student: ${selectedStudent.name}` : 'Select a student first'}
+                        {selectedStudent ? `Student: ${selectedStudent.name}` : 'Tap record to start'}
                     </Text>
                 </View>
 
-                {/* Recording UI */}
+                {/* 에러 메시지 */}
+                {errorMessage && (
+                    <View style={styles.errorBanner}>
+                        <Text style={styles.errorText}>{errorMessage}</Text>
+                    </View>
+                )}
+
+                {/* 메인 컨텐츠 */}
                 <View style={styles.centerContainer}>
+
+                    {/* 대기 상태 */}
                     {state === 'idle' && (
                         <View style={styles.viewState}>
                             <TouchableOpacity
@@ -328,6 +395,7 @@ export default function RecordingScreen() {
                         </View>
                     )}
 
+                    {/* 녹음 중 */}
                     {state === 'recording' && (
                         <View style={styles.viewState}>
                             <View style={styles.recordingHeader}>
@@ -354,18 +422,18 @@ export default function RecordingScreen() {
                         </View>
                     )}
 
+                    {/* 분석 중 */}
                     {state === 'analyzing' && (
                         <View style={styles.viewState}>
                             <View style={styles.analyzingContainer}>
-                                <Animated.View style={{ transform: [{ rotate: '0deg' }] }}>
-                                    <Ionicons name="sparkles" size={64} color={colors.accent.primary} />
-                                </Animated.View>
+                                <Ionicons name="sparkles" size={64} color={colors.accent.primary} />
                             </View>
-                            <Text style={styles.analyzingText}>AI is crafting the lesson report...</Text>
-                            <Text style={styles.analyzingSubtext}>Identifying key concepts and mastery levels</Text>
+                            <Text style={styles.analyzingText}>AI is analyzing your lesson...</Text>
+                            <Text style={styles.analyzingSubtext}>Finding key concepts and insights</Text>
                         </View>
                     )}
 
+                    {/* 분석 완료 */}
                     {state === 'complete' && analysisResult && (
                         <View style={styles.completeContainer}>
                             <View style={styles.checkCircle}>
@@ -373,7 +441,7 @@ export default function RecordingScreen() {
                             </View>
                             <Text style={styles.completeTitle}>Lesson Analyzed</Text>
                             <Text style={styles.completeSubtitle}>
-                                We've identified {analysisResult.concepts.length} key takeaways
+                                Found {analysisResult.concepts.length} key concepts
                             </Text>
 
                             <View style={styles.conceptsContainer}>
@@ -392,7 +460,7 @@ export default function RecordingScreen() {
                     )}
                 </View>
 
-                {/* Footer Actions */}
+                {/* 저장 버튼 */}
                 {state === 'complete' && (
                     <View style={styles.decisionContainer}>
                         <TouchableOpacity
@@ -407,21 +475,24 @@ export default function RecordingScreen() {
                             style={styles.purgeButton}
                             onPress={() => setState('idle')}
                         >
-                            <Text style={styles.purgeText}>Retake Recording</Text>
+                            <Text style={styles.purgeText}>Record Again</Text>
                         </TouchableOpacity>
                     </View>
                 )}
             </View>
 
-            {/* Privacy Badge */}
+            {/* 보안 뱃지 */}
             <View style={styles.trustBadge}>
                 <Ionicons name="lock-closed-outline" size={12} color={colors.text.muted} />
-                <Text style={styles.trustText}>SECURE ENCRYPTION ENFORCED</Text>
+                <Text style={styles.trustText}>SECURE ENCRYPTION</Text>
             </View>
         </SafeAreaView>
     );
 }
 
+// ===================================
+// 스타일
+// ===================================
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -444,6 +515,11 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: spacing.lg,
     },
+    loadingText: {
+        color: colors.text.muted,
+        marginTop: spacing.lg,
+        fontSize: 16,
+    },
     viewState: {
         alignItems: 'center',
         justifyContent: 'center',
@@ -463,6 +539,17 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: colors.accent.primary,
         fontWeight: '600',
+    },
+    errorBanner: {
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        padding: spacing.md,
+        borderRadius: radius.md,
+        marginBottom: spacing.md,
+    },
+    errorText: {
+        color: '#ef4444',
+        textAlign: 'center',
+        fontSize: 14,
     },
     recordingHeader: {
         alignItems: 'center',

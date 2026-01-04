@@ -165,3 +165,67 @@ export async function getStudentPredictions(studentId: string, subjectId: string
         weaknessPatterns: weakPatterns.slice(0, 2)
     };
 }
+
+/**
+ * Get topic-level predictions for a student
+ * Returns array of TopicPrediction for use in overview/analysis pages
+ */
+export async function getTopicPredictions(studentId: string): Promise<TopicPrediction[]> {
+    const supabase = await createServerSupabaseClient();
+
+    const { data: masteryData } = await supabase
+        .from('student_mastery')
+        .select('topic_id, score, status, updated_at, kb_topics(name)')
+        .eq('student_id', studentId);
+
+    if (!masteryData || masteryData.length === 0) {
+        return [];
+    }
+
+    const now = new Date();
+    const predictions: TopicPrediction[] = await Promise.all(masteryData.map(async m => {
+        const lastReview = new Date(m.updated_at);
+        const daysSinceReview = Math.floor((now.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24));
+
+        const decayRate = m.score >= 80 ? 0.08 : m.score >= 60 ? 0.12 : 0.20;
+        const predictedScore = await predictScoreAfterDays(m.score, 7, decayRate);
+
+        let urgency: TopicPrediction['urgency'] = 'stable';
+        if (predictedScore < 50 && m.score >= 70) {
+            urgency = 'critical';
+        } else if (predictedScore < 70 && m.score >= 80) {
+            urgency = 'warning';
+        } else if (m.score >= 85) {
+            urgency = 'strong';
+        }
+
+        const targetRetention = 0.7;
+        const stability = 1 + (m.score / 100) * 6;
+        const daysUntilReview = Math.max(1, Math.round(-stability * Math.log(targetRetention)));
+        const optimalReviewDate = new Date(now.getTime() + daysUntilReview * 24 * 60 * 60 * 1000);
+
+        let recommendation = "Continue with regular practice.";
+        if (urgency === 'critical') {
+            recommendation = "Urgent review needed to prevent significant knowledge decay.";
+        } else if (urgency === 'warning') {
+            recommendation = "Schedule review within 2-3 days to maintain retention.";
+        } else if (urgency === 'strong') {
+            recommendation = "Mastery is solid. Consider advancing to new topics.";
+        }
+
+        return {
+            topicId: m.topic_id,
+            topicName: (m.kb_topics as any)?.name || m.topic_id,
+            currentScore: m.score,
+            predictedScore,
+            daysSinceReview,
+            urgency,
+            recommendation,
+            decayRate,
+            optimalReviewDate
+        };
+    }));
+
+    const urgencyOrder = { critical: 0, warning: 1, stable: 2, strong: 3 };
+    return predictions.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
+}
