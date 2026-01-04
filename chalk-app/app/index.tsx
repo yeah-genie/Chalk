@@ -132,17 +132,37 @@ export default function Dashboard() {
                     </View>
                 </View>
 
-                {/* AI Scribe Button */}
+                {/* Action Buttons Row */}
+                <View style={styles.actionRow}>
+                    {/* ESIP Test Button - Primary */}
+                    <TouchableOpacity
+                        style={styles.esipButton}
+                        onPress={() => router.push('/test')}
+                        testID="start-esip-button"
+                        accessibilityLabel="start-esip-button"
+                    >
+                        <View style={styles.esipIcon}>
+                            <Ionicons name="school" size={20} color="#000" />
+                        </View>
+                        <View style={styles.esipContent}>
+                            <Text style={styles.esipText}>ESIP TEST</Text>
+                            <Text style={styles.esipSubtext}>SAT/ACT Strategy</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#000" />
+                    </TouchableOpacity>
+                </View>
+
+                {/* AI Scribe Button - Secondary */}
                 <TouchableOpacity
                     style={styles.scribeButton}
                     onPress={() => router.push('/recording')}
                     testID="start-ai-scribe-button"
                     accessibilityLabel="start-ai-scribe-button"
                 >
-                    <View style={styles.scribeIcon}>
-                        <Ionicons name="mic" size={20} color="#000" />
+                    <View style={styles.scribeIconSmall}>
+                        <Ionicons name="mic" size={16} color={colors.accent.primary} />
                     </View>
-                    <Text style={styles.scribeText}>START AI SCRIBE</Text>
+                    <Text style={styles.scribeTextSecondary}>AI SCRIBE (Lesson Recording)</Text>
                 </TouchableOpacity>
 
                 {/* Stats Grid */}
@@ -314,21 +334,76 @@ const styles = StyleSheet.create({
         borderColor: colors.border.subtle,
     },
 
-    // AI Scribe Button
-    scribeButton: {
+    // Action Row
+    actionRow: {
+        marginBottom: spacing.md,
+    },
+
+    // ESIP Button - Primary CTA
+    esipButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
         backgroundColor: colors.accent.primary,
         borderRadius: radius.xl,
         paddingVertical: spacing.lg,
-        paddingHorizontal: spacing.xl,
-        marginBottom: spacing.xl,
+        paddingHorizontal: spacing.lg,
         shadowColor: colors.accent.primary,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.4,
         shadowRadius: 16,
         elevation: 8,
+    },
+    esipIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(0,0,0,0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: spacing.md,
+    },
+    esipContent: {
+        flex: 1,
+    },
+    esipText: {
+        fontSize: 14,
+        fontWeight: '900',
+        letterSpacing: 2,
+        color: '#000',
+    },
+    esipSubtext: {
+        fontSize: 11,
+        color: 'rgba(0,0,0,0.6)',
+        marginTop: 2,
+    },
+
+    // AI Scribe Button - Secondary
+    scribeButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.bg.card,
+        borderRadius: radius.lg,
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg,
+        marginBottom: spacing.xl,
+        borderWidth: 1,
+        borderColor: colors.border.default,
+    },
+    scribeIconSmall: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: colors.accent.muted,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: spacing.sm,
+    },
+    scribeTextSecondary: {
+        fontSize: 12,
+        fontWeight: '600',
+        letterSpacing: 0.5,
+        color: colors.text.secondary,
     },
     scribeIcon: {
         width: 32,
