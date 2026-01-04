@@ -1,0 +1,35 @@
+appId: com.chalk.tutor
+name: AI Scribe Recording Flow
+---
+- launchApp
+
+# 학생 선택
+- tapOn: "Jane Doe"
+
+# 녹음 시작 버튼
+- tapOn:
+    id: "start-recording-button"
+
+# 녹음 중 표시 확인
+- assertVisible: "RECORDING"
+
+# 녹음 중지
+- tapOn:
+    id: "stop-recording-button"
+
+# 분석 완료 대기 (최대 30초)
+- extendedWaitUntil:
+    visible: "Lesson Analyzed"
+    timeout: 30000
+
+# 결과 확인
+- assertVisible: "AI INSIGHT"
+
+# 저장 및 대시보드 복귀
+- tapOn:
+    id: "save-portfolio-button"
+
+# 대시보드 복귀 확인
+- extendedWaitUntil:
+    visible: "Jane Doe"
+    timeout: 10000

@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -36,8 +37,31 @@ yarn-error.log*
 # vercel
 .vercel
 
+# other projects (keep only relay)
+/seedlab
+/briefix
+/briefix-extension
+/codebase-handoff
+/test-react-app
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# Large files and builds
+*.apk
+*.zip
+*.mp4
+/chalk-app/chalk-dev.apk
+/chalk-app/chalk-preview.apk
+/chalk-app/maestro.zip
+/chalk-app/chalk-dev.apk
+/chalk-app/chalk-preview.apk
+/chalk-app/maestro.zip
+**/chalk-dev.apk
+**/chalk-preview.apk
+**/maestro.zip
+**/test_audio_feynman.mp3
+**/ui_dump.xml
+**/walkthrough_dashboard.png
+**/verify_update_v3.png

@@ -1,0 +1,8 @@
+{
+  "name": "Chalk - Zero-Action Tutor Portfolio",
+  "description": "An automated portfolio service for elite online tutors. Sync Zoom and Gmail to automatically build your professional presence without lifting a finger.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
